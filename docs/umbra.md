@@ -22,3 +22,7 @@ run at a time in the same page — for example, a split screen comparing two gam
 
 Every game built on umbra follows the same shape: its own actors, its own
 levels/missions, and its own aesthetics.
+
+A game defines its actors as a set identified by unique ids, each carrying a
+`key` — a stable number that can be used, for example, to map an actor to a
+hotkey. Each mission exposes a subset of the game's actors.

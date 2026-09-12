@@ -1,12 +1,22 @@
 # The rockers game
 
-`rockers/` is a bare configuration for one game. It maps the engine's abstract
-concepts onto the game's vocabulary:
+**Rockers** is an *umbra* game where a group of friends have to complete missions
+within their town.
 
-- actor -> rocker
-- actors -> rockers
-- item -> objeto
-- items -> objetos
+The actors are called "rockers", as the group calls itself — "The rockers"
+(or "Los rockers" in Spanish). The items are simply called "objects"
+(or "objetos" in Spanish).
 
-The game levels are described inside `rockers/`. To build a different game, this
-folder is replaced while the engine stays untouched.
+## Actors
+
+For now the actors are the following:
+
+1. `alicia = 1` — Alicia
+2. `bob = 2` — Bob
+3. `carlos = 3` — Carlos
+
+## Levels
+
+Currently there is a single test level that exposes a subset of the actors:
+
+1. `test` — "Test" — actors: alicia, bob
