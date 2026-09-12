@@ -26,3 +26,9 @@ levels/missions, and its own aesthetics.
 A game defines its actors as a set identified by unique ids, each carrying a
 `key` — a stable number that can be used, for example, to map an actor to a
 hotkey. Each mission exposes a subset of the game's actors.
+
+Each mission has a start time: the game clock advances from it as the player
+makes decisions. Starting the engine begins at the first mission and renders
+the game state through events (the DOM module just listens and draws). The
+engine requires at least one mission — starting with an empty mission list
+is an error.

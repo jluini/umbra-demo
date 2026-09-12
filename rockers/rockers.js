@@ -17,6 +17,7 @@ const config = {
     {
       id: "test",
       name: "Test",
+      start: "2024-12-31T22:00:00",
       actors: ["alicia", "bob"],
     },
   ],
