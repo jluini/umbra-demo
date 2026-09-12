@@ -19,4 +19,4 @@ For now the actors are the following:
 
 Currently there is a single test level that exposes a subset of the actors:
 
-1. `test` — "Test" — starts at 2024-12-31T22:00 — actors: alicia, bob
+1. `test` — "Test" — starts at 2024-12-31T22:00 · deadline 2025-01-01T00:00 · actors: alicia, bob

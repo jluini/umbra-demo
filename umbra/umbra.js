@@ -1,36 +1,12 @@
 (() => {
 "use strict";
 
-const dom = {
-  listen(instance) {
-    instance.on("render", (level) => {
-      const container = instance.state.container;
-      if (level === null) { container.replaceChildren(); return; }
-      const actors = level.actors.map((id) => instance.state.config.actors[id]);
-      const box = document.createElement("div");
-      box.style.border = "1px solid black";
-      box.style.padding = "8px";
-      const title = document.createElement("h2");
-      title.textContent = level.name;
-      const start = document.createElement("p");
-      start.textContent = "Starts at " + level.start;
-      const list = document.createElement("ul");
-      for (const actor of actors) {
-        const item = document.createElement("li");
-        item.textContent = actor.key + ". " + actor.name;
-        list.appendChild(item);
-      }
-      box.append(title, start, list);
-      container.replaceChildren(box);
-    });
-  },
-};
-
 const create = (opts = {}) => {
+  const config = opts.config || {};
   const state = {
-    config: opts.config,
-    container: document.querySelector(opts.container),
-    level: null,
+    config,
+    mission: null,
+    clock: null,
   };
   const listeners = {};
   const api = {
@@ -38,20 +14,30 @@ const create = (opts = {}) => {
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
     emit(name, data) { (listeners[name] || []).forEach((fn) => fn(data)); },
     start() {
-      if (!state.config.levels || state.config.levels.length === 0) {
+      if (!config.levels || config.levels.length === 0) {
         throw new Error("umbra: no levels configured");
       }
-      state.level = state.config.levels[0];
-      api.emit("render", state.level);
+      const level = config.levels[0];
+      const mission = {
+        id: level.id,
+        name: level.name,
+        start: new Date(level.start),
+        deadline: new Date(level.deadline),
+        actors: level.actors.map((id) => config.actors[id]),
+      };
+      state.mission = mission;
+      state.clock = mission.start;
+      api.emit("mission:start", { mission });
+      api.emit("clock:set", { time: state.clock });
       return api;
     },
     stop() {
-      state.level = null;
-      api.emit("render", null);
+      state.mission = null;
+      state.clock = null;
+      api.emit("mission:end");
       return api;
     },
   };
-  dom.listen(api);
   return api;
 };
 

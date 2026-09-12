@@ -4,14 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rockers</title>
+  <style>
+    [data-widget] {
+      border: 1px solid black;
+      padding: 8px;
+      margin: 8px 0;
+    }
+  </style>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <div data-widget="mission"></div>
+    <div data-widget="actors"></div>
+    <div data-widget="clock"></div>
+  </div>
 
   <script src="umbra/umbra.js"></script>
   <script src="rockers/rockers.js"></script>
+  <script src="renderer.js"></script>
   <script>
-    Rockers.create("#app").start();
+    const game = Rockers.create();
+    Renderer.create({ root: document.getElementById("app") }).connect(game);
+    game.start();
   </script>
 </body>
 </html>

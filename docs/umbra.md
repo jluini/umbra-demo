@@ -11,11 +11,16 @@ The engine is built on two abstract concepts:
 The engine:
 
 - manages one or more independent game instances, each with its own state.
-- renders via an event-based drawing system.
-- keeps browser- and HTML-specific functionality isolated in its own
-  interchangeable modules, so it can be ported to a different architecture
-  without rewriting the engine logic.
+- knows nothing about the DOM or about how it is rendered.
+- exposes its state and changes through events; the host application connects an
+  external renderer that listens to those events.
 - never references any specific game.
+
+The host (for example `index.html`) declares the view as **widgets** — markup and
+CSS it owns. The renderer feeds only the widgets that are present, translating
+engine events into presentation. Because the renderer is pluggable, the engine can
+run with a different renderer on a different architecture without rewriting its
+logic.
 
 Because the engine supports several independent instances, more than one game can
 run at a time in the same page — for example, a split screen comparing two games.
@@ -27,8 +32,8 @@ A game defines its actors as a set identified by unique ids, each carrying a
 `key` — a stable number that can be used, for example, to map an actor to a
 hotkey. Each mission exposes a subset of the game's actors.
 
-Each mission has a start time: the game clock advances from it as the player
-makes decisions. Starting the engine begins at the first mission and renders
-the game state through events (the DOM module just listens and draws). The
-engine requires at least one mission — starting with an empty mission list
-is an error.
+Each mission has a **start time** and a **deadline**: the game clock starts at the
+mission's start time and advances as the player makes decisions.
+Starting the engine begins at the first mission and emits events the renderer
+feeds into the widgets. The engine requires at least one mission — starting with an
+empty mission list is an error.

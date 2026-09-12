@@ -18,13 +18,14 @@ const config = {
       id: "test",
       name: "Test",
       start: "2024-12-31T22:00:00",
+      deadline: "2025-01-01T00:00:00",
       actors: ["alicia", "bob"],
     },
   ],
 };
 
-const create = (container) =>
-  Umbra.create({ container, config: config });
+const create = () =>
+  Umbra.create({ config: config });
 
 window.Rockers = { create };
 })();
