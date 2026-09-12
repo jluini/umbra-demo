@@ -1,6 +1,9 @@
 (() => {
 "use strict";
 
+// Javascript-specific functions
+const parseDate = (s) => new Date(s);
+
 const create = (opts = {}) => {
   const config = opts.config || {};
   const state = {
@@ -21,8 +24,8 @@ const create = (opts = {}) => {
       const mission = {
         id: level.id,
         name: level.name,
-        start: new Date(level.start),
-        deadline: new Date(level.deadline),
+        start: parseDate(level.start),
+        deadline: parseDate(level.deadline),
         actors: level.actors.map((id) => config.actors[id]),
       };
       state.mission = mission;
