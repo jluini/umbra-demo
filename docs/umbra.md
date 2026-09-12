@@ -46,10 +46,16 @@ items, startsAt, deadline, clock) in a fixed set of languages (`en`, `es`, `de`)
 Each game defines:
 
 - `config.languages` — the list of languages available in that game.
-- `config.dictionary` — a per-language dictionary of game-specific terms that
+- `config.translations` — a per-language object of game-specific terms that
   override the engine's defaults. Any term the game does not define falls back
   to the engine's translation. If the game chooses a language the engine does
-  not have, it falls back to `en`.
+  not have, it falls back to `en`. The game can also provide engine concept
+  translations (mission, startsAt, etc.) for languages the engine does not
+  support.
+
+Mission names can be a string (same in all languages) or a per-language object
+(`{ en: "Test", es: "Prueba" }`). The engine resolves the name for the current
+language.
 
 The instance tracks the current language and exposes:
 

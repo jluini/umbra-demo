@@ -3,10 +3,13 @@
 
 const config = {
   languages: ["en", "es", "pt"],
-  dictionary: {
+  translations: {
     en: { actors: "Rockers", items: "Objects" },
     es: { actors: "Rockers", items: "Objetos" },
-    pt: { actors: "Rockers", items: "Objetos" },
+    pt: {
+      actors: "Rockers", items: "Objetos",
+      mission: "Missão", startsAt: "Começa às", deadline: "Prazo", clock: "Relógio",
+    },
   },
   actors: {
     alicia: { id: "alicia", name: "Alicia", key: 1 },
@@ -16,7 +19,7 @@ const config = {
   levels: [
     {
       id: "test",
-      name: "Test",
+      name: { en: "Test", es: "Prueba", pt: "Teste" },
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: ["alicia", "bob"],

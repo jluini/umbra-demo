@@ -1,14 +1,14 @@
 (() => {
 "use strict";
 
-const formatTime = (date) =>
-  date.toLocaleString([], {
+const formatTime = (date, lang) =>
+  new Intl.DateTimeFormat(lang, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  }).format(date);
 
 const languageNames = {
   en: "English",
@@ -28,12 +28,13 @@ const create = ({ root }) => {
   return {
     connect(game) {
       const renderAll = () => {
+        const lang = game.state.language;
         const mission = game.state.mission;
         if (widgets.mission && mission) {
           widgets.mission.textContent =
-            game.t("mission") + ": " + mission.name +
-            " | " + game.t("startsAt") + ": " + formatTime(mission.start) +
-            " | " + game.t("deadline") + ": " + formatTime(mission.deadline);
+            game.t("mission") + ": " + game.resolveName(mission.name) +
+            " | " + game.t("startsAt") + ": " + formatTime(mission.start, lang) +
+            " | " + game.t("deadline") + ": " + formatTime(mission.deadline, lang);
         }
         if (widgets.actors && mission) {
           const title = document.createElement("h3");
@@ -48,7 +49,7 @@ const create = ({ root }) => {
         }
         if (widgets.clock && game.state.clock) {
           widgets.clock.textContent =
-            game.t("clock") + ": " + formatTime(game.state.clock);
+            game.t("clock") + ": " + formatTime(game.state.clock, lang);
         }
       };
 

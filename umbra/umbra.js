@@ -12,36 +12,40 @@ const engineTranslations = {
         startsAt: "Beginnt um", deadline: "Frist", clock: "Uhr" },
 };
 
+const resolveName = (name, lang) =>
+  typeof name === "string" ? name : (name[lang] || name.en);
+
 const create = (opts = {}) => {
   const config = opts.config || {};
   const languages = config.languages || ["en"];
   let currentLanguage = languages[0];
 
-  const getDictionary = (lang) => ({
+  const getTranslations = (lang) => ({
     ...engineTranslations[lang] || engineTranslations.en,
-    ...config.dictionary?.[lang],
+    ...config.translations?.[lang],
   });
 
-  let dictionary = getDictionary(currentLanguage);
+  let translations = getTranslations(currentLanguage);
 
   const state = {
     config,
     mission: null,
     clock: null,
     language: currentLanguage,
-    dictionary,
+    translations,
   };
 
   const listeners = {};
   const api = {
     state,
-    t(key) { return dictionary[key] || key; },
+    t(key) { return translations[key] || key; },
+    resolveName(name) { return resolveName(name, currentLanguage); },
     setLanguage(lang) {
       currentLanguage = lang;
-      dictionary = getDictionary(lang);
+      translations = getTranslations(lang);
       state.language = lang;
-      state.dictionary = dictionary;
-      api.emit("language:set", { language: lang, dictionary });
+      state.translations = translations;
+      api.emit("language:set", { language: lang, translations });
     },
     languages() { return languages; },
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },

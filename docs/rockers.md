@@ -9,13 +9,21 @@ The actors are called "rockers", as the group calls itself — "The rockers"
 
 ## Languages
 
-The game supports three languages: English, Spanish and Portuguese. The dictionary
-maps the engine's abstract concepts to the game's vocabulary per language:
+The game supports three languages: English, Spanish and Portuguese. The translations
+map the engine's abstract concepts to the game's vocabulary per language:
 
 | Concept | English | Spanish | Portuguese |
 | --- | --- | --- | --- |
 | actors | Rockers | Rockers | Rockers |
 | items | Objects | Objetos | Objetos |
+| mission | — | — | Missão |
+| startsAt | — | — | Começa às |
+| deadline | — | — | Prazo |
+| clock | — | — | Relógio |
+
+Portuguese fills in the engine labels (`mission`, `startsAt`, `deadline`, `clock`)
+because the engine does not natively support `pt`. English and Spanish use the
+engine's built-in translations.
 
 ## Actors
 
@@ -29,4 +37,4 @@ For now the actors are the following:
 
 Currently there is a single test level that exposes a subset of the actors:
 
-1. `test` — "Test" — starts at 2024-12-31T22:00 · deadline 2025-01-01T00:00 · actors: alicia, bob
+1. `test` — "Test" / "Prueba" / "Teste" — starts at 2024-12-31T22:00 · deadline 2025-01-01T00:00 · actors: alicia, bob
