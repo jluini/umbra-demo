@@ -12,7 +12,7 @@ const config = {
 };
 
 const create = (container) =>
-  Actor.create({ container, config: config });
+  Umbra.create({ container, config: config });
 
 window.Rockers = { create };
 })();

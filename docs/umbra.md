@@ -1,6 +1,9 @@
-# The actor engine
+# The umbra engine
 
-`actor/` is a general-purpose game engine built on two abstract concepts:
+`umbra/` is a general-purpose engine for non-realtime, decision-based games: the
+player makes choices for each actor on a turn, then the game runs and clocks advance.
+
+The engine is built on two abstract concepts:
 
 - **actors** — the entities that live in a game world.
 - **items** — the objects with which actors interact.
@@ -16,3 +19,6 @@ The engine:
 
 Because the engine supports several independent instances, more than one game can
 run at a time in the same page — for example, a split screen comparing two games.
+
+Every game built on umbra follows the same shape: its own actors, its own
+levels/missions, and its own aesthetics.

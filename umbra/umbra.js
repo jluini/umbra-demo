@@ -12,5 +12,5 @@ const create = (opts = {}) => {
   return api;
 };
 
-window.Actor = { create };
+window.Umbra = { create };
 })();

@@ -3,7 +3,7 @@
 "Rockers" is a game built on top of the "actor" engine. Development happens in two
 tracks that stay strictly separated:
 
-- [The actor engine](actor.md) — a general-purpose, reusable tool with no knowledge
+- [The umbra engine](umbra.md) — a general-purpose, reusable tool with no knowledge
   of any game that runs on it.
 - [The rockers game](rockers.md) — essentially a configuration that describes what
   the engine should instantiate and how.
