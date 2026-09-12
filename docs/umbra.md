@@ -37,3 +37,25 @@ mission's start time and advances as the player makes decisions.
 Starting the engine begins at the first mission and emits events the renderer
 feeds into the widgets. The engine requires at least one mission — starting with an
 empty mission list is an error.
+
+## Languages and translations
+
+The engine includes built-in translations for its own concepts (mission, actors,
+items, startsAt, deadline, clock) in a fixed set of languages (`en`, `es`, `de`).
+
+Each game defines:
+
+- `config.languages` — the list of languages available in that game.
+- `config.dictionary` — a per-language dictionary of game-specific terms that
+  override the engine's defaults. Any term the game does not define falls back
+  to the engine's translation. If the game chooses a language the engine does
+  not have, it falls back to `en`.
+
+The instance tracks the current language and exposes:
+
+- `t(key)` — returns the translation of a key in the current language.
+- `setLanguage(lang)` — switches the language and emits `language:set`.
+- `languages()` — returns the game's available languages.
+
+The renderer can listen to `language:set` to re-render widgets when the language
+changes.

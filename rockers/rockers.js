@@ -2,11 +2,11 @@
 "use strict";
 
 const config = {
+  languages: ["en", "es", "pt"],
   dictionary: {
-    actor: "rocker",
-    actors: "rockers",
-    item: "objeto",
-    items: "objetos",
+    en: { actors: "Rockers", items: "Objects" },
+    es: { actors: "Rockers", items: "Objetos" },
+    pt: { actors: "Rockers", items: "Objetos" },
   },
   actors: {
     alicia: { id: "alicia", name: "Alicia", key: 1 },

@@ -7,6 +7,16 @@ The actors are called "rockers", as the group calls itself — "The rockers"
 (or "Los rockers" in Spanish). The items are simply called "objects"
 (or "objetos" in Spanish).
 
+## Languages
+
+The game supports three languages: English, Spanish and Portuguese. The dictionary
+maps the engine's abstract concepts to the game's vocabulary per language:
+
+| Concept | English | Spanish | Portuguese |
+| --- | --- | --- | --- |
+| actors | Rockers | Rockers | Rockers |
+| items | Objects | Objetos | Objetos |
+
 ## Actors
 
 For now the actors are the following:
