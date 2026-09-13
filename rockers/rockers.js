@@ -4,17 +4,18 @@
 const config = {
   languages: ["en", "es", "pt"],
   translations: {
-    en: { actors: "Rockers", items: "Objects" },
-    es: { actors: "Rockers", items: "Objetos" },
+    en: { actors: "Rockers", items: "Objects", alicia: "Alice", bob: "Bob", carlos: "Charles" },
+    es: { actors: "Rockers", items: "Objetos", alicia: "Alicia", bob: "Rober", carlos: "Carlos" },
     pt: {
       actors: "Rockers", items: "Objetos",
       mission: "Missão", startsAt: "Começa às", deadline: "Prazo", clock: "Relógio",
+      alicia: "Alice", bob: "Beto", carlos: "Carlos",
     },
   },
   actors: {
-    alicia: { id: "alicia", name: "Alicia", key: 1 },
-    bob: { id: "bob", name: "Bob", key: 2 },
-    carlos: { id: "carlos", name: "Carlos", key: 3 },
+    alicia: { id: "alicia", key: 1 },
+    bob: { id: "bob", key: 2 },
+    carlos: { id: "carlos", key: 3 },
   },
   levels: [
     {

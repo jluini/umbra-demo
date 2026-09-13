@@ -27,11 +27,13 @@ engine's built-in translations.
 
 ## Actors
 
-For now the actors are the following:
+Actors are defined by their `id` and `key`. Their names live in the translations:
 
-1. `alicia = 1` — Alicia
-2. `bob = 2` — Bob
-3. `carlos = 3` — Carlos
+| id | key | English | Spanish | Portuguese |
+| --- | --- | --- | --- | --- |
+| alicia | 1 | Alice | Alicia | Alice |
+| bob | 2 | Bob | Rober | Beto |
+| carlos | 3 | Charles | Carlos | Carlos |
 
 ## Levels
 
