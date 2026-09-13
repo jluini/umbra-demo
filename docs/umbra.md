@@ -99,6 +99,40 @@ Plans are stored in `state.plans` as a hash keyed by actor id:
 
 Time tracking uses an internal counter (`state.internalTime`) that starts at 0 when the mission begins. The displayed clock is `mission.start + internalTime`. This decouples time display from time progression.
 
+## Items
+
+Items are objects that actors can possess. Each game defines item types in `config.items` as a hash keyed by item id:
+
+```js
+items: {
+  cider: { id: "cider", name: { en: "Cider", es: "Sidra", pt: "Sidra" } },
+}
+```
+
+Items carry per-language names, like actors and locations. The engine resolves item names via `t(itemId)`.
+
+Actors' starting items are declared in the level config as an array of item ids:
+
+```js
+actors: [
+  { id: "alice", location: "alice_house", items: [] },
+  { id: "charles", location: "charles_house", items: ["cider"] },
+]
+```
+
+At mission start, the engine builds `state.inventory` — a hash keyed by actor id, where each value is an array of item ids the actor possesses:
+
+```js
+state.inventory = {
+  alice: [],
+  charles: ["cider"],
+}
+```
+
+The engine validates that all referenced item ids exist in `config.items`. Referencing an unknown item throws an error.
+
+Items do not consume time. Two actors at the same location can exchange items (exchange mechanics not yet implemented).
+
 The renderer can listen to `language:set` to re-render widgets when the language
 changes.
 
@@ -109,8 +143,8 @@ The default renderer (`renderer.js`) feeds the following widgets:
 - **languages** — buttons for each available language. Hidden if only one language.
 - **mission** — mission name, start/deadline times, and optional briefing.
 - **inventory** — initially hidden. When an actor is selected (by clicking their
-  name), shows actor details and actions ("Walk to..."). In walk-to mode, shows
-  available destinations with distance and walking time.
+  name), shows actor details, possessed items (if any), and actions ("Walk to...").
+  In walk-to mode, shows available destinations with distance and walking time.
 - **actors** — list of actors with their key, translated name, current location,
   and planned destination if any. Clicking an actor's name opens the inventory widget.
 - **locations** — for each location in the level, a subtitle with the location name

@@ -4,13 +4,16 @@
 const config = {
   languages: ["en", "es", "pt"],
   translations: {
-    en: { actors: "Characters", locations: "Places", alice: "Alice", bob: "Bob", charles: "Charles", dave: "Dave" },
-    es: { actors: "Personajes", locations: "Lugares", alice: "Alicia", bob: "Rober", charles: "Carlos", dave: "David" },
+    en: { actors: "Characters", locations: "Places", alice: "Alice", bob: "Bob", charles: "Charles", dave: "Dave", cider: "Cider" },
+    es: { actors: "Personajes", locations: "Lugares", alice: "Alicia", bob: "Rober", charles: "Carlos", dave: "David", cider: "Sidra" },
     pt: {
       actors: "Personagens", locations: "Lugares",
       mission: "Missão", startsAt: "Começa às", deadline: "Prazo", clock: "Relógio", briefing: "Resumo",
-      alice: "Alice", bob: "Beto", charles: "Carlos", dave: "Davi"
+      alice: "Alice", bob: "Beto", charles: "Carlos", dave: "Davi", cider: "Sidra"
     },
+  },
+  items: {
+    cider: { id: "cider", name: { en: "Cider", es: "Sidra", pt: "Sidra" } },
   },
   actors: {
     alice: { id: "alice", key: 1 },
@@ -44,9 +47,9 @@ const config = {
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: [
-        { id: "alice", location: "alice_house" },
-        { id: "bob", location: "alice_house" },
-        { id: "charles", location: "charles_house" },
+        { id: "alice", location: "alice_house", items: [] },
+        { id: "bob", location: "alice_house", items: [] },
+        { id: "charles", location: "charles_house", items: ["cider"] },
       ],
       locations: ["alice_house", "charles_house", "market"],
     },

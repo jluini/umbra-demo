@@ -41,6 +41,7 @@ const create = (opts = {}) => {
     clock: null,
     internalTime: 0,
     plans: {},
+    inventory: {},
     language: currentLanguage,
     translations,
   };
@@ -173,6 +174,17 @@ const create = (opts = {}) => {
         }),
         locations: (level.locations || []).map((id) => config.locations[id]),
       };
+      const validItems = new Set(Object.keys(config.items || {}));
+      state.inventory = {};
+      for (const a of level.actors) {
+        const items = a.items || [];
+        for (const itemId of items) {
+          if (!validItems.has(itemId)) {
+            throw new Error("umbra: actor '" + a.id + "' has unknown item '" + itemId + "'");
+          }
+        }
+        state.inventory[a.id] = items.slice();
+      }
       state.mission = mission;
       state.internalTime = 0;
       state.clock = mission.start;

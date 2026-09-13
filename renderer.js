@@ -63,6 +63,17 @@ const create = ({ root }) => {
         header.textContent = game.t(actor.id) + " (" + game.resolveName(actor.location.name) + ")";
         children.push(header);
 
+        const items = game.state.inventory[actor.id] || [];
+        if (items.length > 0) {
+          const itemsDiv = document.createElement("div");
+          const itemNames = items.map((id) => {
+            const itemConfig = game.state.config.items[id];
+            return itemConfig ? game.t(id) : id;
+          });
+          itemsDiv.textContent = game.t("items") + ": " + itemNames.join(", ");
+          children.push(itemsDiv);
+        }
+
         if (walkToMode) {
           const walkTitle = document.createElement("div");
           walkTitle.textContent = "Walk to:";
