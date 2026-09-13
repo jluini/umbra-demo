@@ -38,6 +38,10 @@ Starting the engine begins at the first mission and emits events the renderer
 feeds into the widgets. The engine requires at least one mission — starting with an
 empty mission list is an error.
 
+Levels include a **briefing** — a per-language text that
+introduces the mission's situation and objective. Like mission names, the
+briefing can be a string (same in all languages) or a per-language object.
+
 ## Languages and translations
 
 The engine includes built-in translations for its own concepts (mission, actors,

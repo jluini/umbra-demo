@@ -31,10 +31,18 @@ const create = ({ root }) => {
         const lang = game.state.language;
         const mission = game.state.mission;
         if (widgets.mission && mission) {
-          widgets.mission.textContent =
+          const header = document.createElement("div");
+          header.textContent =
             game.t("mission") + ": " + game.resolveName(mission.name) +
             " | " + game.t("startsAt") + ": " + formatTime(mission.start, lang) +
             " | " + game.t("deadline") + ": " + formatTime(mission.deadline, lang);
+          const children = [header];
+          if (mission.briefing) {
+            const p = document.createElement("p");
+            p.textContent = game.t("briefing") + ": " + game.resolveName(mission.briefing);
+            children.push(p);
+          }
+          widgets.mission.replaceChildren(...children);
         }
         if (widgets.actors && mission) {
           const title = document.createElement("h3");

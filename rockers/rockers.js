@@ -8,7 +8,7 @@ const config = {
     es: { actors: "Rockers", items: "Objetos", alicia: "Alicia", bob: "Rober", carlos: "Carlos" },
     pt: {
       actors: "Rockers", items: "Objetos",
-      mission: "Missão", startsAt: "Começa às", deadline: "Prazo", clock: "Relógio",
+      mission: "Missão", startsAt: "Começa às", deadline: "Prazo", clock: "Relógio", briefing: "Resumo",
       alicia: "Alice", bob: "Beto", carlos: "Carlos",
     },
   },
@@ -21,6 +21,11 @@ const config = {
     {
       id: "test",
       name: { en: "Test", es: "Prueba", pt: "Teste" },
+      briefing: {
+        en: "Alice and Bob finished New Year's dinner at Alicia's house. They need to buy cider and bring it back before the new year starts.",
+        es: "Alicia y Rober terminaron la cena de fin de año en la casa de Alicia. Deben comprar una sidra y traerla a la casa antes de que comience el nuevo año.",
+        pt: "Alice e o Beto terminaram o jantar de Réveillon na casa da Alice. Precisam comprar sidra e trazer de volta antes do ano novo começar.",
+      },
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: ["alicia", "bob"],

@@ -5,11 +5,14 @@ const parseDate = (s) => new Date(s);
 
 const engineTranslations = {
   en: { mission: "Mission", actors: "Actors", items: "Items",
-        startsAt: "Starts at", deadline: "Deadline", clock: "Clock" },
+        startsAt: "Starts at", deadline: "Deadline", clock: "Clock",
+        briefing: "Briefing" },
   es: { mission: "Misión", actors: "Actores", items: "Objetos",
-        startsAt: "Comienza a las", deadline: "Fecha límite", clock: "Reloj" },
+        startsAt: "Comienza a las", deadline: "Fecha límite", clock: "Reloj",
+        briefing: "Resumen" },
   de: { mission: "Mission", actors: "Schauspieler", items: "Gegenstände",
-        startsAt: "Beginnt um", deadline: "Frist", clock: "Uhr" },
+        startsAt: "Beginnt um", deadline: "Frist", clock: "Uhr",
+        briefing: "Lagebesprechung" },
 };
 
 const resolveName = (name, lang) =>
@@ -58,6 +61,7 @@ const create = (opts = {}) => {
       const mission = {
         id: level.id,
         name: level.name,
+        briefing: level.briefing,
         start: parseDate(level.start),
         deadline: parseDate(level.deadline),
         actors: level.actors.map((id) => config.actors[id]),
