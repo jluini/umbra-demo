@@ -11,6 +11,10 @@ The engine is built on two abstract concepts:
   Each game defines its own locations. A level can expose a subset of the game's
   locations. Like actors, locations are defined by unique ids and carry
   per-language names.
+- **routes** — the connections between locations, each with a distance. Routes
+  are defined as `{ from, to, distance }` objects. They are bidirectional by
+  default: `from → to` implies `to → from`. The engine pre-computes shortest
+  paths using Floyd-Warshall and exposes `distance(from, to)` on the API.
 
 The engine:
 
@@ -70,6 +74,9 @@ The instance tracks the current language and exposes:
 - `t(key)` — returns the translation of a key in the current language.
 - `setLanguage(lang)` — switches the language and emits `language:set`.
 - `languages()` — returns the game's available languages.
+- `distance(from, to)` — returns the shortest distance between two locations
+  in km. Returns `Infinity` if no path exists. Requires `start()` to be called
+  first (distances are computed at mission start).
 
 The renderer can listen to `language:set` to re-render widgets when the language
 changes.

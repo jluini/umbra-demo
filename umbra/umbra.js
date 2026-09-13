@@ -25,6 +25,7 @@ const create = (opts = {}) => {
   const config = opts.config || {};
   const languages = config.languages || ["en"];
   let currentLanguage = languages[0];
+  let distMatrix = {};
 
   const getTranslations = (lang) => ({
     ...engineTranslations[lang] || engineTranslations.en,
@@ -41,11 +42,52 @@ const create = (opts = {}) => {
     translations,
   };
 
+  const buildDistanceMatrix = () => {
+    const locs = Object.keys(config.locations || {});
+    const n = locs.length;
+    const idx = {};
+    locs.forEach((id, i) => { idx[id] = i; });
+
+    const INF = Infinity;
+    const matrix = Array.from({ length: n }, () => Array(n).fill(INF));
+    locs.forEach((id, i) => { matrix[i][i] = 0; });
+
+    for (const route of (config.routes || [])) {
+      const i = idx[route.from];
+      const j = idx[route.to];
+      if (i !== undefined && j !== undefined) {
+        matrix[i][j] = route.distance;
+        matrix[j][i] = route.distance;
+      }
+    }
+
+    for (let k = 0; k < n; k++) {
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          if (matrix[i][k] + matrix[k][j] < matrix[i][j]) {
+            matrix[i][j] = matrix[i][k] + matrix[k][j];
+          }
+        }
+      }
+    }
+
+    distMatrix = {};
+    locs.forEach((idI, i) => {
+      locs.forEach((idJ, j) => {
+        distMatrix[idI] = distMatrix[idI] || {};
+        distMatrix[idI][idJ] = matrix[i][j];
+      });
+    });
+  };
+
   const listeners = {};
   const api = {
     state,
     t(key) { return translations[key] || key; },
     resolveName(name) { return resolveName(name, currentLanguage); },
+    distance(from, to) {
+      return (distMatrix[from] && distMatrix[from][to]) || Infinity;
+    },
     setLanguage(lang) {
       currentLanguage = lang;
       translations = getTranslations(lang);
@@ -63,6 +105,7 @@ const create = (opts = {}) => {
       if (!config.locations || Object.keys(config.locations).length === 0) {
         throw new Error("umbra: no locations configured");
       }
+      buildDistanceMatrix();
       const level = config.levels[0];
       const mission = {
         id: level.id,

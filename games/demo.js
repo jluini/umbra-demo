@@ -25,6 +25,12 @@ const config = {
     square: { id: "square", name: { en: "Square", es: "Plaza", pt: "Praça" } },
     forest: { id: "forest", name: { en: "Forest", es: "Bosque", pt: "Floresta" } },
   },
+  routes: [
+    { from: "alice_house", to: "square", distance: 1 },
+    { from: "bob_house", to: "square", distance: 1.2 },
+    { from: "charles_house", to: "square", distance: 1.4 },
+    { from: "square", to: "market", distance: 0.5 },
+  ],
   levels: [
     {
       id: "test",

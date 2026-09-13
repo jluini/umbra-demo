@@ -33,6 +33,20 @@ The game defines the following locations (of which only the first two are presen
 - Square
 - Forest
 
+## Routes
+
+Locations are connected by the following routes (bidirectional, distances in km):
+
+| From | To | Distance |
+| --- | --- | --- |
+| Alice's House | Square | 1 |
+| Bob's House | Square | 1.2 |
+| Charles's House | Square | 1.4 |
+| Square | Market | 0.5 |
+
+The engine computes shortest paths automatically. For example, Alice's House to Market
+is 1.5 km via Square (1 + 0.5). Forest is unreachable from all other locations.
+
 ## Levels
 
 Currently there is a single test level that is played with Alice and Bob.
