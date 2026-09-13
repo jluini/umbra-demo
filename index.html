@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rockers</title>
+  <title>Umbra</title>
   <style>
     [data-widget] {
       border: 1px solid black;
@@ -21,12 +21,20 @@
   </div>
 
   <script src="umbra/umbra.js"></script>
-  <script src="rockers/rockers.js"></script>
+  <script src="games/demo.js"></script>
+  <script src="games/rockers.js"></script>
   <script src="renderer.js"></script>
   <script>
-    const game = Rockers.create();
-    Renderer.create({ root: document.getElementById("app") }).connect(game);
-    game.start();
+    (() => {
+      const games = { demo: Demo, rockers: Rockers };
+      const params = new URLSearchParams(window.location.search);
+      const name = params.get("game") || "demo";
+      const Game = games[name];
+      if (!Game) { console.error("umbra: unknown game: " + name); return; }
+      const game = Game.create();
+      Renderer.create({ root: document.getElementById("app") }).connect(game);
+      game.start();
+    })();
   </script>
 </body>
 </html>

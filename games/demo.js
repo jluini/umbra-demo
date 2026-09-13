@@ -4,10 +4,10 @@
 const config = {
   languages: ["en", "es", "pt"],
   translations: {
-    en: { actors: "Rockers", items: "Objects", alicia: "Alice", bob: "Bob", carlos: "Charles" },
-    es: { actors: "Rockers", items: "Objetos", alicia: "Alicia", bob: "Rober", carlos: "Carlos" },
+    en: { actors: "Characters", alicia: "Alice", bob: "Bob", carlos: "Charles" },
+    es: { actors: "Personajes", alicia: "Alicia", bob: "Rober", carlos: "Carlos" },
     pt: {
-      actors: "Rockers", items: "Objetos",
+      actors: "Personagens",
       mission: "Missão", startsAt: "Começa às", deadline: "Prazo", clock: "Relógio", briefing: "Resumo",
       alicia: "Alice", bob: "Beto", carlos: "Carlos",
     },
@@ -36,5 +36,5 @@ const config = {
 const create = () =>
   Umbra.create({ config: config });
 
-window.Rockers = { create };
+window.Demo = { create };
 })();
