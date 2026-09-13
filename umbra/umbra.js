@@ -5,12 +5,15 @@ const parseDate = (s) => new Date(s);
 
 const engineTranslations = {
   en: { mission: "Mission", actors: "Actors", items: "Items",
+        locations: "Locations",
         startsAt: "Starts at", deadline: "Deadline", clock: "Clock",
         briefing: "Briefing" },
   es: { mission: "Misión", actors: "Actores", items: "Objetos",
+        locations: "Locaciones",
         startsAt: "Comienza a las", deadline: "Fecha límite", clock: "Reloj",
         briefing: "Resumen" },
   de: { mission: "Mission", actors: "Schauspieler", items: "Gegenstände",
+        locations: "Orte",
         startsAt: "Beginnt um", deadline: "Frist", clock: "Uhr",
         briefing: "Lagebesprechung" },
 };
@@ -57,6 +60,9 @@ const create = (opts = {}) => {
       if (!config.levels || config.levels.length === 0) {
         throw new Error("umbra: no levels configured");
       }
+      if (!config.locations || Object.keys(config.locations).length === 0) {
+        throw new Error("umbra: no locations configured");
+      }
       const level = config.levels[0];
       const mission = {
         id: level.id,
@@ -65,6 +71,7 @@ const create = (opts = {}) => {
         start: parseDate(level.start),
         deadline: parseDate(level.deadline),
         actors: level.actors.map((id) => config.actors[id]),
+        locations: (level.locations || []).map((id) => config.locations[id]),
       };
       state.mission = mission;
       state.clock = mission.start;

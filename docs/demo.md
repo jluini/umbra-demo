@@ -22,6 +22,17 @@ The actors or characters of this game are:
 
 3. Charles
 
+## Locations
+
+The game defines the following locations (of which only the first two are presented at level 1):
+
+- Alice's House
+- Bob's House
+- Charles's House
+- Market
+- Square
+- Forest
+
 ## Levels
 
 Currently there is a single test level that is played with Alice and Bob.

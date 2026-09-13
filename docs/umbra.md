@@ -7,6 +7,10 @@ The engine is built on two abstract concepts:
 
 - **actors** — the entities that live in a game world.
 - **items** — the objects with which actors interact.
+- **locations** — the places where actors can be or where events can happen.
+  Each game defines its own locations. A level can expose a subset of the game's
+  locations. Like actors, locations are defined by unique ids and carry
+  per-language names.
 
 The engine:
 
@@ -45,7 +49,7 @@ briefing can be a string (same in all languages) or a per-language object.
 ## Languages and translations
 
 The engine includes built-in translations for its own concepts (mission, actors,
-items, startsAt, deadline, clock) in a fixed set of languages (`en`, `es`, `de`).
+items, etc...) in a fixed set of languages (`en`, `es`, `de`).
 
 Each game defines:
 
