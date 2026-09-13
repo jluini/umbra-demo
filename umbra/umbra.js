@@ -157,16 +157,20 @@ const create = (opts = {}) => {
       }
       buildDistanceMatrix();
       const level = config.levels[0];
+      const levelLocs = new Set((level.locations || []));
       const mission = {
         id: level.id,
         name: level.name,
         briefing: level.briefing,
         start: parseDate(level.start),
         deadline: parseDate(level.deadline),
-        actors: level.actors.map((a) => ({
-          ...config.actors[a.id],
-          location: config.locations[a.location],
-        })),
+        actors: level.actors.map((a) => {
+          const loc = config.locations[a.location];
+          if (!loc || !levelLocs.has(a.location)) {
+            throw new Error("umbra: actor '" + a.id + "' starts at '" + a.location + "' which is not in level locations");
+          }
+          return { ...config.actors[a.id], location: loc };
+        }),
         locations: (level.locations || []).map((id) => config.locations[id]),
       };
       state.mission = mission;
