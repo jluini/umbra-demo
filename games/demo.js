@@ -4,18 +4,19 @@
 const config = {
   languages: ["en", "es", "pt"],
   translations: {
-    en: { actors: "Characters", locations: "Places", alice: "Alice", bob: "Bob", charles: "Charles" },
-    es: { actors: "Personajes", locations: "Lugares", alice: "Alicia", bob: "Rober", charles: "Carlos" },
+    en: { actors: "Characters", locations: "Places", alice: "Alice", bob: "Bob", charles: "Charles", dave: "Dave" },
+    es: { actors: "Personajes", locations: "Lugares", alice: "Alicia", bob: "Rober", charles: "Carlos", dave: "David" },
     pt: {
       actors: "Personagens", locations: "Lugares",
       mission: "Missão", startsAt: "Começa às", deadline: "Prazo", clock: "Relógio", briefing: "Resumo",
-      alice: "Alice", bob: "Beto", charles: "Carlos",
+      alice: "Alice", bob: "Beto", charles: "Carlos", dave: "Davi"
     },
   },
   actors: {
     alice: { id: "alice", key: 1 },
     bob: { id: "bob", key: 2 },
     charles: { id: "charles", key: 3 },
+    dave: { id: "dave", key: 4 },
   },
   locations: {
     alice_house: { id: "alice_house", name: { en: "Alice's House", es: "Casa de Alicia", pt: "Casa da Alice" } },
@@ -45,8 +46,9 @@ const config = {
       actors: [
         { id: "alice", location: "alice_house" },
         { id: "bob", location: "alice_house" },
+        { id: "charles", location: "charles_house" },
       ],
-      locations: ["alice_house", "market"],
+      locations: ["alice_house", "charles_house", "market"],
     },
   ],
 };
