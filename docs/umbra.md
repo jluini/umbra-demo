@@ -81,3 +81,14 @@ The instance tracks the current language and exposes:
 
 The renderer can listen to `language:set` to re-render widgets when the language
 changes.
+
+## Widgets
+
+The default renderer (`renderer.js`) feeds the following widgets:
+
+- **languages** — buttons for each available language. Hidden if only one language.
+- **mission** — mission name, start/deadline times, and optional briefing.
+- **actors** — list of actors with their key, translated name, and current location.
+- **locations** — for each location in the level, a subtitle with the location name
+  and a list of actors currently at that location (sorted by key).
+- **clock** — current in-game time.

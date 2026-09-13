@@ -56,6 +56,29 @@ const create = ({ root }) => {
           }
           widgets.actors.replaceChildren(title, list);
         }
+        if (widgets.locations && mission) {
+          const title = document.createElement("h3");
+          title.textContent = game.t("locations") + ":";
+          const children = [title];
+          for (const loc of mission.locations) {
+            const subtitle = document.createElement("h4");
+            subtitle.textContent = game.resolveName(loc.name);
+            children.push(subtitle);
+            const actorsAtLoc = mission.actors
+              .filter((a) => a.location && a.location.id === loc.id)
+              .sort((a, b) => a.key - b.key);
+            if (actorsAtLoc.length > 0) {
+              const list = document.createElement("ul");
+              for (const actor of actorsAtLoc) {
+                const item = document.createElement("li");
+                item.textContent = game.t(actor.id);
+                list.appendChild(item);
+              }
+              children.push(list);
+            }
+          }
+          widgets.locations.replaceChildren(...children);
+        }
         if (widgets.clock && game.state.clock) {
           widgets.clock.textContent =
             game.t("clock") + ": " + formatTime(game.state.clock, lang);
