@@ -39,6 +39,7 @@ const create = (opts = {}) => {
     config,
     mission: null,
     clock: null,
+    internalTime: 0,
     plans: {},
     language: currentLanguage,
     translations,
@@ -88,13 +89,19 @@ const create = (opts = {}) => {
     t(key) { return translations[key] || key; },
     resolveName(name) { return resolveName(name, currentLanguage); },
     distance(from, to) {
-      return (distMatrix[from] && distMatrix[from][to]) || Infinity;
+      if (!distMatrix[from]) return Infinity;
+      const d = distMatrix[from][to];
+      return d !== undefined ? d : Infinity;
     },
     computeWalkTime(distance) {
       return Math.round(distance * WALKING_PACE);
     },
     setPlan(actorId, destination) {
-      state.plans[actorId] = { destination };
+      const actor = state.mission.actors.find((a) => a.id === actorId);
+      if (!actor) return;
+      const dist = api.distance(actor.location.id, destination);
+      const walkTime = Math.round(api.computeWalkTime(dist));
+      state.plans[actorId] = { destination, from: actor.location.id, startTime: null, walkTime };
       api.emit("plan:set", { actorId, destination });
     },
     cancelPlan(actorId) {
@@ -109,6 +116,36 @@ const create = (opts = {}) => {
       api.emit("language:set", { language: lang, translations });
     },
     languages() { return languages; },
+    advanceTime(minutes) {
+      state.internalTime += minutes;
+      state.clock = new Date(state.mission.start.getTime() + state.internalTime * 60000);
+      api.emit("clock:set", { time: state.clock });
+    },
+    play() {
+      for (const plan of Object.values(state.plans)) {
+        if (plan.startTime === null) plan.startTime = state.internalTime;
+      }
+    },
+    pause() {},
+    checkPlans() {
+      const completed = [];
+      for (const [actorId, plan] of Object.entries(state.plans)) {
+        if (plan.startTime === null) continue;
+        const elapsed = state.internalTime - plan.startTime;
+        if (elapsed >= plan.walkTime) {
+          completed.push({ actorId, plan });
+        }
+      }
+      return completed;
+    },
+    completePlan(actorId) {
+      const plan = state.plans[actorId];
+      if (!plan) return;
+      const actor = state.mission.actors.find((a) => a.id === actorId);
+      if (actor) actor.location = state.config.locations[plan.destination];
+      delete state.plans[actorId];
+      api.emit("plan:done", { actorId });
+    },
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
     emit(name, data) { (listeners[name] || []).forEach((fn) => fn(data)); },
     start() {
@@ -133,6 +170,7 @@ const create = (opts = {}) => {
         locations: (level.locations || []).map((id) => config.locations[id]),
       };
       state.mission = mission;
+      state.internalTime = 0;
       state.clock = mission.start;
       api.emit("mission:start", { mission });
       api.emit("clock:set", { time: state.clock });

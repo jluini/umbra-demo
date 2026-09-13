@@ -1,6 +1,8 @@
 (() => {
 "use strict";
 
+const REAL_MS_PER_GAME_MIN = 250;
+
 const formatTime = (date, lang) =>
   new Intl.DateTimeFormat(lang, {
     day: "2-digit",
@@ -29,10 +31,12 @@ const create = ({ root }) => {
     connect(game) {
       let selectedActor = null;
       let walkToMode = false;
+      let playInterval = null;
+      let playing = false;
 
       const renderInventory = () => {
         if (!widgets.inventory) return;
-        if (!selectedActor) {
+        if (!selectedActor || playing) {
           widgets.inventory.style.display = "none";
           return;
         }
@@ -40,6 +44,18 @@ const create = ({ root }) => {
         const mission = game.state.mission;
         const actor = mission.actors.find((a) => a.id === selectedActor);
         if (!actor) { widgets.inventory.style.display = "none"; return; }
+
+        const plan = game.state.plans[actor.id];
+        if (plan && plan.startTime !== null) {
+          const destLoc = mission.locations.find((l) => l.id === plan.destination);
+          const destName = destLoc ? game.resolveName(destLoc.name) : plan.destination;
+          const elapsed = game.state.internalTime - plan.startTime;
+          const children = [
+            document.createTextNode(game.t(actor.id) + " → " + destName + " (en camino: " + elapsed + "/" + plan.walkTime + " min)")
+          ];
+          widgets.inventory.replaceChildren(...children);
+          return;
+        }
 
         const children = [];
 
@@ -86,13 +102,11 @@ const create = ({ root }) => {
           children.push(cancelBtn);
         } else {
           const plan = game.state.plans[actor.id];
-          if (plan) {
+          if (plan && plan.startTime === null) {
             const destLoc = mission.locations.find((l) => l.id === plan.destination);
             const destName = destLoc ? game.resolveName(destLoc.name) : plan.destination;
-            const dist = game.distance(actor.location.id, plan.destination);
-            const walkTime = Math.round(game.computeWalkTime(dist));
             const planDiv = document.createElement("div");
-            planDiv.textContent = "→ Walk to " + destName + " (" + walkTime + " min)";
+            planDiv.textContent = "→ Walk to " + destName + " (" + plan.walkTime + " min)";
             children.push(planDiv);
 
             const cancelBtn = document.createElement("button");
@@ -155,13 +169,17 @@ const create = ({ root }) => {
             if (plan) {
               const destLoc = mission.locations.find((l) => l.id === plan.destination);
               const destName = destLoc ? game.resolveName(destLoc.name) : plan.destination;
-              const dist = game.distance(actor.location.id, plan.destination);
-              const walkTime = Math.round(game.computeWalkTime(dist));
-              planText = " → " + destName + " (" + walkTime + " min)";
+              if (plan.startTime !== null) {
+                const elapsed = game.state.internalTime - plan.startTime;
+                planText = " → " + destName + " (en camino: " + elapsed + "/" + plan.walkTime + " min)";
+              } else {
+                planText = " → " + destName + " (" + plan.walkTime + " min)";
+              }
             }
             item.textContent = actor.key + ". " + game.t(actor.id) + loc + planText;
             item.style.cursor = "pointer";
             item.addEventListener("click", () => {
+              if (plan && plan.startTime !== null) return;
               selectedActor = actor.id;
               walkToMode = false;
               renderInventory();
@@ -179,7 +197,12 @@ const create = ({ root }) => {
             subtitle.textContent = game.resolveName(loc.name);
             children.push(subtitle);
             const actorsAtLoc = mission.actors
-              .filter((a) => a.location && a.location.id === loc.id)
+              .filter((a) => {
+                if (!a.location) return false;
+                const plan = game.state.plans[a.id];
+                if (plan && plan.startTime !== null) return false;
+                return a.location.id === loc.id;
+              })
               .sort((a, b) => a.key - b.key);
             if (actorsAtLoc.length > 0) {
               const list = document.createElement("ul");
@@ -197,11 +220,62 @@ const create = ({ root }) => {
               children.push(list);
             }
           }
+          
+          const inTransit = mission.actors.filter((a) => {
+            const plan = game.state.plans[a.id];
+            return plan && plan.startTime !== null;
+          });
+          if (inTransit.length > 0) {
+            const transitDiv = document.createElement("div");
+            transitDiv.textContent = "En tránsito:";
+            children.push(transitDiv);
+            const list = document.createElement("ul");
+            for (const actor of inTransit) {
+              const plan = game.state.plans[actor.id];
+              const destLoc = mission.locations.find((l) => l.id === plan.destination);
+              const destName = destLoc ? game.resolveName(destLoc.name) : plan.destination;
+              const elapsed = game.state.internalTime - plan.startTime;
+              const item = document.createElement("li");
+              item.textContent = game.t(actor.id) + " → " + destName + " (" + elapsed + "/" + plan.walkTime + " min)";
+              list.appendChild(item);
+            }
+            children.push(list);
+          }
+          
           widgets.locations.replaceChildren(...children);
         }
         if (widgets.clock && game.state.clock) {
-          widgets.clock.textContent =
-            game.t("clock") + ": " + formatTime(game.state.clock, lang);
+          const clockDiv = document.createElement("div");
+          clockDiv.textContent = game.t("clock") + ": " + formatTime(game.state.clock, lang);
+          
+          const hasPlans = Object.keys(game.state.plans).length > 0;
+          if (!playing && hasPlans) {
+            const playBtn = document.createElement("button");
+            playBtn.textContent = "▶ Play";
+            playBtn.addEventListener("click", () => {
+              playing = true;
+              game.play();
+              renderAll();
+              playInterval = setInterval(() => {
+                game.advanceTime(1);
+                const completed = game.checkPlans();
+                if (completed.length > 0) {
+                  for (const { actorId } of completed) {
+                    game.completePlan(actorId);
+                  }
+                  playing = false;
+                  clearInterval(playInterval);
+                  playInterval = null;
+                  selectedActor = null;
+                  renderAll();
+                }
+              }, REAL_MS_PER_GAME_MIN);
+            });
+            clockDiv.appendChild(playBtn);
+          }
+          
+          widgets.clock.textContent = "";
+          widgets.clock.appendChild(clockDiv);
         }
         renderInventory();
       };

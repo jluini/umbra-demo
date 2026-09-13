@@ -83,9 +83,21 @@ The instance tracks the current language and exposes:
 - `setPlan(actorId, destination)` — registers a plan for an actor to walk to a
   destination location. Emits `plan:set`.
 - `cancelPlan(actorId)` — cancels an actor's plan. Emits `plan:cancel`.
+- `advanceTime(minutes)` — advances the internal clock by N minutes. Emits `clock:set`.
+- `play()` — starts time progression. Assigns `startTime` to all plans that don't have one yet.
+- `pause()` — pauses time progression.
+- `checkPlans()` — checks if any plan has completed (elapsed time >= walk time). Returns `{ actorId, plan }` for the first completed plan, or `null`.
+- `completePlan(actorId)` — moves the actor to the plan's destination, removes the plan, emits `plan:done`.
 
 Plans are stored in `state.plans` as a hash keyed by actor id:
-`{ actorId: { destination: locationId } }`.
+`{ actorId: { destination, from, startTime, walkTime } }`.
+
+- `destination` — the target location id.
+- `from` — the location id where the actor was when the plan was created.
+- `startTime` — `null` if the plan hasn't started yet, or the internal time (in minutes) when play began.
+- `walkTime` — computed walking time in minutes from `from` to `destination`.
+
+Time tracking uses an internal counter (`state.internalTime`) that starts at 0 when the mission begins. The displayed clock is `mission.start + internalTime`. This decouples time display from time progression.
 
 The renderer can listen to `language:set` to re-render widgets when the language
 changes.
@@ -103,4 +115,4 @@ The default renderer (`renderer.js`) feeds the following widgets:
   and planned destination if any. Clicking an actor's name opens the inventory widget.
 - **locations** — for each location in the level, a subtitle with the location name
   and a list of actors currently at that location (sorted by key).
-- **clock** — current in-game time.
+- **clock** — current in-game time. When plans exist and the game is not playing, shows a Play button. Clicking Play starts time progression: the engine advances 1 minute every 250ms. Time stops when the first plan completes (the actor with the shortest walk time arrives at their destination). Actors in transit show their progress (elapsed/walkTime minutes). During play, the inventory widget is hidden and actors in transit cannot be selected.
