@@ -2,6 +2,7 @@
 "use strict";
 
 const parseDate = (s) => new Date(s);
+const WALKING_PACE = 10;
 
 const engineTranslations = {
   en: { mission: "Mission", actors: "Actors", items: "Items",
@@ -38,6 +39,7 @@ const create = (opts = {}) => {
     config,
     mission: null,
     clock: null,
+    plans: {},
     language: currentLanguage,
     translations,
   };
@@ -87,6 +89,17 @@ const create = (opts = {}) => {
     resolveName(name) { return resolveName(name, currentLanguage); },
     distance(from, to) {
       return (distMatrix[from] && distMatrix[from][to]) || Infinity;
+    },
+    computeWalkTime(distance) {
+      return Math.round(distance * WALKING_PACE);
+    },
+    setPlan(actorId, destination) {
+      state.plans[actorId] = { destination };
+      api.emit("plan:set", { actorId, destination });
+    },
+    cancelPlan(actorId) {
+      delete state.plans[actorId];
+      api.emit("plan:cancel", { actorId });
     },
     setLanguage(lang) {
       currentLanguage = lang;

@@ -78,6 +78,14 @@ The instance tracks the current language and exposes:
 - `distance(from, to)` — returns the shortest distance between two locations
   in km. Returns `Infinity` if no path exists. Requires `start()` to be called
   first (distances are computed at mission start).
+- `computeWalkTime(distance)` — returns walking time in minutes for a given
+  distance in km. Uses the engine's `WALKING_PACE` constant (10 min/km).
+- `setPlan(actorId, destination)` — registers a plan for an actor to walk to a
+  destination location. Emits `plan:set`.
+- `cancelPlan(actorId)` — cancels an actor's plan. Emits `plan:cancel`.
+
+Plans are stored in `state.plans` as a hash keyed by actor id:
+`{ actorId: { destination: locationId } }`.
 
 The renderer can listen to `language:set` to re-render widgets when the language
 changes.
@@ -88,7 +96,11 @@ The default renderer (`renderer.js`) feeds the following widgets:
 
 - **languages** — buttons for each available language. Hidden if only one language.
 - **mission** — mission name, start/deadline times, and optional briefing.
-- **actors** — list of actors with their key, translated name, and current location.
+- **inventory** — initially hidden. When an actor is selected (by clicking their
+  name), shows actor details and actions ("Walk to..."). In walk-to mode, shows
+  available destinations with distance and walking time.
+- **actors** — list of actors with their key, translated name, current location,
+  and planned destination if any. Clicking an actor's name opens the inventory widget.
 - **locations** — for each location in the level, a subtitle with the location name
   and a list of actors currently at that location (sorted by key).
 - **clock** — current in-game time.
