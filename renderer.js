@@ -50,7 +50,8 @@ const create = ({ root }) => {
           const list = document.createElement("ul");
           for (const actor of mission.actors) {
             const item = document.createElement("li");
-            item.textContent = actor.key + ". " + game.t(actor.id);
+            const loc = actor.location ? " (" + game.resolveName(actor.location.name) + ")" : "";
+            item.textContent = actor.key + ". " + game.t(actor.id) + loc;
             list.appendChild(item);
           }
           widgets.actors.replaceChildren(title, list);

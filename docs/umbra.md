@@ -38,7 +38,8 @@ levels/missions, and its own aesthetics.
 
 A game defines its actors as a set identified by unique ids, each carrying a
 `key` — a stable number that can be used, for example, to map an actor to a
-hotkey. Each mission exposes a subset of the game's actors.
+hotkey. Each level exposes a subset of the game's actors as objects with an `id`
+and a starting `location`:
 
 Each mission has a **start time** and a **deadline**: the game clock starts at the
 mission's start time and advances as the player makes decisions.

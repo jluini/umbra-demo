@@ -55,3 +55,8 @@ Currently there is a single test level that is played with Alice and Bob.
 
 The level starts with Alice and Bob at Alice's house on December 31, 2024,
 at 10:00 PM. They have two hours to get a cider before the new year begins.
+
+Actors and starting locations:
+
+- Alice → Alice's House
+- Bob → Alice's House

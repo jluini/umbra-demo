@@ -113,7 +113,10 @@ const create = (opts = {}) => {
         briefing: level.briefing,
         start: parseDate(level.start),
         deadline: parseDate(level.deadline),
-        actors: level.actors.map((id) => config.actors[id]),
+        actors: level.actors.map((a) => ({
+          ...config.actors[a.id],
+          location: config.locations[a.location],
+        })),
         locations: (level.locations || []).map((id) => config.locations[id]),
       };
       state.mission = mission;
