@@ -4,16 +4,19 @@
 const config = {
   languages: ["en", "es", "pt"],
   translations: {
-    en: { actors: "Characters", locations: "Places", alice: "Alice", bob: "Bob", charles: "Charles", dave: "Dave", cider: "Cider" },
-    es: { actors: "Personajes", locations: "Lugares", alice: "Alicia", bob: "Rober", charles: "Carlos", dave: "David", cider: "Sidra" },
+    en: { actors: "Characters", locations: "Places", alice: "Alice", bob: "Bob", charles: "Charles", dave: "Dave" },
+    es: { actors: "Personajes", locations: "Lugares", alice: "Alicia", bob: "Rober", charles: "Carlos", dave: "David" },
     pt: {
       actors: "Personagens", locations: "Lugares",
       mission: "Missão", startsAt: "Começa às", deadline: "Prazo", clock: "Relógio", briefing: "Resumo",
-      alice: "Alice", bob: "Beto", charles: "Carlos", dave: "Davi", cider: "Sidra"
+      alice: "Alice", bob: "Beto", charles: "Carlos", dave: "Davi"
     },
   },
   items: {
     cider: { id: "cider", name: { en: "Cider", es: "Sidra", pt: "Sidra" } },
+    bike: { id: "bike", name: { en: "Bike", es: "Bicicleta", pt: "Bicicleta" } },
+    chocolates: { id: "chocolates", name: { en: "Box of Chocolates", es: "Caja de Bombones", pt: "Caixa de Bombons" } },
+    diamond: { id: "diamond", name: { en: "Diamond", es: "Diamante", pt: "Diamante" } },
   },
   actors: {
     alice: { id: "alice", key: 1 },
@@ -47,7 +50,7 @@ const config = {
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: [
-        { id: "alice", location: "alice_house", items: [] },
+        { id: "alice", location: "alice_house", items: ["bike", "chocolates"] },
         { id: "bob", location: "alice_house", items: [] },
         { id: "charles", location: "charles_house", items: ["cider"] },
       ],

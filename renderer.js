@@ -68,7 +68,7 @@ const create = ({ root }) => {
           const itemsDiv = document.createElement("div");
           const itemNames = items.map((id) => {
             const itemConfig = game.state.config.items[id];
-            return itemConfig ? game.t(id) : id;
+            return itemConfig ? game.resolveName(itemConfig.name) : id;
           });
           itemsDiv.textContent = game.t("items") + ": " + itemNames.join(", ");
           children.push(itemsDiv);
