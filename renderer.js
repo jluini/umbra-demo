@@ -340,6 +340,80 @@ const create = ({ root }) => {
           widgets.clock.textContent = "";
           widgets.clock.appendChild(clockDiv);
         }
+        if (widgets.analog_clock && game.state.clock) {
+          const clock = game.state.clock;
+          const h = clock.getHours();
+          const m = clock.getMinutes();
+          const hourAngle = ((h % 12) + m / 60) * 30;
+          const minuteAngle = m * 6;
+
+          const svgNS = "http://www.w3.org/2000/svg";
+          const svg = document.createElementNS(svgNS, "svg");
+          svg.setAttribute("viewBox", "0 0 100 100");
+          svg.setAttribute("width", "150");
+          svg.setAttribute("height", "150");
+
+          const face = document.createElementNS(svgNS, "circle");
+          face.setAttribute("cx", "50");
+          face.setAttribute("cy", "50");
+          face.setAttribute("r", "45");
+          face.setAttribute("fill", "none");
+          face.setAttribute("stroke", "black");
+          face.setAttribute("stroke-width", "1");
+          svg.appendChild(face);
+
+          for (let i = 0; i < 12; i++) {
+            const angle = i * 30;
+            const major = i % 3 === 0;
+            const r1 = major ? 38 : 40;
+            const r2 = 45;
+            const rad = (angle - 90) * Math.PI / 180;
+            const line = document.createElementNS(svgNS, "line");
+            line.setAttribute("x1", 50 + r1 * Math.cos(rad));
+            line.setAttribute("y1", 50 + r1 * Math.sin(rad));
+            line.setAttribute("x2", 50 + r2 * Math.cos(rad));
+            line.setAttribute("y2", 50 + r2 * Math.sin(rad));
+            line.setAttribute("stroke", "black");
+            line.setAttribute("stroke-width", major ? "2" : "1");
+            svg.appendChild(line);
+          }
+
+          const hourHand = document.createElementNS(svgNS, "line");
+          hourHand.setAttribute("x1", "50");
+          hourHand.setAttribute("y1", "50");
+          hourHand.setAttribute("x2", "50");
+          hourHand.setAttribute("y2", "25");
+          hourHand.setAttribute("stroke", "black");
+          hourHand.setAttribute("stroke-width", "3");
+          hourHand.setAttribute("stroke-linecap", "round");
+          hourHand.setAttribute("transform", "rotate(" + hourAngle + ", 50, 50)");
+          svg.appendChild(hourHand);
+
+          const minuteHand = document.createElementNS(svgNS, "line");
+          minuteHand.setAttribute("x1", "50");
+          minuteHand.setAttribute("y1", "50");
+          minuteHand.setAttribute("x2", "50");
+          minuteHand.setAttribute("y2", "15");
+          minuteHand.setAttribute("stroke", "black");
+          minuteHand.setAttribute("stroke-width", "1.5");
+          minuteHand.setAttribute("stroke-linecap", "round");
+          minuteHand.setAttribute("transform", "rotate(" + minuteAngle + ", 50, 50)");
+          svg.appendChild(minuteHand);
+
+          const dot = document.createElementNS(svgNS, "circle");
+          dot.setAttribute("cx", "50");
+          dot.setAttribute("cy", "50");
+          dot.setAttribute("r", "2");
+          dot.setAttribute("fill", "black");
+          svg.appendChild(dot);
+
+          const digitalDiv = document.createElement("div");
+          digitalDiv.textContent = formatTime(clock, lang);
+
+          widgets.analog_clock.textContent = "";
+          widgets.analog_clock.appendChild(svg);
+          widgets.analog_clock.appendChild(digitalDiv);
+        }
         renderInventory();
       };
 
