@@ -31,6 +31,7 @@ const create = ({ root }) => {
     connect(game) {
       let selectedActor = null;
       let walkToMode = false;
+      let giveMode = null;
       let playInterval = null;
       let playing = false;
 
@@ -64,13 +65,62 @@ const create = ({ root }) => {
         children.push(header);
 
         const items = game.state.inventory[actor.id] || [];
-        if (items.length > 0) {
-          const itemsDiv = document.createElement("div");
-          const itemNames = items.map((id) => {
-            const itemConfig = game.state.config.items[id];
-            return itemConfig ? game.resolveName(itemConfig.name) : id;
+        const othersAtLoc = mission.actors.filter((a) =>
+          a.id !== actor.id &&
+          a.location &&
+          a.location.id === actor.location.id &&
+          !(game.state.plans[a.id] && game.state.plans[a.id].startTime !== null)
+        );
+
+        if (giveMode) {
+          const giveDiv = document.createElement("div");
+          giveDiv.textContent = "Give " + giveMode.itemName + " to:";
+          children.push(giveDiv);
+          const recipientList = document.createElement("ul");
+          for (const other of othersAtLoc) {
+            const li = document.createElement("li");
+            li.textContent = game.t(other.id);
+            li.style.cursor = "pointer";
+            li.addEventListener("click", () => {
+              game.giveItem(actor.id, other.id, giveMode.itemId);
+              giveMode = null;
+              renderInventory();
+              renderAll();
+            });
+            recipientList.appendChild(li);
+          }
+          children.push(recipientList);
+          const cancelBtn = document.createElement("button");
+          cancelBtn.textContent = "Cancelar";
+          cancelBtn.addEventListener("click", () => {
+            giveMode = null;
+            renderInventory();
           });
-          itemsDiv.textContent = game.t("items") + ": " + itemNames.join(", ");
+          children.push(cancelBtn);
+        } else if (items.length > 0) {
+          const itemsDiv = document.createElement("div");
+          const itemsLabel = document.createElement("span");
+          itemsLabel.textContent = game.t("items") + ": ";
+          itemsDiv.appendChild(itemsLabel);
+          for (let i = 0; i < items.length; i++) {
+            const itemId = items[i];
+            const itemConfig = game.state.config.items[itemId];
+            const itemName = itemConfig ? game.resolveName(itemConfig.name) : itemId;
+            if (i > 0) itemsDiv.appendChild(document.createTextNode(", "));
+            if (othersAtLoc.length > 0) {
+              const span = document.createElement("span");
+              span.textContent = itemName;
+              span.style.cursor = "pointer";
+              span.style.textDecoration = "underline";
+              span.addEventListener("click", () => {
+                giveMode = { itemId, itemName };
+                renderInventory();
+              });
+              itemsDiv.appendChild(span);
+            } else {
+              itemsDiv.appendChild(document.createTextNode(itemName));
+            }
+          }
           children.push(itemsDiv);
         }
 
@@ -133,6 +183,7 @@ const create = ({ root }) => {
             walkBtn.textContent = "Walk to...";
             walkBtn.addEventListener("click", () => {
               walkToMode = true;
+              giveMode = null;
               renderInventory();
             });
             children.push(walkBtn);
@@ -144,6 +195,7 @@ const create = ({ root }) => {
         closeBtn.addEventListener("click", () => {
           selectedActor = null;
           walkToMode = false;
+          giveMode = null;
           renderInventory();
         });
         children.push(closeBtn);

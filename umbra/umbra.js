@@ -109,6 +109,20 @@ const create = (opts = {}) => {
       delete state.plans[actorId];
       api.emit("plan:cancel", { actorId });
     },
+    giveItem(fromActorId, toActorId, itemId) {
+      const from = state.mission.actors.find((a) => a.id === fromActorId);
+      const to = state.mission.actors.find((a) => a.id === toActorId);
+      if (!from || !to) return;
+      if (from.location.id !== to.location.id) return;
+      const fromItems = state.inventory[fromActorId];
+      if (!fromItems) return;
+      const idx = fromItems.indexOf(itemId);
+      if (idx === -1) return;
+      fromItems.splice(idx, 1);
+      if (!state.inventory[toActorId]) state.inventory[toActorId] = [];
+      state.inventory[toActorId].push(itemId);
+      api.emit("item:give", { from: fromActorId, to: toActorId, itemId });
+    },
     setLanguage(lang) {
       currentLanguage = lang;
       translations = getTranslations(lang);
