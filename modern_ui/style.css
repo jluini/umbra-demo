@@ -95,10 +95,39 @@ body {
   margin-bottom: 8px;
 }
 
-.mission-bar .briefing-text {
+.briefing-section {
+  margin-bottom: 8px;
   font-size: 0.9rem;
   color: #ccc;
   line-height: 1.5;
+}
+
+.briefing-label {
+  color: #e94560;
+  font-weight: 600;
+}
+
+.briefing-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 8px 0 0 0;
+}
+
+.briefing-list li {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: #ccc;
+  line-height: 1.5;
+}
+
+.briefing-list li::before {
+  content: "›";
+  position: absolute;
+  left: 0;
+  color: #e94560;
+  font-weight: 700;
 }
 
 .clock-area {
