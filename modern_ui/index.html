@@ -18,33 +18,9 @@
       <button class="nav-btn" id="btn-show-menu">Menu</button>
     </div>
 
-    <!-- Mission bar -->
+    <!-- Mission bar (briefing) -->
     <div class="mission-bar">
-      <div class="mission-info">
-        <div class="mission-title" id="mission-title">Mission 1: Test</div>
-        <div class="briefing-text" id="mission-briefing">Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.</div>
-      </div>
-      <div class="clock-area">
-        <span class="clock-date" id="clock-date">31/12/2024</span>
-        <svg class="analog-clock" viewBox="0 0 100 100">
-          <circle class="clock-face" cx="50" cy="50" r="45" />
-          <line class="hour-mark" x1="50" y1="8" x2="50" y2="14" transform="rotate(0, 50, 50)" />
-          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(30, 50, 50)" />
-          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(60, 50, 50)" />
-          <line class="hour-mark" x1="50" y1="8" x2="50" y2="14" transform="rotate(90, 50, 50)" />
-          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(120, 50, 50)" />
-          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(150, 50, 50)" />
-          <line class="hour-mark" x1="50" y1="8" x2="50" y2="14" transform="rotate(180, 50, 50)" />
-          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(210, 50, 50)" />
-          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(240, 50, 50)" />
-          <line class="hour-mark" x1="50" y1="8" x2="50" y2="14" transform="rotate(270, 50, 50)" />
-          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(300, 50, 50)" />
-          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(330, 50, 50)" />
-          <line class="hand-hour" x1="50" y1="50" x2="50" y2="25" transform="rotate(317, 50, 50)" />
-          <line class="hand-minute" x1="50" y1="50" x2="50" y2="15" transform="rotate(204, 50, 50)" />
-          <circle class="center-dot" cx="50" cy="50" r="3" />
-        </svg>
-      </div>
+      <div class="briefing-text" id="mission-briefing">Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.</div>
     </div>
 
     <!-- Main area: Locations -->
@@ -124,29 +100,13 @@
         <div class="subtitle">a decision-based game engine</div>
       </div>
       <div class="menu-buttons">
-        <button class="btn" id="btn-play">▶ Play</button>
-        <button class="btn btn-secondary" id="btn-credits">Credits</button>
-        <button class="btn btn-secondary" id="btn-about">About</button>
+        <button class="btn" id="btn-play" disabled>▶ Play</button>
+        <button class="btn btn-secondary" id="btn-credits" disabled>Credits</button>
+        <button class="btn btn-secondary" id="btn-about" disabled>About</button>
       </div>
-      <div class="lang-selector" id="lang-selector">
-        <button class="lang-btn active" data-lang="en">English</button>
-        <button class="lang-btn" data-lang="es">Español</button>
-        <button class="lang-btn" data-lang="pt">Português</button>
-      </div>
+      <div class="lang-selector" id="lang-selector"></div>
     </div>
 
-    <!-- Briefing screen -->
-    <div class="screen screen-briefing" id="screen-briefing">
-      <div class="briefing-label">Mission Briefing</div>
-      <div class="briefing-mission-name" id="briefing-mission-name">Mission 1: Test</div>
-      <div class="briefing-body" id="briefing-body">
-        Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.
-      </div>
-      <div class="briefing-actions">
-        <button class="btn btn-secondary" id="btn-back-to-titles">← Back</button>
-        <button class="btn" id="btn-start-game">Start Game</button>
-      </div>
-    </div>
   </div>
 
   <script src="../umbra/umbra.js"></script>
@@ -157,7 +117,17 @@
     (() => {
       const games = { demo: Demo, rockers: Rockers };
       const params = new URLSearchParams(window.location.search);
-      const name = params.get("game") || "demo";
+      const name = params.get("game");
+      const validGames = ["demo", "rockers", "none"];
+
+      if (validGames.includes(name)) {
+        document.getElementById("btn-play").disabled = false;
+        document.getElementById("btn-credits").disabled = false;
+        document.getElementById("btn-about").disabled = false;
+      }
+
+      if (name === "none") return;
+
       const Game = games[name];
       if (!Game) { console.error("umbra: unknown game: " + name); return; }
       // const game = Game.create();
