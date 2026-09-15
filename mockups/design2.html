@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Umbra — Design</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    .game-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+      min-height: 100vh;
+    }
+
+    /* Header / Mission bar */
+    .mission-bar {
+      grid-column: 1 / -1;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .mission-bar .mission-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #e94560;
+    }
+
+    .mission-bar .clock {
+      margin-left: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 1.2rem;
+      background: #0f3460;
+      padding: 4px 12px;
+      border-radius: 4px;
+    }
+
+    .mission-bar .deadline {
+      color: #e94560;
+      font-size: 0.85rem;
+    }
+
+    /* Main area */
+    .main-area {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Locations panel */
+    .locations-panel {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 16px;
+      flex: 1;
+    }
+
+    .locations-panel h2 {
+      font-size: 1rem;
+      color: #e94560;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .location-card {
+      background: #1a1a2e;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    .location-card .loc-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .location-card .actors-here {
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    /* Right sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Actors panel */
+    .actors-panel {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .actors-panel h2 {
+      font-size: 1rem;
+      color: #e94560;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .actor-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .actor-row:hover {
+      background: #0f3460;
+    }
+
+    .actor-key {
+      background: #e94560;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .actor-name {
+      flex: 1;
+    }
+
+    .actor-loc {
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    /* Inventory / detail panel */
+    .inventory-panel {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 16px;
+      flex: 1;
+    }
+
+    .inventory-panel h2 {
+      font-size: 1rem;
+      color: #e94560;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .inventory-panel .actor-detail-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .inventory-panel .actor-detail-loc {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .inventory-panel .items-label {
+      font-size: 0.8rem;
+      color: #888;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .inventory-panel .item-tag {
+      display: inline-block;
+      background: #0f3460;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      margin: 2px 4px 2px 0;
+    }
+
+    .inventory-panel .actions {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn {
+      background: #0f3460;
+      color: #e0e0e0;
+      border: 1px solid #e94560;
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.15s;
+    }
+
+    .btn:hover {
+      background: #e94560;
+    }
+
+    /* Footer / controls */
+    .controls-bar {
+      grid-column: 1 / -1;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      color: #888;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+
+    .lang-btn:hover,
+    .lang-btn.active {
+      color: #e0e0e0;
+      border-color: #e94560;
+      background: #0f3460;
+    }
+
+    .controls-bar .spacer {
+      flex: 1;
+    }
+
+    /* Briefing overlay (hidden by default) */
+    .briefing-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .briefing-overlay.visible {
+      display: flex;
+    }
+
+    .briefing-box {
+      background: #16213e;
+      border: 2px solid #e94560;
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    .briefing-box h2 {
+      color: #e94560;
+      margin-bottom: 16px;
+    }
+
+    .briefing-box p {
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    /* Responsive: Mobile */
+    @media (max-width: 768px) {
+      .game-container {
+        grid-template-columns: 1fr;
+        padding: 12px;
+        gap: 12px;
+        min-height: auto;
+      }
+
+      .mission-bar {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+
+      .mission-bar .mission-title {
+        font-size: 1rem;
+        width: 100%;
+      }
+
+      .mission-bar .clock {
+        margin-left: 0;
+        font-size: 1rem;
+      }
+
+      .locations-panel,
+      .actors-panel,
+      .inventory-panel {
+        padding: 12px;
+      }
+
+      .actor-row {
+        padding: 10px 8px;
+      }
+
+      .actor-key {
+        width: 28px;
+        height: 28px;
+        font-size: 0.85rem;
+      }
+
+      .btn {
+        padding: 12px 16px;
+        font-size: 1rem;
+      }
+
+      .lang-btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+      }
+
+      .controls-bar {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+
+      .briefing-box {
+        margin: 16px;
+        padding: 24px;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+
+    <!-- Mission bar -->
+    <div class="mission-bar">
+      <span class="mission-title">Mission: Test</span>
+      <span>Starts at: 31/12/2024, 22:00</span>
+      <span class="deadline">Deadline: 01/01/2025, 00:00</span>
+      <span class="clock">22:34</span>
+    </div>
+
+    <!-- Main area: Locations -->
+    <div class="main-area">
+      <div class="locations-panel">
+        <h2>Locations</h2>
+
+        <div class="location-card">
+          <div class="loc-name">Alice's House</div>
+          <div class="actors-here">Alice, Bob</div>
+        </div>
+
+        <div class="location-card">
+          <div class="loc-name">Bob's House</div>
+          <div class="actors-here"></div>
+        </div>
+
+        <div class="location-card">
+          <div class="loc-name">Charles's House</div>
+          <div class="actors-here">Charles</div>
+        </div>
+
+        <div class="location-card">
+          <div class="loc-name">Market</div>
+          <div class="actors-here"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="actors-panel">
+        <h2>Characters</h2>
+
+        <div class="actor-row">
+          <span class="actor-key">1</span>
+          <span class="actor-name">Alice</span>
+          <span class="actor-loc">Alice's House</span>
+        </div>
+
+        <div class="actor-row">
+          <span class="actor-key">2</span>
+          <span class="actor-name">Bob</span>
+          <span class="actor-loc">Alice's House</span>
+        </div>
+
+        <div class="actor-row">
+          <span class="actor-key">3</span>
+          <span class="actor-name">Charles</span>
+          <span class="actor-loc">Charles's House</span>
+        </div>
+      </div>
+
+      <div class="inventory-panel">
+        <h2>Alice</h2>
+        <div class="actor-detail-name">Alice</div>
+        <div class="actor-detail-loc">At: Alice's House</div>
+
+        <div class="items-label">Objects</div>
+        <div>
+          <span class="item-tag">Bike</span>
+          <span class="item-tag">Box of Chocolates</span>
+        </div>
+
+        <div class="actions">
+          <button class="btn">Walk to...</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls bar -->
+    <div class="controls-bar">
+      <button class="lang-btn active">English</button>
+      <button class="lang-btn">Español</button>
+      <button class="lang-btn">Português</button>
+      <span class="spacer"></span>
+      <button class="btn">▶ Play</button>
+    </div>
+
+  </div>
+
+  <!-- Briefing overlay (hidden) -->
+  <div class="briefing-overlay">
+    <div class="briefing-box">
+      <h2>Mission: Test</h2>
+      <p>Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.</p>
+      <button class="btn">Start</button>
+    </div>
+  </div>
+</body>
+</html>
