@@ -34,10 +34,16 @@ body {
   gap: 16px;
 }
 
-.game-top-bar .mission-name {
+.mission-label {
   font-size: 1rem;
   font-weight: 600;
   color: #e94560;
+}
+
+.mission-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e0e0e0;
 }
 
 .game-top-bar .clock {
