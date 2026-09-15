@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Umbra</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Game screen (always rendered) -->
+  <div class="game-container">
+
+    <div class="game-top-bar">
+      <span class="mission-name" id="mission-name">Mission 1: Test</span>
+      <span class="clock" id="game-clock">22:34</span>
+      <button class="nav-btn" id="btn-show-briefing">Briefing</button>
+      <button class="nav-btn" id="btn-show-menu">Menu</button>
+    </div>
+
+    <!-- Mission bar -->
+    <div class="mission-bar">
+      <div class="mission-info">
+        <div class="mission-title" id="mission-title">Mission 1: Test</div>
+        <div class="briefing-text" id="mission-briefing">Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.</div>
+      </div>
+      <div class="clock-area">
+        <span class="clock-date" id="clock-date">31/12/2024</span>
+        <svg class="analog-clock" viewBox="0 0 100 100">
+          <circle class="clock-face" cx="50" cy="50" r="45" />
+          <line class="hour-mark" x1="50" y1="8" x2="50" y2="14" transform="rotate(0, 50, 50)" />
+          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(30, 50, 50)" />
+          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(60, 50, 50)" />
+          <line class="hour-mark" x1="50" y1="8" x2="50" y2="14" transform="rotate(90, 50, 50)" />
+          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(120, 50, 50)" />
+          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(150, 50, 50)" />
+          <line class="hour-mark" x1="50" y1="8" x2="50" y2="14" transform="rotate(180, 50, 50)" />
+          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(210, 50, 50)" />
+          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(240, 50, 50)" />
+          <line class="hour-mark" x1="50" y1="8" x2="50" y2="14" transform="rotate(270, 50, 50)" />
+          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(300, 50, 50)" />
+          <line class="hour-mark-minor" x1="50" y1="8" x2="50" y2="12" transform="rotate(330, 50, 50)" />
+          <line class="hand-hour" x1="50" y1="50" x2="50" y2="25" transform="rotate(317, 50, 50)" />
+          <line class="hand-minute" x1="50" y1="50" x2="50" y2="15" transform="rotate(204, 50, 50)" />
+          <circle class="center-dot" cx="50" cy="50" r="3" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Main area: Locations -->
+    <div class="main-area">
+      <div class="locations-panel" id="locations-panel">
+        <h2>Locations</h2>
+        <div class="location-card">
+          <div class="loc-name">Alice's House</div>
+          <div class="actors-here">Alice, Bob</div>
+        </div>
+        <div class="location-card">
+          <div class="loc-name">Bob's House</div>
+          <div class="actors-here"></div>
+        </div>
+        <div class="location-card">
+          <div class="loc-name">Charles's House</div>
+          <div class="actors-here">Charles</div>
+        </div>
+        <div class="location-card">
+          <div class="loc-name">Market</div>
+          <div class="actors-here"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="actors-panel" id="actors-panel">
+        <h2>Characters</h2>
+        <div class="actor-row">
+          <span class="actor-key">1</span>
+          <span class="actor-name">Alice</span>
+          <span class="actor-loc">Alice's House</span>
+        </div>
+        <div class="actor-row">
+          <span class="actor-key">2</span>
+          <span class="actor-name">Bob</span>
+          <span class="actor-loc">Alice's House</span>
+        </div>
+        <div class="actor-row">
+          <span class="actor-key">3</span>
+          <span class="actor-name">Charles</span>
+          <span class="actor-loc">Charles's House</span>
+        </div>
+      </div>
+
+      <div class="inventory-panel" id="inventory-panel">
+        <h2>Alice</h2>
+        <div class="actor-detail-name">Alice</div>
+        <div class="actor-detail-loc">At: Alice's House</div>
+        <div class="items-label">Objects</div>
+        <div>
+          <span class="item-tag">Bike</span>
+          <span class="item-tag">Box of Chocolates</span>
+        </div>
+        <div class="actions">
+          <button class="btn">Walk to...</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls bar -->
+    <div class="controls-bar">
+      <span class="spacer"></span>
+      <button class="btn" id="btn-play-game">▶ Play</button>
+    </div>
+
+  </div>
+
+  <!-- Overlay -->
+  <div class="overlay active" id="overlay">
+
+    <!-- Titles screen -->
+    <div class="screen screen-titles active" id="screen-titles">
+      <div>
+        <div class="logo"><span>U</span>Mb<span>R</span>A</div>
+        <div class="subtitle">a decision-based game engine</div>
+      </div>
+      <div class="menu-buttons">
+        <button class="btn" id="btn-play">▶ Play</button>
+        <button class="btn btn-secondary" id="btn-credits">Credits</button>
+        <button class="btn btn-secondary" id="btn-about">About</button>
+      </div>
+      <div class="lang-selector" id="lang-selector">
+        <button class="lang-btn active" data-lang="en">English</button>
+        <button class="lang-btn" data-lang="es">Español</button>
+        <button class="lang-btn" data-lang="pt">Português</button>
+      </div>
+    </div>
+
+    <!-- Briefing screen -->
+    <div class="screen screen-briefing" id="screen-briefing">
+      <div class="briefing-label">Mission Briefing</div>
+      <div class="briefing-mission-name" id="briefing-mission-name">Mission 1: Test</div>
+      <div class="briefing-body" id="briefing-body">
+        Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.
+      </div>
+      <div class="briefing-actions">
+        <button class="btn btn-secondary" id="btn-back-to-titles">← Back</button>
+        <button class="btn" id="btn-start-game">Start Game</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../umbra/umbra.js"></script>
+  <script src="../games/demo.js"></script>
+  <script src="../games/rockers.js"></script>
+  <script src="script.js"></script>
+  <script>
+    (() => {
+      const games = { demo: Demo, rockers: Rockers };
+      const params = new URLSearchParams(window.location.search);
+      const name = params.get("game") || "demo";
+      const Game = games[name];
+      if (!Game) { console.error("umbra: unknown game: " + name); return; }
+      // const game = Game.create();
+      // Renderer.create({ root: document.getElementById("app") }).connect(game);
+      // game.start();
+    })();
+  </script>
+</body>
+</html>

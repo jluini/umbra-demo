@@ -1,0 +1,524 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+.game-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 16px;
+  min-height: 100vh;
+}
+
+/* Game top bar */
+.game-top-bar {
+  display: flex;
+  grid-column: 1 / -1;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 10px 16px;
+  align-items: center;
+  gap: 16px;
+}
+
+.game-top-bar .mission-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e94560;
+}
+
+.game-top-bar .clock {
+  margin-left: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  background: #0f3460;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.game-top-bar .nav-btn {
+  background: transparent;
+  color: #888;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+
+.game-top-bar .nav-btn:hover {
+  color: #e0e0e0;
+  border-color: #e94560;
+  background: #0f3460;
+}
+
+/* Mission bar */
+.mission-bar {
+  grid-column: 1 / -1;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.mission-info {
+  flex: 1;
+}
+
+.mission-bar .mission-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e94560;
+  margin-bottom: 8px;
+}
+
+.mission-bar .briefing-text {
+  font-size: 0.9rem;
+  color: #ccc;
+  line-height: 1.5;
+}
+
+.clock-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.clock-area .clock-date {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.analog-clock {
+  width: 100px;
+  height: 100px;
+}
+
+.analog-clock .clock-face {
+  fill: none;
+  stroke: #0f3460;
+  stroke-width: 2;
+}
+
+.analog-clock .hour-mark {
+  stroke: #e94560;
+  stroke-width: 2;
+}
+
+.analog-clock .hour-mark-minor {
+  stroke: #555;
+  stroke-width: 1;
+}
+
+.analog-clock .hand-hour {
+  stroke: #e0e0e0;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.analog-clock .hand-minute {
+  stroke: #e0e0e0;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.analog-clock .center-dot {
+  fill: #e94560;
+}
+
+/* Main area */
+.main-area {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Locations panel */
+.locations-panel {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 16px;
+  flex: 1;
+}
+
+.locations-panel h2 {
+  font-size: 1rem;
+  color: #e94560;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.location-card {
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.location-card .loc-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.location-card .actors-here {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+/* Right sidebar */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Actors panel */
+.actors-panel {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.actors-panel h2 {
+  font-size: 1rem;
+  color: #e94560;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.actor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.actor-row:hover {
+  background: #0f3460;
+}
+
+.actor-key {
+  background: #e94560;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.actor-name {
+  flex: 1;
+}
+
+.actor-loc {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* Inventory / detail panel */
+.inventory-panel {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 16px;
+  flex: 1;
+}
+
+.inventory-panel h2 {
+  font-size: 1rem;
+  color: #e94560;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.inventory-panel .actor-detail-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.inventory-panel .actor-detail-loc {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 12px;
+}
+
+.inventory-panel .items-label {
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.inventory-panel .item-tag {
+  display: inline-block;
+  background: #0f3460;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  margin: 2px 4px 2px 0;
+}
+
+.inventory-panel .actions {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn {
+  background: #0f3460;
+  color: #e0e0e0;
+  border: 1px solid #e94560;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+
+.btn:hover {
+  background: #e94560;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #888;
+  border: 1px solid #333;
+}
+
+.btn-secondary:hover {
+  color: #e0e0e0;
+  border-color: #e94560;
+  background: #0f3460;
+}
+
+/* Controls bar */
+.controls-bar {
+  grid-column: 1 / -1;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.controls-bar .spacer {
+  flex: 1;
+}
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay.active {
+  display: flex;
+}
+
+.screen {
+  display: none;
+  width: 100%;
+  max-width: 480px;
+  padding: 32px;
+  text-align: center;
+}
+
+.screen.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Title screen */
+.screen-titles .logo {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #e94560;
+  letter-spacing: 8px;
+  margin-bottom: 8px;
+}
+
+.screen-titles .logo span {
+  color: #e0e0e0;
+}
+
+.screen-titles .subtitle {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.screen-titles .menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 240px;
+}
+
+.screen-titles .menu-buttons .btn {
+  width: 100%;
+}
+
+.screen-titles .lang-selector {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.lang-btn {
+  background: transparent;
+  color: #888;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+
+.lang-btn:hover,
+.lang-btn.active {
+  color: #e0e0e0;
+  border-color: #e94560;
+  background: #0f3460;
+}
+
+/* Briefing screen */
+.screen-briefing .briefing-label {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.screen-briefing .briefing-mission-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #e94560;
+}
+
+.screen-briefing .briefing-body {
+  font-size: 0.95rem;
+  color: #ccc;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.screen-briefing .briefing-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 8px;
+}
+
+.screen-briefing .briefing-actions .btn {
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .game-container {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+    min-height: auto;
+  }
+
+  .mission-bar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .clock-area {
+    flex-direction: row;
+    gap: 12px;
+    min-width: auto;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .analog-clock {
+    width: 80px;
+    height: 80px;
+  }
+
+  .locations-panel,
+  .actors-panel,
+  .inventory-panel {
+    padding: 12px;
+  }
+
+  .actor-row {
+    padding: 10px 8px;
+  }
+
+  .actor-key {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+  }
+
+  .btn {
+    padding: 12px 16px;
+    font-size: 1rem;
+  }
+
+  .controls-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .screen {
+    padding: 24px 16px;
+  }
+
+  .screen-titles .logo {
+    font-size: 1.8rem;
+  }
+}
