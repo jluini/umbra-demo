@@ -31,7 +31,7 @@ body {
   border-radius: 8px;
   padding: 10px 16px;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
 }
 
 .mission-label {
@@ -60,10 +60,12 @@ body {
   color: #888;
   border: 1px solid #333;
   border-radius: 4px;
-  padding: 4px 10px;
+  padding: 4px 0px;
   cursor: pointer;
   font-size: 0.8rem;
   transition: all 0.15s;
+  min-width: 25px;
+  text-align: center;
 }
 
 .game-top-bar .nav-btn:hover,
@@ -510,6 +512,10 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+  #mission-prefix {
+    display: none;
+  }
+
   .game-container {
     grid-template-columns: 1fr;
     padding: 12px;
