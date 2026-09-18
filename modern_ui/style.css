@@ -16,14 +16,14 @@ body {
   margin: 0 auto;
   padding: 16px;
   display: grid;
-  grid-template-columns: 1fr 300px;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto 1fr;
   gap: 16px;
   min-height: 100vh;
 }
 
-/* Game top bar */
-.game-top-bar {
+/* Top bar */
+.top-bar {
   display: flex;
   grid-column: 1 / -1;
   background: #16213e;
@@ -46,16 +46,8 @@ body {
   color: #e0e0e0;
 }
 
-.game-top-bar .clock {
+.top-bar .nav-btn {
   margin-left: auto;
-  font-family: 'Courier New', monospace;
-  font-size: 1rem;
-  background: #0f3460;
-  padding: 4px 12px;
-  border-radius: 4px;
-}
-
-.game-top-bar .nav-btn {
   background: transparent;
   color: #888;
   border: 1px solid #333;
@@ -68,21 +60,34 @@ body {
   text-align: center;
 }
 
-.game-top-bar .nav-btn:hover,
-.game-top-bar .nav-btn.active {
+.top-bar .nav-btn:hover {
   color: #e0e0e0;
   border-color: #e94560;
   background: #0f3460;
 }
 
-@keyframes shine {
-  0% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(233, 69, 96, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0); }
+/* Status bar */
+.status-bar {
+  grid-column: 1 / -1;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.nav-btn.shine {
-  animation: shine 0.6s ease-out;
+.clock {
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  background: #0f3460;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.status-bar .btn {
+  margin-left: auto;
 }
 
 /* Mission bar */
@@ -91,19 +96,7 @@ body {
   background: #16213e;
   border: 1px solid #0f3460;
   border-radius: 8px;
-  padding: 12px 16px 40px;
-  position: relative;
-}
-
-.mission-info {
-  flex: 1;
-}
-
-.mission-bar .mission-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #e94560;
-  margin-bottom: 8px;
+  padding: 12px 16px;
 }
 
 .briefing-section {
@@ -116,30 +109,6 @@ body {
 .briefing-label {
   color: #e94560;
   font-weight: 600;
-}
-
-.briefing-close {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background: transparent;
-  color: #888;
-  border: 1px solid #333;
-  border-radius: 4px;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.15s;
-}
-
-.briefing-close:hover {
-  color: #e0e0e0;
-  border-color: #e94560;
-  background: #0f3460;
-}
-
-.briefing-close.hidden {
-  display: none;
 }
 
 .briefing-list {
@@ -163,56 +132,6 @@ body {
   left: 0;
   color: #e94560;
   font-weight: 700;
-}
-
-.clock-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-width: 120px;
-}
-
-.clock-area .clock-date {
-  font-size: 0.75rem;
-  color: #888;
-}
-
-.analog-clock {
-  width: 100px;
-  height: 100px;
-}
-
-.analog-clock .clock-face {
-  fill: none;
-  stroke: #0f3460;
-  stroke-width: 2;
-}
-
-.analog-clock .hour-mark {
-  stroke: #e94560;
-  stroke-width: 2;
-}
-
-.analog-clock .hour-mark-minor {
-  stroke: #555;
-  stroke-width: 1;
-}
-
-.analog-clock .hand-hour {
-  stroke: #e0e0e0;
-  stroke-width: 3;
-  stroke-linecap: round;
-}
-
-.analog-clock .hand-minute {
-  stroke: #e0e0e0;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-}
-
-.analog-clock .center-dot {
-  fill: #e94560;
 }
 
 /* Main area */
@@ -257,14 +176,13 @@ body {
   color: #aaa;
 }
 
-/* Right sidebar */
+/*
 .sidebar {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* Actors panel */
 .actors-panel {
   background: #16213e;
   border: 1px solid #0f3460;
@@ -316,7 +234,6 @@ body {
   color: #888;
 }
 
-/* Inventory / detail panel */
 .inventory-panel {
   background: #16213e;
   border: 1px solid #0f3460;
@@ -367,6 +284,7 @@ body {
   flex-direction: column;
   gap: 8px;
 }
+*/
 
 .btn {
   background: #0f3460;
@@ -402,22 +320,6 @@ body {
   color: #e0e0e0;
   border-color: #e94560;
   background: #0f3460;
-}
-
-/* Controls bar */
-.controls-bar {
-  grid-column: 1 / -1;
-  background: #16213e;
-  border: 1px solid #0f3460;
-  border-radius: 8px;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.controls-bar .spacer {
-  flex: 1;
 }
 
 /* Overlay */
@@ -505,11 +407,6 @@ body {
   background: #0f3460;
 }
 
-/* Mission bar hidden state */
-.mission-bar.hidden {
-  display: none;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   #mission-prefix {
@@ -517,37 +414,18 @@ body {
   }
 
   .game-container {
-    grid-template-columns: 1fr;
     padding: 12px;
     gap: 12px;
     min-height: auto;
   }
 
-  .locations-panel,
-  .actors-panel,
-  .inventory-panel {
+  .locations-panel {
     padding: 12px;
-  }
-
-  .actor-row {
-    padding: 10px 8px;
-  }
-
-  .actor-key {
-    width: 28px;
-    height: 28px;
-    font-size: 0.85rem;
   }
 
   .btn {
     padding: 12px 16px;
     font-size: 1rem;
-  }
-
-  .controls-bar {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 12px;
   }
 
   .screen {
@@ -558,3 +436,55 @@ body {
     font-size: 1.8rem;
   }
 }
+
+/*
+.clock-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.clock-area .clock-date {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.analog-clock {
+  width: 100px;
+  height: 100px;
+}
+
+.analog-clock .clock-face {
+  fill: none;
+  stroke: #0f3460;
+  stroke-width: 2;
+}
+
+.analog-clock .hour-mark {
+  stroke: #e94560;
+  stroke-width: 2;
+}
+
+.analog-clock .hour-mark-minor {
+  stroke: #555;
+  stroke-width: 1;
+}
+
+.analog-clock .hand-hour {
+  stroke: #e0e0e0;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.analog-clock .hand-minute {
+  stroke: #e0e0e0;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.analog-clock .center-dot {
+  fill: #e94560;
+}
+*/

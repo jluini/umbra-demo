@@ -11,20 +11,22 @@
   <!-- Game screen (always rendered) -->
   <div class="game-container">
 
-    <div class="game-top-bar">
+    <div class="top-bar">
       <span class="mission-label">
         <span id="mission-prefix">Mission</span>
         <span id="mission-number">3</span>
       </span>
       <span class="mission-title" id="mission-title">Midnight Run</span>
-      <span class="clock" id="game-clock">09/17/2026 22:34</span>
-      <button class="nav-btn active" id="btn-show-briefing">i</button>
       <button class="nav-btn" id="btn-show-menu">☰</button>
+    </div>
+
+    <div class="status-bar">
+      <span class="clock">09/17/2026 22:34</span>
+      <button class="btn" id="btn-play-game" disabled>▶ Play</button>
     </div>
 
     <!-- Mission bar (briefing) -->
     <div class="mission-bar">
-      <button class="briefing-close" id="btn-close-briefing">Got it</button>
       <div id="mission-briefing">
         <div class="briefing-section">
           <span class="briefing-text">A valuable artifact has been spotted at the museum. The team needs to retrieve it before the night guard shift changes at dawn.</span>
@@ -67,7 +69,7 @@
       </div>
     </div>
 
-    <!-- Sidebar -->
+    <!-- Sidebar (hidden for now)
     <div class="sidebar">
       <div class="actors-panel" id="actors-panel">
         <h2>Characters</h2>
@@ -102,12 +104,7 @@
         </div>
       </div>
     </div>
-
-    <!-- Controls bar -->
-    <div class="controls-bar">
-      <span class="spacer"></span>
-      <button class="btn" id="btn-play-game">▶ Play</button>
-    </div>
+    -->
 
   </div>
 
