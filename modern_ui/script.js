@@ -11,6 +11,7 @@ const langSelectorInline = document.getElementById("lang-selector-inline");
 const missionNumber = document.getElementById("mission-number");
 const missionTitle = document.getElementById("mission-title");
 const missionBriefing = document.getElementById("mission-briefing");
+const locationsList = document.getElementById("locations-list");
 const clockEl = document.getElementById("clock");
 
 let activeI18n = null;
@@ -55,6 +56,34 @@ function renderClock(time) {
   updateClockText();
 }
 
+function renderLocations(mission) {
+  locationsList.replaceChildren();
+  for (const loc of mission.locations) {
+    const card = document.createElement("div");
+    card.className = "location-card";
+
+    const name = document.createElement("div");
+    name.className = "loc-name";
+    Presentation.setI18nKey(name, Presentation.key("locations", loc.id, "name"), activeI18n);
+    card.appendChild(name);
+
+    const here = document.createElement("div");
+    here.className = "actors-here";
+    const actors = mission.actors
+      .filter((a) => a.locationId === loc.id)
+      .sort((a, b) => a.key - b.key);
+    actors.forEach((a, i) => {
+      if (i > 0) here.appendChild(document.createTextNode(", "));
+      const span = document.createElement("span");
+      Presentation.setI18nKey(span, Presentation.key("actors", a.id, "name"), activeI18n);
+      here.appendChild(span);
+    });
+    card.appendChild(here);
+
+    locationsList.appendChild(card);
+  }
+}
+
 function updateClockText() {
   if (activeClock) clockEl.textContent = Presentation.formatDateTime(activeClock, activeI18n.language());
 }
@@ -65,6 +94,7 @@ function onMissionStart({ mission }) {
     prefix: "briefing",
     base: Presentation.key("missions", mission.id, "briefing"),
   });
+  renderLocations(mission);
   hideOverlay();
 }
 
