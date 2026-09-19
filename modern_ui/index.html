@@ -132,41 +132,20 @@
   <script src="../presentation/dom.js"></script>
   <script src="../games/demo.js"></script>
   <script src="../games/rockers.js"></script>
-  <script src="script.js"></script>
   <script>
-    (() => {
-      const games = {
-        demo: Demo,
-        rockers: Rockers,
-        none: {
-          config: {
-            languages: [
-              { code: "en", name: "English" },
-              { code: "es", name: "Español" },
-            ]
-          }
-        }
-      };
-
-      const params = new URLSearchParams(window.location.search);
-      const name = params.get("game");
-      const validGames = ["demo", "rockers", "none"];
-
-      if (!validGames.includes(name)) {
-        console.error("umbra: unknown game: " + name);
-        return;
-      }
-
-      document.getElementById("btn-play").disabled = false;
-      document.getElementById("btn-credits").disabled = false;
-      document.getElementById("btn-about").disabled = false;
-
-      const Game = games[name];
-      const ui = loadGame(Game.config);
-      const requested = params.get("lang");
-      const languages = ui.languages();
-      ui.setLanguage(languages.includes(requested) ? requested : languages[0]);
-    })();
+    window.games = {
+      demo: Demo,
+      rockers: Rockers,
+      none: {
+        config: {
+          languages: [
+            { code: "en", name: "English" },
+            { code: "es", name: "Español" },
+          ],
+        },
+      },
+    };
   </script>
+  <script src="script.js"></script>
 </body>
 </html>

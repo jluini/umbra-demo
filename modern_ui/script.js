@@ -73,7 +73,25 @@ btnAbout.addEventListener("click", () => {
 
 btnShowMenu.addEventListener("click", showOverlay);
 
-// Exports
-window.loadGame = loadGame;
+function boot() {
+  const games = window.games || {};
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get("game");
+  if (!Object.hasOwn(games, name)) {
+    console.error("umbra: unknown game: " + name);
+    return;
+  }
+
+  btnPlay.disabled = false;
+  btnCredits.disabled = false;
+  btnAbout.disabled = false;
+
+  const ui = loadGame(games[name].config);
+  const requested = params.get("lang");
+  const languages = ui.languages();
+  ui.setLanguage(languages.includes(requested) ? requested : languages[0]);
+}
+
+boot();
 
 })();
