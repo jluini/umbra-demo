@@ -45,3 +45,18 @@ Living record of architectural decisions. Each entry documents the context, the 
 **Selected**: (C) for entity text, with (A) for formatted values (the clock). One keyed mechanism for entity text; the UI stays reactive; no `resolveName` nor binding.
 
 **Notes**: (B) was implemented for entity names and the clock, then replaced. It is set aside, not discarded: it is the natural option if many computed/language-dependent texts appear that keys cannot express (e.g. interpolations, composed strings).
+
+---
+
+## Recursive translation interpolation (possible feature)
+
+**Context**: Translation values can repeat entity names (e.g. the demo briefing hardcodes "Alice", "Bob", "Alice's house"). A value could instead reference other keys — `{actors.alice.name} and {actors.bob.name} finished dinner at {actors.alice.name}'s house.` — and be resolved recursively.
+
+**Alternatives**:
+- (A) Parameterized `t(key, params)`: explicit, no cross-key dependencies, but the caller must pass the values.
+- (B) Self-referential values with `{key}` placeholders: self-contained, convenient for config-driven static text.
+- (C) Structured inline refs in rich text (`{ ref: "actors.alice.name" }`): typed, but more verbose.
+
+**Selected**: not implemented for now; noted as a possible feature. If done, use (B) with **precomputed** resolution: resolve once per language after the base+game merge, leave unresolved placeholders as-is, and reserve `{{`/`}}` for literal braces.
+
+**Notes**: Deferred until there is enough prose/name reuse to justify it. It does not solve grammar/plurals (gender, number, declension) — only name reuse.
