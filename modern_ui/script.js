@@ -6,9 +6,22 @@ const btnPlay = document.getElementById("btn-play");
 const btnCredits = document.getElementById("btn-credits");
 const btnAbout = document.getElementById("btn-about");
 const btnShowMenu = document.getElementById("btn-show-menu");
+const langSelector = document.getElementById("lang-selector");
+const missionNumber = document.getElementById("mission-number");
+const clockEl = document.getElementById("clock");
 
 let activeI18n = null;
+let activeEngine = null;
 let started = false;
+
+function setLanguage(code) {
+  const active = activeI18n.setLanguage(code);
+  if (!active) return;
+  langSelector.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.lang === active);
+  });
+  Presentation.applyI18n(document, activeI18n);
+}
 
 function setPlayLabel(key) {
   const label = btnPlay.querySelector("[data-i18n]");
@@ -23,11 +36,26 @@ function hideOverlay() {
   overlay.classList.remove("active");
 }
 
+function renderMission(mission) {
+  missionNumber.textContent = mission.index + 1;
+}
+
+function renderClock(time) {
+  clockEl.textContent = Presentation.formatDateTime(time, activeI18n.language());
+}
+
+function onMissionStart({ mission }) {
+  renderMission(mission);
+  hideOverlay();
+}
+
+function onClockSet({ time }) {
+  renderClock(time);
+}
+
 function loadGame(config) {
   config = config || {};
-  const langSelector = document.getElementById("lang-selector");
-  const i18n = Presentation.createI18n({ config, base: Umbra.baseTranslations });
-  activeI18n = i18n;
+  activeI18n = Presentation.createI18n({ config, base: Umbra.baseTranslations });
 
   langSelector.replaceChildren();
   for (const lang of config.languages || []) {
@@ -38,29 +66,32 @@ function loadGame(config) {
     langSelector.appendChild(btn);
   }
 
-  const setLanguage = (code) => {
-    const active = i18n.setLanguage(code);
-    if (!active) return;
-    langSelector.querySelectorAll(".lang-btn").forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.lang === active);
-    });
-    Presentation.applyI18n(document, i18n);
-  };
-
-  langSelector.addEventListener("click", (e) => {
-    const btn = e.target.closest(".lang-btn");
-    if (btn) setLanguage(btn.dataset.lang);
-  });
-
-  return { setLanguage, languages: () => i18n.languages() };
+  const playable = Array.isArray(config.levels) && config.levels.length > 0;
+  activeEngine = playable ? Umbra.create(config) : null;
+  if (activeEngine) {
+    activeEngine.on("mission:start", onMissionStart);
+    activeEngine.on("clock:set", onClockSet);
+  }
 }
+
+function startGame() {
+  if (activeEngine) activeEngine.start();
+  else hideOverlay();
+}
+
+langSelector.addEventListener("click", (e) => {
+  const btn = e.target.closest(".lang-btn");
+  if (btn) setLanguage(btn.dataset.lang);
+});
 
 btnPlay.addEventListener("click", () => {
   if (!started) {
     started = true;
     setPlayLabel("menu.continue");
+    startGame();
+  } else {
+    hideOverlay();
   }
-  hideOverlay();
 });
 
 btnCredits.addEventListener("click", () => {
@@ -86,10 +117,10 @@ function boot() {
   btnCredits.disabled = false;
   btnAbout.disabled = false;
 
-  const ui = loadGame(games[name].config);
+  loadGame(games[name].config);
   const requested = params.get("lang");
-  const languages = ui.languages();
-  ui.setLanguage(languages.includes(requested) ? requested : languages[0]);
+  const languages = activeI18n.languages();
+  setLanguage(languages.includes(requested) ? requested : languages[0]);
 }
 
 boot();
