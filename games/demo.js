@@ -121,7 +121,11 @@ const config = {
       },
       plan: {
         walkTo: "Caminhar até...",
-        cancel: "Cancelar"
+        cancel: "Cancelar",
+        inTransit: "Em trânsito"
+      },
+      actions: {
+        play: "Jogar"
       },
       missions: {
         test: {

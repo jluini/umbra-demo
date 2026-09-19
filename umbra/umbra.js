@@ -27,7 +27,11 @@ const engineTranslations = {
     },
     plan: {
       walkTo: "Walk to...",
-      cancel: "Cancel"
+      cancel: "Cancel",
+      inTransit: "In transit"
+    },
+    actions: {
+      play: "Play"
     },
   },
   es: {
@@ -51,7 +55,11 @@ const engineTranslations = {
     },
     plan: {
       walkTo: "Caminar a...",
-      cancel: "Cancelar"
+      cancel: "Cancelar",
+      inTransit: "En tránsito"
+    },
+    actions: {
+      play: "Jugar"
     },
   },
   de: {
@@ -75,7 +83,11 @@ const engineTranslations = {
     },
     plan: {
       walkTo: "Gehen zu...",
-      cancel: "Abbrechen"
+      cancel: "Abbrechen",
+      inTransit: "Unterwegs"
+    },
+    actions: {
+      play: "Spielen"
     }
   }
 };

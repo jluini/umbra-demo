@@ -6,12 +6,15 @@ const btnPlay = document.getElementById("btn-play");
 const btnCredits = document.getElementById("btn-credits");
 const btnAbout = document.getElementById("btn-about");
 const btnShowMenu = document.getElementById("btn-show-menu");
+const btnPlayGame = document.getElementById("btn-play-game");
 const langSelector = document.getElementById("lang-selector");
 const langSelectorInline = document.getElementById("lang-selector-inline");
 const missionNumber = document.getElementById("mission-number");
 const missionTitle = document.getElementById("mission-title");
 const missionBriefing = document.getElementById("mission-briefing");
 const locationsList = document.getElementById("locations-list");
+const transit = document.getElementById("transit");
+const transitList = document.getElementById("transit-list");
 const actorPanel = document.getElementById("actor-panel");
 const actorPanelName = document.getElementById("actor-panel-name");
 const actorPanelItems = document.getElementById("actor-panel-items");
@@ -24,7 +27,11 @@ let activeEngine = null;
 let activeClock = null;
 let selectedActorId = null;
 let walkToMode = false;
+let playing = false;
+let playTimer = null;
 let started = false;
+
+const REAL_MS_PER_GAME_MIN = 250;
 
 function markActiveLanguage(code) {
   document.querySelectorAll(".lang-btn").forEach((btn) => {
@@ -83,12 +90,16 @@ function renderLocations() {
     const here = document.createElement("div");
     here.className = "actors-here";
     const present = mission.actors
-      .filter((a) => a.locationId === loc.id)
+      .filter((a) => {
+        if (a.locationId !== loc.id) return false;
+        const plan = activeEngine.getPlan(a.id);
+        return !plan || plan.startTime === null;
+      })
       .sort((a, b) => a.key - b.key);
     present.forEach((a, i) => {
       if (i > 0) here.appendChild(document.createTextNode(", "));
       const span = document.createElement("span");
-      if (!actor) {
+      if (!actor && !playing) {
         span.className = "actor-link";
         span.dataset.actorId = a.id;
       }
@@ -163,20 +174,31 @@ function renderActions(actor) {
   }
 
   const plan = activeEngine.getPlan(actor.id);
-  if (plan && plan.startTime === null) {
-    const line = document.createElement("div");
-    line.className = "plan-line";
-    line.appendChild(document.createTextNode("→ "));
-    const dest = document.createElement("span");
-    Presentation.setI18nKey(dest, Presentation.key("locations", plan.destination, "name"), activeI18n);
-    line.appendChild(dest);
-    line.appendChild(document.createTextNode(" (" + Presentation.formatWalkTime(plan.walkTime) + ")"));
-    actorPanelActions.appendChild(line);
+  if (plan && plan.startTime !== null) {
+    actorPanelActions.appendChild(makePlanLine(plan, true));
+    return;
+  }
+  if (plan) {
+    actorPanelActions.appendChild(makePlanLine(plan, false));
     actorPanelActions.appendChild(makeActionButton("plan.cancel", () => cancelPlan(actor.id)));
     return;
   }
 
   actorPanelActions.appendChild(makeActionButton("plan.walkTo", enterWalkTo));
+}
+
+function makePlanLine(plan, started) {
+  const line = document.createElement("div");
+  line.className = "plan-line";
+  line.appendChild(document.createTextNode("→ "));
+  const dest = document.createElement("span");
+  Presentation.setI18nKey(dest, Presentation.key("locations", plan.destination, "name"), activeI18n);
+  line.appendChild(dest);
+  const progress = started
+    ? " (" + (activeEngine.getInternalTime() - plan.startTime) + "/" + plan.walkTime + " min)"
+    : " (" + Presentation.formatWalkTime(plan.walkTime) + ")";
+  line.appendChild(document.createTextNode(progress));
+  return line;
 }
 
 function selectActor(actorId) {
@@ -217,6 +239,71 @@ function closeActorPanel() {
   renderLocations();
 }
 
+function renderTransit() {
+  const now = activeEngine.getInternalTime();
+  const entries = Object.entries(activeEngine.getPlans())
+    .filter(([, plan]) => plan.startTime !== null);
+  transit.hidden = entries.length === 0;
+  transitList.replaceChildren();
+
+  for (const [actorId, plan] of entries) {
+    const line = document.createElement("div");
+    line.className = "transit-line";
+    const actor = document.createElement("span");
+    Presentation.setI18nKey(actor, Presentation.key("actors", actorId, "name"), activeI18n);
+    line.appendChild(actor);
+    line.appendChild(document.createTextNode(" → "));
+    const dest = document.createElement("span");
+    Presentation.setI18nKey(dest, Presentation.key("locations", plan.destination, "name"), activeI18n);
+    line.appendChild(dest);
+    line.appendChild(document.createTextNode(" (" + (now - plan.startTime) + "/" + plan.walkTime + " min)"));
+    transitList.appendChild(line);
+  }
+}
+
+function hasPlans() {
+  return Object.keys(activeEngine.getPlans()).length > 0;
+}
+
+function updatePlayButton() {
+  btnPlayGame.disabled = playing || !activeEngine || !hasPlans();
+}
+
+function onPlansChanged() {
+  updatePlayButton();
+  renderLocations();
+  renderTransit();
+  if (selectedActorId) renderActorPanel();
+}
+
+function startPlay() {
+  if (playing || !activeEngine || !hasPlans()) return;
+  playing = true;
+  closeActorPanel();
+  activeEngine.play();
+  renderLocations();
+  renderTransit();
+  updatePlayButton();
+  playTimer = setInterval(tick, REAL_MS_PER_GAME_MIN);
+}
+
+function tick() {
+  activeEngine.advanceTime(1);
+  const completed = activeEngine.checkPlans();
+  if (completed.length === 0) return;
+  for (const { actorId } of completed) activeEngine.completePlan(actorId);
+  stopPlay();
+}
+
+function stopPlay() {
+  playing = false;
+  clearInterval(playTimer);
+  playTimer = null;
+  renderLocations();
+  renderTransit();
+  updatePlayButton();
+}
+
 function updateClockText() {
   if (activeClock) clockEl.textContent = Presentation.formatDateTime(activeClock, activeI18n.language());
 }
@@ -228,11 +315,14 @@ function onMissionStart({ mission }) {
     base: Presentation.key("missions", mission.id, "briefing"),
   });
   renderLocations();
+  renderTransit();
+  updatePlayButton();
   hideOverlay();
 }
 
 function onClockSet({ time }) {
   renderClock(time);
+  renderTransit();
 }
 
 function renderLanguageSelector(container, config, caption) {
@@ -257,6 +347,9 @@ function loadGame(config) {
   if (activeEngine) {
     activeEngine.on("mission:start", onMissionStart);
     activeEngine.on("clock:set", onClockSet);
+    activeEngine.on("plan:set", onPlansChanged);
+    activeEngine.on("plan:cancel", onPlansChanged);
+    activeEngine.on("plan:done", onPlansChanged);
   }
 }
 
@@ -284,6 +377,8 @@ locationsList.addEventListener("click", (e) => {
 });
 
 actorPanelClose.addEventListener("click", closeActorPanel);
+
+btnPlayGame.addEventListener("click", startPlay);
 
 btnPlay.addEventListener("click", () => {
   if (!started) {

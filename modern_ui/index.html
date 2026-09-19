@@ -25,7 +25,7 @@
 
     <div class="status-bar">
       <span class="clock" id="clock">09/17/2026, 22:34</span>
-      <button class="btn" id="btn-play-game" disabled>▶ Play</button>
+      <button class="btn" id="btn-play-game" disabled>▶ <span data-i18n="actions.play">Play</span></button>
     </div>
 
     <!-- Mission bar (briefing) -->
@@ -87,6 +87,10 @@
               <div class="actors-here"></div>
             </div>
           </div>
+        </div>
+        <div class="transit" id="transit" hidden>
+          <div class="transit-label" data-i18n="plan.inTransit">In transit</div>
+          <div id="transit-list"></div>
         </div>
       </div>
     </div>
