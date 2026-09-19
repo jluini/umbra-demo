@@ -401,9 +401,10 @@ btnAbout.addEventListener("click", () => {
 btnShowMenu.addEventListener("click", showOverlay);
 
 function boot() {
+  const defaults = window.umbraDefaults || {};
   const games = window.games || {};
   const params = new URLSearchParams(window.location.search);
-  const name = params.get("game");
+  const name = params.get("game") || defaults.game;
   if (!Object.hasOwn(games, name)) {
     console.error("umbra: unknown game: " + name);
     return;
@@ -414,7 +415,7 @@ function boot() {
   btnAbout.disabled = false;
 
   loadGame(games[name].config);
-  const requested = params.get("lang");
+  const requested = params.get("lang") || defaults.lang;
   const languages = activeI18n.languages();
   setLanguage(languages.includes(requested) ? requested : languages[0]);
 }
