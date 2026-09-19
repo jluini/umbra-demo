@@ -12,6 +12,10 @@ const missionNumber = document.getElementById("mission-number");
 const missionTitle = document.getElementById("mission-title");
 const missionBriefing = document.getElementById("mission-briefing");
 const locationsList = document.getElementById("locations-list");
+const actorPanel = document.getElementById("actor-panel");
+const actorPanelName = document.getElementById("actor-panel-name");
+const actorPanelItems = document.getElementById("actor-panel-items");
+const actorPanelClose = document.getElementById("actor-panel-close");
 const clockEl = document.getElementById("clock");
 
 let activeI18n = null;
@@ -75,6 +79,8 @@ function renderLocations(mission) {
     actors.forEach((a, i) => {
       if (i > 0) here.appendChild(document.createTextNode(", "));
       const span = document.createElement("span");
+      span.className = "actor-link";
+      span.dataset.actorId = a.id;
       Presentation.setI18nKey(span, Presentation.key("actors", a.id, "name"), activeI18n);
       here.appendChild(span);
     });
@@ -82,6 +88,30 @@ function renderLocations(mission) {
 
     locationsList.appendChild(card);
   }
+}
+
+function selectActor(actorId) {
+  const actor = activeEngine.getActor(actorId);
+  if (!actor) return;
+  actorPanel.hidden = false;
+  Presentation.setI18nKey(actorPanelName, Presentation.key("actors", actorId, "name"), activeI18n);
+  renderItems(actor);
+}
+
+function renderItems(actor) {
+  actorPanelItems.replaceChildren();
+  const items = activeEngine.getInventory(actor.id);
+  items.forEach((itemId, i) => {
+    if (i > 0) actorPanelItems.appendChild(document.createTextNode(", "));
+    const tag = document.createElement("span");
+    tag.className = "item-tag";
+    Presentation.setI18nKey(tag, Presentation.key("items", itemId, "name"), activeI18n);
+    actorPanelItems.appendChild(tag);
+  });
+}
+
+function closeActorPanel() {
+  actorPanel.hidden = true;
 }
 
 function updateClockText() {
@@ -139,6 +169,13 @@ function handleLanguageClick(e) {
 
 langSelector.addEventListener("click", handleLanguageClick);
 langSelectorInline.addEventListener("click", handleLanguageClick);
+
+locationsList.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-actor-id]");
+  if (el) selectActor(el.dataset.actorId);
+});
+
+actorPanelClose.addEventListener("click", closeActorPanel);
 
 btnPlay.addEventListener("click", () => {
   if (!started) {

@@ -90,7 +90,7 @@ const config = {
       // startsAt: "Começa às", deadline: "Prazo", clock: "Relógio", briefing: "Resumo",
       umbra: {
         tagline: "um motor de jogos baseados em decisões",
-        mission: "Missão", actors: "Personagens", locations: "Lugares",
+        mission: "Missão", actors: "Personagens", items: "Objetos", locations: "Lugares",
       },
       menu: {
         play: "Jogar", continue: "Continuar", credits: "Créditos", about: "Sobre",
