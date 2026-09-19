@@ -47,7 +47,6 @@ body {
 }
 
 .top-bar .nav-btn {
-  margin-left: auto;
   background: transparent;
   color: #888;
   border: 1px solid #333;
@@ -64,6 +63,22 @@ body {
   color: #e0e0e0;
   border-color: #e94560;
   background: #0f3460;
+}
+
+.top-bar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-selector-inline {
+  display: flex;
+  gap: 4px;
+}
+
+.lang-selector-inline .lang-btn {
+  padding: 3px 7px;
 }
 
 /* Status bar */
@@ -410,6 +425,10 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
   #mission-prefix {
+    display: none;
+  }
+
+  .lang-selector-inline {
     display: none;
   }
 

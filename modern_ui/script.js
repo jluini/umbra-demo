@@ -7,6 +7,7 @@ const btnCredits = document.getElementById("btn-credits");
 const btnAbout = document.getElementById("btn-about");
 const btnShowMenu = document.getElementById("btn-show-menu");
 const langSelector = document.getElementById("lang-selector");
+const langSelectorInline = document.getElementById("lang-selector-inline");
 const missionNumber = document.getElementById("mission-number");
 const missionTitle = document.getElementById("mission-title");
 const clockEl = document.getElementById("clock");
@@ -16,7 +17,7 @@ let activeEngine = null;
 let started = false;
 
 function markActiveLanguage(code) {
-  langSelector.querySelectorAll(".lang-btn").forEach((btn) => {
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.lang === code);
   });
 }
@@ -64,21 +65,22 @@ function onClockSet({ time }) {
   renderClock(time);
 }
 
-function renderLanguageSelector(config) {
-  langSelector.replaceChildren();
+function renderLanguageSelector(container, config, caption) {
+  container.replaceChildren();
   for (const lang of config.languages || []) {
     const btn = document.createElement("button");
     btn.className = "lang-btn";
     btn.dataset.lang = lang.code;
-    btn.textContent = lang.name;
-    langSelector.appendChild(btn);
+    btn.textContent = caption === "code" ? lang.code : lang.name;
+    container.appendChild(btn);
   }
 }
 
 function loadGame(config) {
   config = config || {};
   activeI18n = Presentation.createI18n({ config, base: Umbra.baseTranslations });
-  renderLanguageSelector(config);
+  renderLanguageSelector(langSelector, config, "name");
+  renderLanguageSelector(langSelectorInline, config, "code");
 
   const playable = Array.isArray(config.levels) && config.levels.length > 0;
   activeEngine = playable ? Umbra.create(config) : null;
@@ -93,10 +95,13 @@ function startGame() {
   else hideOverlay();
 }
 
-langSelector.addEventListener("click", (e) => {
+function handleLanguageClick(e) {
   const btn = e.target.closest(".lang-btn");
   if (btn) setLanguage(btn.dataset.lang);
-});
+}
+
+langSelector.addEventListener("click", handleLanguageClick);
+langSelectorInline.addEventListener("click", handleLanguageClick);
 
 btnPlay.addEventListener("click", () => {
   if (!started) {
