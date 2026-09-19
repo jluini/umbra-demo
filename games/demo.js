@@ -76,8 +76,5 @@ const config = {
   ],
 };
 
-const create = () =>
-  Umbra.create({ config: config });
-
-window.Demo = { create, config };
+window.Demo = { id: "demo", config };
 })();
