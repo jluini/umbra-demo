@@ -21,9 +21,13 @@ const engineTranslations = {
       credits: "Credits",
       about: "About"
     },
-    briefing_labels: {
+    briefingLabels: {
       goal: "Goal",
       hints: "Hints"
+    },
+    plan: {
+      walkTo: "Walk to...",
+      cancel: "Cancel"
     },
   },
   es: {
@@ -41,9 +45,13 @@ const engineTranslations = {
       credits: "Créditos",
       about: "Acerca de"
     },
-    briefing_labels: {
+    briefingLabels: {
       goal: "Objetivo",
       hints: "Pistas"
+    },
+    plan: {
+      walkTo: "Caminar a...",
+      cancel: "Cancelar"
     },
   },
   de: {
@@ -61,9 +69,13 @@ const engineTranslations = {
       credits: "Mitwirkende",
       about: "Über uns"
     },
-    briefing_labels: {
+    briefingLabels: {
       goal: "Ziel",
       hints: "Hinweise"
+    },
+    plan: {
+      walkTo: "Gehen zu...",
+      cancel: "Abbrechen"
     }
   }
 };

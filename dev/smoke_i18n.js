@@ -20,8 +20,8 @@ const check = (cond, label) => {
 };
 
 const base = {
-  en: { umbra: { mission: "Mission" }, menu: { play: "Play" }, briefing_labels: { goal: "Goal", hints: "Hints" } },
-  es: { umbra: { mission: "Misión" }, briefing_labels: { goal: "Objetivo", hints: "Pistas" } },
+  en: { umbra: { mission: "Mission" }, menu: { play: "Play" }, briefingLabels: { goal: "Goal", hints: "Hints" }, plan: { walkTo: "Walk to...", cancel: "Cancel" } },
+  es: { umbra: { mission: "Misión" }, briefingLabels: { goal: "Objetivo", hints: "Pistas" }, plan: { walkTo: "Caminar a...", cancel: "Cancelar" } },
 };
 const config = {
   languages: [
@@ -36,7 +36,7 @@ const config = {
       missions: { test: { name: "Test" } },
     },
     es: { actors: { alice: { name: "Alicia" } } },
-    pt: { menu: { play: "Jogar" }, actors: { alice: { name: "Alice" } }, briefing_labels: { goal: "Objetivo", hints: "Dicas" } },
+    pt: { menu: { play: "Jogar" }, actors: { alice: { name: "Alice" } }, briefingLabels: { goal: "Objetivo", hints: "Dicas" }, plan: { walkTo: "Caminhar até...", cancel: "Cancelar" } },
   },
 };
 
@@ -51,7 +51,7 @@ check(i18n.t("umbra.missing") === "umbra.missing", "missing key returns the key"
 check(window.Presentation.key("actors", "alice") === "actors.alice.name", "key defaults to the name field");
 check(window.Presentation.key("missions", "test", "briefing") === "missions.test.briefing", "key uses the given field");
 check(window.Presentation.resolveKey(".situation", "missions.test.briefing") === "missions.test.briefing.situation", "relative key resolves against the base");
-check(window.Presentation.resolveKey("briefing_labels.goal", "missions.test.briefing") === "briefing_labels.goal", "absolute key ignores the base");
+check(window.Presentation.resolveKey("briefingLabels.goal", "missions.test.briefing") === "briefingLabels.goal", "absolute key ignores the base");
 
 i18n.setLanguage("en");
 check(i18n.t(window.Presentation.key("actors", "alice")) === "Alice", "entity name resolves (en)");
@@ -61,17 +61,19 @@ i18n.setLanguage("es");
 check(i18n.t(window.Presentation.key("actors", "alice")) === "Alicia", "entity name resolves (es)");
 check(i18n.t(window.Presentation.key("actors", "bob")) === "actors.bob.name", "missing entity name returns the key");
 
-check(i18n.t("briefing_labels.goal") === "Objetivo", "base briefing label resolves (es)");
+check(i18n.t("briefingLabels.goal") === "Objetivo", "base briefing label resolves (es)");
+check(i18n.t("plan.walkTo") === "Caminar a...", "base plan label resolves (es)");
 i18n.setLanguage("pt");
-check(i18n.t("briefing_labels.hints") === "Dicas", "game override of a base label resolves (pt)");
+check(i18n.t("briefingLabels.hints") === "Dicas", "game override of a base label resolves (pt)");
 
 const german = window.Presentation.createI18n({
   config: { languages: [{ code: "de", name: "Deutsch" }] },
   base: window.Umbra.baseTranslations,
 });
 german.setLanguage("de");
-check(german.t("briefing_labels.goal") === "Ziel", "German label comes from the Umbra base");
-check(german.t("briefing_labels.hints") === "Hinweise", "German hints label comes from the Umbra base");
+check(german.t("briefingLabels.goal") === "Ziel", "German label comes from the Umbra base");
+check(german.t("briefingLabels.hints") === "Hinweise", "German hints label comes from the Umbra base");
+check(german.t("plan.cancel") === "Abbrechen", "German plan label comes from the Umbra base");
 
 if (failures > 0) {
   console.error(failures + " failure(s)");

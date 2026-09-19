@@ -10,6 +10,12 @@ const formatDateTime = (date, lang) =>
     minute: "2-digit",
   }).format(date);
 
+const formatDistance = (km) => km + " km";
+
+const formatWalkTime = (minutes) => minutes + " min";
+
 window.Presentation = window.Presentation || {};
 window.Presentation.formatDateTime = formatDateTime;
+window.Presentation.formatDistance = formatDistance;
+window.Presentation.formatWalkTime = formatWalkTime;
 })();

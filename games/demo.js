@@ -40,7 +40,7 @@ const config = {
             goal: "You must get Alice and Bob together at the house, with at least one cider and no one else present, before midnight.",
             hints: {
               relation: "Do not let Charles see Alice and Bob together. There may be trouble and the mission may be lost.",
-              market_hours: "Keep in mind that the market will not sell alcoholic drinks after 11 PM.",
+              marketHours: "Keep in mind that the market will not sell alcoholic drinks after 11 PM.",
               chocolates: "Charles has a cider and may agree to hand it over in exchange for a box of chocolates.",
             },
           }
@@ -79,7 +79,7 @@ const config = {
             goal: "Debes lograr que Alicia y Rober estén juntos en la casa, con al menos una sidra y sin ningún otro acompañante antes de las doce de la noche.",
             hints: {
               relation: "No permitas que Carlos vea a Alicia y a Rober juntos. Puede haber problemas y darse por perdida la misión.",
-              market_hours: "Tené presente que el supermercado no venderá bebidas alcohólicas después de las 23hs.",
+              marketHours: "Tené presente que el supermercado no venderá bebidas alcohólicas después de las 23hs.",
               chocolates: "Carlos tiene una sidra y es posible que acepte ofrecerla a cambio de una caja de bombones.",
             },
           },
@@ -115,9 +115,13 @@ const config = {
         square: { name: "Praça" },
         forest: { name: "Floresta" },
       },
-      briefing_labels: {
+      briefingLabels: {
         goal: "Objetivo",
         hints: "Dicas"
+      },
+      plan: {
+        walkTo: "Caminhar até...",
+        cancel: "Cancelar"
       },
       missions: {
         test: {
@@ -127,7 +131,7 @@ const config = {
             goal: "Você deve conseguir que Alice e o Beto fiquem juntos na casa, com pelo menos uma sidra e sem mais ninguém, antes da meia-noite.",
             hints: {
               relation: "Não deixe que Carlos veja Alice e o Beto juntos. Pode haver problemas e a missão pode ser dada como perdida.",
-              market_hours: "Lembre-se de que o mercado não venderá bebidas alcoólicas depois das 23h.",
+              marketHours: "Lembre-se de que o mercado não venderá bebidas alcoólicas depois das 23h.",
               chocolates: "Carlos tem uma sidra e pode aceitar trocá-la por uma caixa de bombons.",
             },
           },
@@ -174,8 +178,8 @@ const config = {
       locations: ["alice_house", "charles_house", "market"],
       briefing: [
         { text: ".situation" },
-        { label: "briefing_labels.goal", text: ".goal" },
-        { label: "briefing_labels.hints", entries: [".hints.relation", ".hints.market_hours", ".hints.chocolates"] }
+        { label: "briefingLabels.goal", text: ".goal" },
+        { label: "briefingLabels.hints", entries: [".hints.relation", ".hints.marketHours", ".hints.chocolates"] }
       ]
     },
   ],

@@ -16,11 +16,14 @@ const actorPanel = document.getElementById("actor-panel");
 const actorPanelName = document.getElementById("actor-panel-name");
 const actorPanelItems = document.getElementById("actor-panel-items");
 const actorPanelClose = document.getElementById("actor-panel-close");
+const actorPanelActions = document.getElementById("actor-panel-actions");
 const clockEl = document.getElementById("clock");
 
 let activeI18n = null;
 let activeEngine = null;
 let activeClock = null;
+let selectedActorId = null;
+let walkToMode = false;
 let started = false;
 
 function markActiveLanguage(code) {
@@ -60,42 +63,83 @@ function renderClock(time) {
   updateClockText();
 }
 
-function renderLocations(mission) {
+function renderLocations() {
+  const mission = activeEngine.getMission();
+  const actor = walkToMode && selectedActorId ? activeEngine.getActor(selectedActorId) : null;
   locationsList.replaceChildren();
+
   for (const loc of mission.locations) {
     const card = document.createElement("div");
     card.className = "location-card";
 
+    const info = document.createElement("div");
+    info.className = "loc-info";
+
     const name = document.createElement("div");
     name.className = "loc-name";
     Presentation.setI18nKey(name, Presentation.key("locations", loc.id, "name"), activeI18n);
-    card.appendChild(name);
+    info.appendChild(name);
 
     const here = document.createElement("div");
     here.className = "actors-here";
-    const actors = mission.actors
+    const present = mission.actors
       .filter((a) => a.locationId === loc.id)
       .sort((a, b) => a.key - b.key);
-    actors.forEach((a, i) => {
+    present.forEach((a, i) => {
       if (i > 0) here.appendChild(document.createTextNode(", "));
       const span = document.createElement("span");
-      span.className = "actor-link";
-      span.dataset.actorId = a.id;
+      if (!actor) {
+        span.className = "actor-link";
+        span.dataset.actorId = a.id;
+      }
       Presentation.setI18nKey(span, Presentation.key("actors", a.id, "name"), activeI18n);
       here.appendChild(span);
     });
-    card.appendChild(here);
+    info.appendChild(here);
+    card.appendChild(info);
+
+    if (actor) {
+      const distance = activeEngine.distance(actor.locationId, loc.id);
+      if (loc.id === actor.locationId || distance === Infinity) {
+        card.classList.add("disabled");
+      } else {
+        card.classList.add("selectable");
+        card.dataset.locationId = loc.id;
+        const walkTime = activeEngine.computeWalkTime(distance);
+        const dist = document.createElement("div");
+        dist.className = "loc-distance";
+        dist.textContent = Presentation.formatDistance(distance) + " · " + Presentation.formatWalkTime(walkTime);
+        card.appendChild(dist);
+      }
+    }
 
     locationsList.appendChild(card);
   }
 }
 
-function selectActor(actorId) {
-  const actor = activeEngine.getActor(actorId);
-  if (!actor) return;
+function makeActionButton(key, onClick) {
+  const button = document.createElement("button");
+  button.className = "btn";
+  Presentation.setI18nKey(button, key, activeI18n);
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+function renderActorPanel() {
+  if (!selectedActorId || !activeEngine) {
+    actorPanel.hidden = true;
+    return;
+  }
+  const actor = activeEngine.getActor(selectedActorId);
+  if (!actor) {
+    actorPanel.hidden = true;
+    return;
+  }
+
   actorPanel.hidden = false;
-  Presentation.setI18nKey(actorPanelName, Presentation.key("actors", actorId, "name"), activeI18n);
+  Presentation.setI18nKey(actorPanelName, Presentation.key("actors", selectedActorId, "name"), activeI18n);
   renderItems(actor);
+  renderActions(actor);
 }
 
 function renderItems(actor) {
@@ -110,8 +154,67 @@ function renderItems(actor) {
   });
 }
 
+function renderActions(actor) {
+  actorPanelActions.replaceChildren();
+
+  if (walkToMode) {
+    actorPanelActions.appendChild(makeActionButton("plan.cancel", exitWalkTo));
+    return;
+  }
+
+  const plan = activeEngine.getPlan(actor.id);
+  if (plan && plan.startTime === null) {
+    const line = document.createElement("div");
+    line.className = "plan-line";
+    line.appendChild(document.createTextNode("→ "));
+    const dest = document.createElement("span");
+    Presentation.setI18nKey(dest, Presentation.key("locations", plan.destination, "name"), activeI18n);
+    line.appendChild(dest);
+    line.appendChild(document.createTextNode(" (" + Presentation.formatWalkTime(plan.walkTime) + ")"));
+    actorPanelActions.appendChild(line);
+    actorPanelActions.appendChild(makeActionButton("plan.cancel", () => cancelPlan(actor.id)));
+    return;
+  }
+
+  actorPanelActions.appendChild(makeActionButton("plan.walkTo", enterWalkTo));
+}
+
+function selectActor(actorId) {
+  selectedActorId = actorId;
+  walkToMode = false;
+  renderActorPanel();
+  renderLocations();
+}
+
+function enterWalkTo() {
+  walkToMode = true;
+  renderActorPanel();
+  renderLocations();
+}
+
+function exitWalkTo() {
+  walkToMode = false;
+  renderActorPanel();
+  renderLocations();
+}
+
+function chooseDestination(locationId) {
+  walkToMode = false;
+  activeEngine.setPlan(selectedActorId, locationId);
+  renderActorPanel();
+  renderLocations();
+}
+
+function cancelPlan(actorId) {
+  activeEngine.cancelPlan(actorId);
+  renderActorPanel();
+}
+
 function closeActorPanel() {
+  selectedActorId = null;
+  walkToMode = false;
   actorPanel.hidden = true;
+  renderLocations();
 }
 
 function updateClockText() {
@@ -124,7 +227,7 @@ function onMissionStart({ mission }) {
     prefix: "briefing",
     base: Presentation.key("missions", mission.id, "briefing"),
   });
-  renderLocations(mission);
+  renderLocations();
   hideOverlay();
 }
 
@@ -171,8 +274,13 @@ langSelector.addEventListener("click", handleLanguageClick);
 langSelectorInline.addEventListener("click", handleLanguageClick);
 
 locationsList.addEventListener("click", (e) => {
-  const el = e.target.closest("[data-actor-id]");
-  if (el) selectActor(el.dataset.actorId);
+  const actorEl = e.target.closest("[data-actor-id]");
+  if (actorEl) {
+    selectActor(actorEl.dataset.actorId);
+    return;
+  }
+  const locEl = e.target.closest("[data-location-id]");
+  if (locEl && walkToMode) chooseDestination(locEl.dataset.locationId);
 });
 
 actorPanelClose.addEventListener("click", closeActorPanel);
