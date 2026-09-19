@@ -6,6 +6,7 @@ const path = require("path");
 const root = path.join(__dirname, "..");
 
 global.window = global;
+require(path.join(root, "umbra/umbra.js"));
 require(path.join(root, "presentation/i18n.js"));
 
 let failures = 0;
@@ -19,8 +20,8 @@ const check = (cond, label) => {
 };
 
 const base = {
-  en: { umbra: { mission: "Mission" }, menu: { play: "Play" } },
-  es: { umbra: { mission: "Misión" } },
+  en: { umbra: { mission: "Mission" }, menu: { play: "Play" }, briefing_labels: { goal: "Goal", hints: "Hints" } },
+  es: { umbra: { mission: "Misión" }, briefing_labels: { goal: "Objetivo", hints: "Pistas" } },
 };
 const config = {
   languages: [
@@ -35,7 +36,7 @@ const config = {
       missions: { test: { name: "Test" } },
     },
     es: { actors: { alice: { name: "Alicia" } } },
-    pt: { menu: { play: "Jogar" }, actors: { alice: { name: "Alice" } } },
+    pt: { menu: { play: "Jogar" }, actors: { alice: { name: "Alice" } }, briefing_labels: { goal: "Objetivo", hints: "Dicas" } },
   },
 };
 
@@ -57,6 +58,18 @@ check(i18n.t(window.Presentation.key("missions", "test")) === "Test", "mission n
 i18n.setLanguage("es");
 check(i18n.t(window.Presentation.key("actors", "alice")) === "Alicia", "entity name resolves (es)");
 check(i18n.t(window.Presentation.key("actors", "bob")) === "actors.bob.name", "missing entity name returns the key");
+
+check(i18n.t("briefing_labels.goal") === "Objetivo", "base briefing label resolves (es)");
+i18n.setLanguage("pt");
+check(i18n.t("briefing_labels.hints") === "Dicas", "game override of a base label resolves (pt)");
+
+const german = window.Presentation.createI18n({
+  config: { languages: [{ code: "de", name: "Deutsch" }] },
+  base: window.Umbra.baseTranslations,
+});
+german.setLanguage("de");
+check(german.t("briefing_labels.goal") === "Ziel", "German label comes from the Umbra base");
+check(german.t("briefing_labels.hints") === "Hinweise", "German hints label comes from the Umbra base");
 
 if (failures > 0) {
   console.error(failures + " failure(s)");

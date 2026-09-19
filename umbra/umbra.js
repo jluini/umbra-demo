@@ -21,6 +21,10 @@ const engineTranslations = {
       credits: "Credits",
       about: "About"
     },
+    briefing_labels: {
+      goal: "Goal",
+      hints: "Hints"
+    },
   },
   es: {
     // startsAt: "Comienza a las", deadline: "Fecha límite", clock: "Reloj", briefing: "Resumen",
@@ -37,6 +41,10 @@ const engineTranslations = {
       credits: "Créditos",
       about: "Acerca de"
     },
+    briefing_labels: {
+      goal: "Objetivo",
+      hints: "Pistas"
+    },
   },
   de: {
     // startsAt: "Beginnt um", deadline: "Frist", clock: "Uhr", briefing: "Lagebesprechung",
@@ -52,6 +60,10 @@ const engineTranslations = {
       continue: "Weiter",
       credits: "Mitwirkende",
       about: "Über uns"
+    },
+    briefing_labels: {
+      goal: "Ziel",
+      hints: "Hinweise"
     }
   }
 };
@@ -190,6 +202,7 @@ const buildMission = (config) => {
   const mission = {
     id: level.id,
     index,
+    briefing: level.briefing,
     start: parseDate(level.start),
     deadline: parseDate(level.deadline),
     actors,

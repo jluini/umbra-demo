@@ -41,6 +41,7 @@ const config = {
       { id: "bob", location: "a" },
     ],
     locations: ["a", "b", "c"],
+    briefing: [{ text: "missions.test.briefing.situation" }],
   }],
 };
 
@@ -56,6 +57,7 @@ game.start();
 check(game.getStatus() === "playing", "start -> playing");
 check(missionStarts === 1 && clockSets === 1, "start emits mission:start + clock:set");
 check(game.getMission().index === 0, "initial mission index is 0");
+check(game.getMission().briefing.length === 1, "mission briefing structure passes through");
 check(game.getActor("alice").locationId === "a", "actor location referenced by id");
 check(game.getInventory("alice")[0] === "cider", "starting inventory");
 

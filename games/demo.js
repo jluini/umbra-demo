@@ -35,7 +35,15 @@ const config = {
       missions: {
         test: {
           name: "Test",
-          briefing: "Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.",
+          briefing: {
+            situation: "Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.",
+            goal: "You must get Alice and Bob together at the house, with at least one cider and no one else present, before midnight.",
+            hints: {
+              relation: "Do not let Charles see Alice and Bob together. There may be trouble and the mission may be lost.",
+              market_hours: "Keep in mind that the market will not sell alcoholic drinks after 11 PM.",
+              chocolates: "Charles has a cider and may agree to hand it over in exchange for a box of chocolates.",
+            },
+          }
         },
       },
     },
@@ -66,7 +74,15 @@ const config = {
       missions: {
         test: {
           name: "Prueba",
-          briefing: "Alicia y Rober terminaron la cena de fin de año en la casa de Alicia. Deben comprar una sidra y traerla a la casa antes de que comience el nuevo año.",
+          briefing: {
+            situation: "Alicia y Rober terminaron la cena de fin de año en la casa de Alicia. Deben comprar una sidra y traerla a la casa antes de que comience el nuevo año.",
+            goal: "Debes lograr que Alicia y Rober estén juntos en la casa, con al menos una sidra y sin ningún otro acompañante antes de las doce de la noche.",
+            hints: {
+              relation: "No permitas que Carlos vea a Alicia y a Rober juntos. Puede haber problemas y darse por perdida la misión.",
+              market_hours: "Tené presente que el supermercado no venderá bebidas alcohólicas después de las 23hs.",
+              chocolates: "Carlos tiene una sidra y es posible que acepte ofrecerla a cambio de una caja de bombones.",
+            },
+          },
         },
       },
     },
@@ -99,10 +115,22 @@ const config = {
         square: { name: "Praça" },
         forest: { name: "Floresta" },
       },
+      briefing_labels: {
+        goal: "Objetivo",
+        hints: "Dicas"
+      },
       missions: {
         test: {
           name: "Teste",
-          briefing: "Alice e o Beto terminaram o jantar de Réveillon na casa da Alice. Precisam comprar sidra e trazer de volta antes do ano novo começar.",
+          briefing: {
+            situation: "Alice e o Beto terminaram o jantar de Réveillon na casa da Alice. Precisam comprar sidra e trazer de volta antes do ano novo começar.",
+            goal: "Você deve conseguir que Alice e o Beto fiquem juntos na casa, com pelo menos uma sidra e sem mais ninguém, antes da meia-noite.",
+            hints: {
+              relation: "Não deixe que Carlos veja Alice e o Beto juntos. Pode haver problemas e a missão pode ser dada como perdida.",
+              market_hours: "Lembre-se de que o mercado não venderá bebidas alcoólicas depois das 23h.",
+              chocolates: "Carlos tem uma sidra e pode aceitar trocá-la por uma caixa de bombons.",
+            },
+          },
         },
       },
     },
@@ -144,6 +172,11 @@ const config = {
         { id: "charles", location: "charles_house", items: ["cider"] },
       ],
       locations: ["alice_house", "charles_house", "market"],
+      briefing: [
+        { text: "missions.test.briefing.situation" },
+        { label: "briefing_labels.goal", text: "missions.test.briefing.goal" },
+        { label: "briefing_labels.hints", entries: ["missions.test.briefing.hints.relation", "missions.test.briefing.hints.market_hours", "missions.test.briefing.hints.chocolates"] }
+      ]
     },
   ],
 };
