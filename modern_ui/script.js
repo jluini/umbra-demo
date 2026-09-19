@@ -10,6 +10,7 @@ const langSelector = document.getElementById("lang-selector");
 const langSelectorInline = document.getElementById("lang-selector-inline");
 const missionNumber = document.getElementById("mission-number");
 const missionTitle = document.getElementById("mission-title");
+const missionBriefing = document.getElementById("mission-briefing");
 const clockEl = document.getElementById("clock");
 
 let activeI18n = null;
@@ -60,6 +61,7 @@ function updateClockText() {
 
 function onMissionStart({ mission }) {
   renderMission(mission);
+  Presentation.renderRichText(missionBriefing, mission.briefing, activeI18n, "briefing");
   hideOverlay();
 }
 
