@@ -50,6 +50,10 @@ const createI18n = ({ config = {}, base = {} } = {}) => {
       const value = getPath(dictionary[current], key);
       return value === undefined ? key : value;
     },
+    resolveName(value) {
+      if (typeof value === "string" || value == null) return value;
+      return value[current] ?? value.en ?? Object.values(value)[0];
+    },
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
     emit(name, data) { (listeners[name] || []).forEach((fn) => fn(data)); },
   };

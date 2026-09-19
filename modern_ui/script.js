@@ -8,6 +8,7 @@ const btnAbout = document.getElementById("btn-about");
 const btnShowMenu = document.getElementById("btn-show-menu");
 const langSelector = document.getElementById("lang-selector");
 const missionNumber = document.getElementById("mission-number");
+const missionTitle = document.getElementById("mission-title");
 const clockEl = document.getElementById("clock");
 
 let activeI18n = null;
@@ -25,6 +26,7 @@ function setLanguage(code) {
   if (!active) return;
   markActiveLanguage(active);
   Presentation.applyI18n(document, activeI18n);
+  Presentation.refreshBoundText(activeI18n);
 }
 
 function setPlayLabel(key) {
@@ -42,10 +44,15 @@ function hideOverlay() {
 
 function renderMission(mission) {
   missionNumber.textContent = mission.index + 1;
+  Presentation.bindText(missionTitle, mission.name, activeI18n);
 }
 
 function renderClock(time) {
-  clockEl.textContent = Presentation.formatDateTime(time, activeI18n.language());
+  Presentation.bindText(
+    clockEl,
+    (i18n) => Presentation.formatDateTime(time, i18n.language()),
+    activeI18n
+  );
 }
 
 function onMissionStart({ mission }) {
