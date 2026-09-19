@@ -61,7 +61,10 @@ function updateClockText() {
 
 function onMissionStart({ mission }) {
   renderMission(mission);
-  Presentation.renderRichText(missionBriefing, mission.briefing, activeI18n, "briefing");
+  Presentation.renderRichText(missionBriefing, mission.briefing, activeI18n, {
+    prefix: "briefing",
+    base: Presentation.key("missions", mission.id, "briefing"),
+  });
   hideOverlay();
 }
 

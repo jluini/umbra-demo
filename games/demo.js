@@ -173,9 +173,9 @@ const config = {
       ],
       locations: ["alice_house", "charles_house", "market"],
       briefing: [
-        { text: "missions.test.briefing.situation" },
-        { label: "briefing_labels.goal", text: "missions.test.briefing.goal" },
-        { label: "briefing_labels.hints", entries: ["missions.test.briefing.hints.relation", "missions.test.briefing.hints.market_hours", "missions.test.briefing.hints.chocolates"] }
+        { text: ".situation" },
+        { label: "briefing_labels.goal", text: ".goal" },
+        { label: "briefing_labels.hints", entries: [".hints.relation", ".hints.market_hours", ".hints.chocolates"] }
       ]
     },
   ],

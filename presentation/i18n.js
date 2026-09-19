@@ -58,7 +58,11 @@ const createI18n = ({ config = {}, base = {} } = {}) => {
 
 const key = (type, id, field = "name") => type + "." + id + "." + field;
 
+const resolveKey = (path, base = "") =>
+  path && path.startsWith(".") ? base + path : path;
+
 window.Presentation = window.Presentation || {};
 window.Presentation.createI18n = createI18n;
 window.Presentation.key = key;
+window.Presentation.resolveKey = resolveKey;
 })();

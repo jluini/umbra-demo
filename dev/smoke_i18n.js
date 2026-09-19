@@ -50,6 +50,8 @@ check(i18n.t("umbra.missing") === "umbra.missing", "missing key returns the key"
 
 check(window.Presentation.key("actors", "alice") === "actors.alice.name", "key defaults to the name field");
 check(window.Presentation.key("missions", "test", "briefing") === "missions.test.briefing", "key uses the given field");
+check(window.Presentation.resolveKey(".situation", "missions.test.briefing") === "missions.test.briefing.situation", "relative key resolves against the base");
+check(window.Presentation.resolveKey("briefing_labels.goal", "missions.test.briefing") === "briefing_labels.goal", "absolute key ignores the base");
 
 i18n.setLanguage("en");
 check(i18n.t(window.Presentation.key("actors", "alice")) === "Alice", "entity name resolves (en)");
