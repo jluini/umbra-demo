@@ -14,12 +14,16 @@ let activeI18n = null;
 let activeEngine = null;
 let started = false;
 
+function markActiveLanguage(code) {
+  langSelector.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.lang === code);
+  });
+}
+
 function setLanguage(code) {
   const active = activeI18n.setLanguage(code);
   if (!active) return;
-  langSelector.querySelectorAll(".lang-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.lang === active);
-  });
+  markActiveLanguage(active);
   Presentation.applyI18n(document, activeI18n);
 }
 
@@ -53,10 +57,7 @@ function onClockSet({ time }) {
   renderClock(time);
 }
 
-function loadGame(config) {
-  config = config || {};
-  activeI18n = Presentation.createI18n({ config, base: Umbra.baseTranslations });
-
+function renderLanguageSelector(config) {
   langSelector.replaceChildren();
   for (const lang of config.languages || []) {
     const btn = document.createElement("button");
@@ -65,6 +66,12 @@ function loadGame(config) {
     btn.textContent = lang.name;
     langSelector.appendChild(btn);
   }
+}
+
+function loadGame(config) {
+  config = config || {};
+  activeI18n = Presentation.createI18n({ config, base: Umbra.baseTranslations });
+  renderLanguageSelector(config);
 
   const playable = Array.isArray(config.levels) && config.levels.length > 0;
   activeEngine = playable ? Umbra.create(config) : null;
