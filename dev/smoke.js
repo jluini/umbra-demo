@@ -32,7 +32,7 @@ const config = {
     { from: "a", to: "b", distance: 1.5 },
     { from: "b", to: "c", distance: 2 },
   ],
-  levels: [{
+  missions: [{
     id: "test",
     start: "2024-12-31T22:00:00",
     deadline: "2025-01-01T00:00:00",

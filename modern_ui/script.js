@@ -86,7 +86,7 @@ function loadGame(config) {
   renderLanguageSelector(langSelector, config, "name");
   renderLanguageSelector(langSelectorInline, config, "code");
 
-  const playable = Array.isArray(config.levels) && config.levels.length > 0;
+  const playable = Array.isArray(config.missions) && config.missions.length > 0;
   activeEngine = playable ? Umbra.create(config) : null;
   if (activeEngine) {
     activeEngine.on("mission:start", onMissionStart);

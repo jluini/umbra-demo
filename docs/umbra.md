@@ -8,7 +8,7 @@ The engine is built on two abstract concepts:
 - **actors** — the entities that live in a game world.
 - **items** — the objects with which actors interact.
 - **locations** — the places where actors can be or where events can happen.
-  Each game defines its own locations. A level can expose a subset of the game's
+  Each game defines its own locations. A mission can expose a subset of the game's
   locations. Like actors, locations are defined by unique ids and carry
   per-language names.
 - **routes** — the connections between locations, each with a distance. Routes
@@ -34,11 +34,11 @@ Because the engine supports several independent instances, more than one game ca
 run at a time in the same page — for example, a split screen comparing two games.
 
 Every game built on umbra follows the same shape: its own actors, its own
-levels/missions, and its own aesthetics.
+missions, and its own aesthetics.
 
 A game defines its actors as a set identified by unique ids, each carrying a
 `key` — a stable number that can be used, for example, to map an actor to a
-hotkey. Each level exposes a subset of the game's actors as objects with an `id`
+hotkey. Each mission exposes a subset of the game's actors as objects with an `id`
 and a starting `location`:
 
 Each mission has a **start time** and a **deadline**: the game clock starts at the
@@ -47,7 +47,7 @@ Starting the engine begins at the first mission and emits events the renderer
 feeds into the widgets. The engine requires at least one mission — starting with an
 empty mission list is an error.
 
-Levels include a **briefing** — a per-language text that
+Missions include a **briefing** — a per-language text that
 introduces the mission's situation and objective. Like mission names, the
 briefing can be a string (same in all languages) or a per-language object.
 
@@ -111,7 +111,7 @@ items: {
 
 Items carry per-language names, like actors and locations. The engine resolves item names via `t(itemId)`.
 
-Actors' starting items are declared in the level config as an array of item ids:
+Actors' starting items are declared in the mission config as an array of item ids:
 
 ```js
 actors: [
@@ -147,6 +147,6 @@ The default renderer (`renderer.js`) feeds the following widgets:
   In walk-to mode, shows available destinations with distance and walking time.
 - **actors** — list of actors with their key, translated name, current location,
   and planned destination if any. Clicking an actor's name opens the inventory widget.
-- **locations** — for each location in the level, a subtitle with the location name
+- **locations** — for each location in the mission, a subtitle with the location name
   and a list of actors currently at that location (sorted by key).
 - **clock** — current in-game time. When plans exist and the game is not playing, shows a Play button. Clicking Play starts time progression: the engine advances 1 minute every 250ms. Time stops when the first plan completes (the actor with the shortest walk time arrives at their destination). Actors in transit show their progress (elapsed/walkTime minutes). During play, the inventory widget is hidden and actors in transit cannot be selected.

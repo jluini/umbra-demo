@@ -161,7 +161,7 @@ const config = {
     { from: "charles_house", to: "square", distance: 1.4 },
     { from: "square", to: "market", distance: 0.5 },
   ],
-  levels: [
+  missions: [
     {
       id: "test",
       start: "2024-12-31T22:00:00",

@@ -143,23 +143,23 @@ const moveItem = (inventory, fromActorId, toActorId, itemId) => {
   return true;
 };
 
-const buildActors = (config, level, levelLocs) =>
-  (level.actors || []).map((a) => {
+const buildActors = (config, mission, missionLocs) =>
+  (mission.actors || []).map((a) => {
     const base = config.actors && config.actors[a.id];
     if (!base) {
       throw new Error("umbra: actor '" + a.id + "' is not defined in config.actors");
     }
     const loc = config.locations[a.location];
-    if (!loc || !levelLocs.has(a.location)) {
-      throw new Error("umbra: actor '" + a.id + "' starts at '" + a.location + "' which is not in level locations");
+    if (!loc || !missionLocs.has(a.location)) {
+      throw new Error("umbra: actor '" + a.id + "' starts at '" + a.location + "' which is not in mission locations");
     }
     return { ...base, locationId: a.location, items: (a.items || []).slice() };
   });
 
-const buildInventory = (config, level) => {
+const buildInventory = (config, mission) => {
   const validItems = new Set(Object.keys(config.items || {}));
   const inventory = {};
-  for (const a of level.actors || []) {
+  for (const a of mission.actors || []) {
     const items = a.items || [];
     for (const itemId of items) {
       if (!validItems.has(itemId)) {
@@ -171,40 +171,40 @@ const buildInventory = (config, level) => {
   return inventory;
 };
 
-const buildLocations = (config, level) =>
-  (level.locations || []).map((id) => {
+const buildLocations = (config, mission) =>
+  (mission.locations || []).map((id) => {
     const loc = config.locations[id];
     if (!loc) {
-      throw new Error("umbra: level references unknown location '" + id + "'");
+      throw new Error("umbra: mission references unknown location '" + id + "'");
     }
     return loc;
   });
 
 const buildMission = (config) => {
-  if (!config.levels || config.levels.length === 0) {
-    throw new Error("umbra: no levels configured");
+  if (!config.missions || config.missions.length === 0) {
+    throw new Error("umbra: no missions configured");
   }
   if (!config.locations || Object.keys(config.locations).length === 0) {
     throw new Error("umbra: no locations configured");
   }
 
   const index = getInitialMissionIndex();
-  const level = config.levels[index];
-  if (!level) {
+  const missionDef = config.missions[index];
+  if (!missionDef) {
     throw new Error("umbra: initial mission '" + index + "' not found");
   }
 
-  const levelLocs = new Set(level.locations || []);
-  const actors = buildActors(config, level, levelLocs);
-  const inventory = buildInventory(config, level);
-  const locations = buildLocations(config, level);
+  const missionLocs = new Set(missionDef.locations || []);
+  const actors = buildActors(config, missionDef, missionLocs);
+  const inventory = buildInventory(config, missionDef);
+  const locations = buildLocations(config, missionDef);
 
   const mission = {
-    id: level.id,
+    id: missionDef.id,
     index,
-    briefing: level.briefing,
-    start: parseDate(level.start),
-    deadline: parseDate(level.deadline),
+    briefing: missionDef.briefing,
+    start: parseDate(missionDef.start),
+    deadline: parseDate(missionDef.deadline),
     actors,
     locations,
   };

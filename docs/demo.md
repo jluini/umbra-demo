@@ -22,7 +22,7 @@ The actors or characters of this game are:
 
 3. Charles
 
-4. Dave (unused in current level)
+4. Dave (unused in current mission)
 
 ## Items
 
@@ -32,7 +32,7 @@ The game defines one item type:
 
 ## Locations
 
-The game defines the following locations (of which only the first two are presented at level 1):
+The game defines the following locations (of which only the first two are presented in mission 1):
 
 - Alice's House
 - Bob's House
@@ -55,13 +55,13 @@ Locations are connected by the following routes (bidirectional, distances in km)
 The engine computes shortest paths automatically. For example, Alice's House to Market
 is 1.5 km via Square (1 + 0.5). Forest is unreachable from all other locations.
 
-## Levels
+## Missions
 
-Currently there is a single test level played with Alice, Bob, and Charles.
+Currently there is a single test mission played with Alice, Bob, and Charles.
 
-### Level 1: Test
+### Mission 1: Test
 
-The level starts on December 31, 2024, at 10:00 PM. Alice and Bob are at Alice's
+The mission starts on December 31, 2024, at 10:00 PM. Alice and Bob are at Alice's
 house. Charles is at his own house with a cider. They have two hours to get the
 cider to Alice's house before the new year begins.
 

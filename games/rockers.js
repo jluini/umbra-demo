@@ -15,7 +15,7 @@ const config = {
     bob: { id: "bob", key: 2 },
     carlos: { id: "carlos", key: 3 },
   },
-  levels: [
+  missions: [
     {
       id: "test",
       name: { en: "Test", es: "Prueba", pt: "Teste" },
