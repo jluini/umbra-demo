@@ -2,14 +2,31 @@
 "use strict";
 
 const config = {
-  languages: ["en", "es", "pt"],
+  languages: [
+    { code: "en", name: "English" },
+    { code: "es", name: "Español" },
+    { code: "pt", name: "Português" }
+  ],
   translations: {
-    en: { actors: "Characters", locations: "Places", alice: "Alice", bob: "Bob", charles: "Charles", dave: "Dave" },
-    es: { actors: "Personajes", locations: "Lugares", alice: "Alicia", bob: "Rober", charles: "Carlos", dave: "David" },
+    en: {
+      umbra: {
+        actors: "Characters", locations: "Places",
+      },
+    },
+    es: {
+      umbra: {
+        actors: "Personajes", locations: "Lugares",
+      },
+    },
     pt: {
-      actors: "Personagens", locations: "Lugares",
-      mission: "Missão", startsAt: "Começa às", deadline: "Prazo", clock: "Relógio", briefing: "Resumo",
-      alice: "Alice", bob: "Beto", charles: "Carlos", dave: "Davi"
+      // startsAt: "Começa às", deadline: "Prazo", clock: "Relógio", briefing: "Resumo",
+      umbra: {
+        tagline: "un motor de juegos basados en decisiones", // TODO: traducir a portugués
+        mission: "Missão", actors: "Personagens", locations: "Lugares",
+      },
+      menu: {
+        play: "Jugar", credits: "Créditos", about: "Acerca de", // TODO: traducir a portugués
+      },
     },
   },
   items: {
@@ -19,10 +36,10 @@ const config = {
     diamond: { id: "diamond", name: { en: "Diamond", es: "Diamante", pt: "Diamante" } },
   },
   actors: {
-    alice: { id: "alice", key: 1 },
-    bob: { id: "bob", key: 2 },
-    charles: { id: "charles", key: 3 },
-    dave: { id: "dave", key: 4 },
+    alice: { id: "alice", key: 1, name: { en: "Alice", es: "Alicia", pt: "Alice" } },
+    bob: { id: "bob", key: 2, name: { en: "Bob", es: "Rober", pt: "Beto" } },
+    charles: { id: "charles", key: 3, name: { en: "Charles", es: "Carlos", pt: "Carlos" } },
+    dave: { id: "dave", key: 4, name: { en: "Dave", es: "David", pt: "Davi" } },
   },
   locations: {
     alice_house: { id: "alice_house", name: { en: "Alice's House", es: "Casa de Alicia", pt: "Casa da Alice" } },
@@ -62,5 +79,5 @@ const config = {
 const create = () =>
   Umbra.create({ config: config });
 
-window.Demo = { create };
+window.Demo = { create, config };
 })();

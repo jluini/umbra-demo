@@ -2,7 +2,10 @@
 "use strict";
 
 const config = {
-  languages: ["en", "es"],
+  languages: [
+    { code: "en", name: "English" },
+    { code: "es", name: "Español" }
+  ],
   translations: {
     en: { actors: "Rockers", items: "Objects", alicia: "Alice", bob: "Bob", carlos: "Charles" },
     es: { actors: "Rockers", items: "Objetos", alicia: "Alicia", bob: "Rober", carlos: "Carlos" },
@@ -32,5 +35,5 @@ const create = () => {
   throw new Error("rockers: not implemented yet");
 };
 
-window.Rockers = { create };
+window.Rockers = { create, config };
 })();

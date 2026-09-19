@@ -5,35 +5,68 @@ const parseDate = (s) => new Date(s);
 const WALKING_PACE = 10;
 
 const engineTranslations = {
-  en: { mission: "Mission", actors: "Actors", items: "Items",
-        locations: "Locations",
-        startsAt: "Starts at", deadline: "Deadline", clock: "Clock",
-        briefing: "Briefing" },
-  es: { mission: "Misión", actors: "Actores", items: "Objetos",
-        locations: "Locaciones",
-        startsAt: "Comienza a las", deadline: "Fecha límite", clock: "Reloj",
-        briefing: "Resumen" },
-  de: { mission: "Mission", actors: "Schauspieler", items: "Gegenstände",
-        locations: "Orte",
-        startsAt: "Beginnt um", deadline: "Frist", clock: "Uhr",
-        briefing: "Lagebesprechung" },
+  en: {
+    // startsAt: "Starts at", deadline: "Deadline", clock: "Clock", briefing: "Briefing",
+    umbra: {
+      tagline: "a decision-based game engine",
+      mission: "Mission",
+      actors: "Actors",
+      items: "Items",
+      locations: "Locations",
+    },
+    menu: {
+      play: "Play",
+      credits: "Credits",
+      about: "About"
+    },
+  },
+  es: {
+    // startsAt: "Comienza a las", deadline: "Fecha límite", clock: "Reloj", briefing: "Resumen",
+    umbra: {
+      tagline: "un motor de juegos basados en decisiones",
+      mission: "Misión",
+      actors: "Actores",
+      items: "Objetos",
+      locations: "Locaciones",
+    },
+    menu: {
+      play: "Jugar",
+      credits: "Créditos",
+      about: "Acerca de"
+    },
+  },
+  de: {
+    // startsAt: "Beginnt um", deadline: "Frist", clock: "Uhr", briefing: "Lagebesprechung",
+    umbra: {
+      tagline: "eine entscheidungsbasierte Spiel-Engine",
+      mission: "Mission",
+      actors: "Schauspieler",
+      items: "Gegenstände",
+      locations: "Orte",
+    },
+    menu: {
+      play: "Spielen",
+      credits: "Mitwirkende",
+      about: "Über uns"
+    }
+  }
 };
 
-const resolveName = (name, lang) =>
-  typeof name === "string" ? name : (name[lang] || name.en);
+// const resolveName = (name, lang) =>
+//   typeof name === "string" ? name : (name[lang] || name.en);
 
 const create = (opts = {}) => {
   const config = opts.config || {};
-  const languages = config.languages || ["en"];
-  let currentLanguage = languages[0];
+  // const languages = config.languages || ["en"];
+  // let currentLanguage = languages[0];
   let distMatrix = {};
 
-  const getTranslations = (lang) => ({
-    ...engineTranslations[lang] || engineTranslations.en,
-    ...config.translations?.[lang],
-  });
+  // const getTranslations = (lang) => ({
+  //   ...engineTranslations[lang] || engineTranslations.en,
+  //   ...config.translations?.[lang],
+  // });
 
-  let translations = getTranslations(currentLanguage);
+  // let translations = getTranslations(currentLanguage);
 
   const state = {
     config,
@@ -42,8 +75,8 @@ const create = (opts = {}) => {
     internalTime: 0,
     plans: {},
     inventory: {},
-    language: currentLanguage,
-    translations,
+    // language: currentLanguage,
+    // translations,
   };
 
   const buildDistanceMatrix = () => {
@@ -171,6 +204,7 @@ const create = (opts = {}) => {
         throw new Error("umbra: no locations configured");
       }
       buildDistanceMatrix();
+
       const level = config.levels[0];
       const levelLocs = new Set((level.locations || []));
       const mission = {

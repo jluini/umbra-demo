@@ -115,7 +115,7 @@
     <div class="screen screen-titles active" id="screen-titles">
       <div>
         <div class="logo"><span>U</span>Mb<span>R</span>A</div>
-        <div class="subtitle">a decision-based game engine</div>
+        <div class="tagline">a decision-based game engine</div>
       </div>
       <div class="menu-buttons">
         <button class="btn" id="btn-play" disabled>▶ Play</button>
@@ -148,9 +148,7 @@
 
       const Game = games[name];
       if (!Game) { console.error("umbra: unknown game: " + name); return; }
-      // const game = Game.create();
-      // Renderer.create({ root: document.getElementById("app") }).connect(game);
-      // game.start();
+      loadGame(Game.config);
     })();
   </script>
 </body>

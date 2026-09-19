@@ -15,6 +15,20 @@ function hideOverlay() {
   overlay.classList.remove("active");
 }
 
+function loadGame(config) {
+  // Languages
+  const langSelector = document.getElementById("lang-selector");
+  config.languages.forEach((lang, i) => {
+    const btn = document.createElement("button");
+    btn.className = "lang-btn" + (i === 0 ? " active" : "");
+    btn.dataset.lang = lang.code;
+    btn.textContent = lang.name;
+    langSelector.appendChild(btn);
+  });
+
+  // Future: load briefing, locations, actors, etc.
+}
+
 btnPlay.addEventListener("click", hideOverlay);
 
 btnCredits.addEventListener("click", () => {
@@ -30,13 +44,16 @@ btnShowMenu.addEventListener("click", () => {
   showOverlay();
 });
 
-// Language buttons
-document.querySelectorAll(".lang-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".lang-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    // TODO: call game.setLanguage(btn.dataset.lang)
-  });
+// Event delegation for language buttons
+document.getElementById("lang-selector").addEventListener("click", (e) => {
+  const btn = e.target.closest(".lang-btn");
+  if (!btn) return;
+  document.querySelectorAll(".lang-btn").forEach((b) => b.classList.remove("active"));
+  btn.classList.add("active");
+  // TODO: call game.setLanguage(btn.dataset.lang)
 });
+
+// Exports
+window.loadGame = loadGame;
 
 })();
