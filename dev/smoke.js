@@ -18,15 +18,15 @@ const check = (cond, label) => {
 };
 
 const config = {
-  items: { cider: { id: "cider", name: { en: "Cider" } } },
+  items: { cider: { id: "cider" } },
   actors: {
-    alice: { id: "alice", key: 1, name: { en: "Alice" } },
-    bob: { id: "bob", key: 2, name: { en: "Bob" } },
+    alice: { id: "alice", key: 1 },
+    bob: { id: "bob", key: 2 },
   },
   locations: {
-    a: { id: "a", name: { en: "A" } },
-    b: { id: "b", name: { en: "B" } },
-    c: { id: "c", name: { en: "C" } },
+    a: { id: "a" },
+    b: { id: "b" },
+    c: { id: "c" },
   },
   routes: [
     { from: "a", to: "b", distance: 1.5 },
@@ -34,7 +34,6 @@ const config = {
   ],
   levels: [{
     id: "test",
-    name: { en: "Test" },
     start: "2024-12-31T22:00:00",
     deadline: "2025-01-01T00:00:00",
     actors: [

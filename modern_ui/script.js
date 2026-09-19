@@ -14,6 +14,7 @@ const clockEl = document.getElementById("clock");
 
 let activeI18n = null;
 let activeEngine = null;
+let activeClock = null;
 let started = false;
 
 function markActiveLanguage(code) {
@@ -27,7 +28,7 @@ function setLanguage(code) {
   if (!active) return;
   markActiveLanguage(active);
   Presentation.applyI18n(document, activeI18n);
-  Presentation.refreshBoundText(activeI18n);
+  updateClockText();
 }
 
 function setPlayLabel(key) {
@@ -45,15 +46,16 @@ function hideOverlay() {
 
 function renderMission(mission) {
   missionNumber.textContent = mission.index + 1;
-  Presentation.bindText(missionTitle, mission.name, activeI18n);
+  Presentation.setI18nKey(missionTitle, Presentation.key("missions", mission.id, "name"), activeI18n);
 }
 
 function renderClock(time) {
-  Presentation.bindText(
-    clockEl,
-    (i18n) => Presentation.formatDateTime(time, i18n.language()),
-    activeI18n
-  );
+  activeClock = time;
+  updateClockText();
+}
+
+function updateClockText() {
+  if (activeClock) clockEl.textContent = Presentation.formatDateTime(activeClock, activeI18n.language());
 }
 
 function onMissionStart({ mission }) {

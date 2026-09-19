@@ -50,16 +50,15 @@ const createI18n = ({ config = {}, base = {} } = {}) => {
       const value = getPath(dictionary[current], key);
       return value === undefined ? key : value;
     },
-    resolveName(value) {
-      if (typeof value === "string" || value == null) return value;
-      return value[current] ?? value.en ?? Object.values(value)[0];
-    },
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
     emit(name, data) { (listeners[name] || []).forEach((fn) => fn(data)); },
   };
   return i18n;
 };
 
+const key = (type, id, field = "name") => type + "." + id + "." + field;
+
 window.Presentation = window.Presentation || {};
 window.Presentation.createI18n = createI18n;
+window.Presentation.key = key;
 })();

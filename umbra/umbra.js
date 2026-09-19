@@ -190,8 +190,6 @@ const buildMission = (config) => {
   const mission = {
     id: level.id,
     index,
-    name: level.name,
-    briefing: level.briefing,
     start: parseDate(level.start),
     deadline: parseDate(level.deadline),
     actors,
