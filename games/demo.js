@@ -21,11 +21,11 @@ const config = {
     pt: {
       // startsAt: "Começa às", deadline: "Prazo", clock: "Relógio", briefing: "Resumo",
       umbra: {
-        tagline: "un motor de juegos basados en decisiones", // TODO: traducir a portugués
+        tagline: "um motor de jogos baseados em decisões",
         mission: "Missão", actors: "Personagens", locations: "Lugares",
       },
       menu: {
-        play: "Jugar", credits: "Créditos", about: "Acerca de", // TODO: traducir a portugués
+        play: "Jogar", continue: "Continuar", credits: "Créditos", about: "Sobre",
       },
     },
   },

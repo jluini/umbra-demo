@@ -13,7 +13,7 @@
 
     <div class="top-bar">
       <span class="mission-label">
-        <span id="mission-prefix">Mission</span>
+        <span id="mission-prefix" data-i18n="umbra.mission">Mission</span>
         <span id="mission-number">3</span>
       </span>
       <span class="mission-title" id="mission-title">Midnight Run</span>
@@ -115,12 +115,12 @@
     <div class="screen screen-titles active" id="screen-titles">
       <div>
         <div class="logo"><span>U</span>Mb<span>R</span>A</div>
-        <div class="tagline">a decision-based game engine</div>
+        <div class="tagline" data-i18n="umbra.tagline">a decision-based game engine</div>
       </div>
       <div class="menu-buttons">
-        <button class="btn" id="btn-play" disabled>▶ Play</button>
-        <button class="btn btn-secondary" id="btn-credits" disabled>Credits</button>
-        <button class="btn btn-secondary" id="btn-about" disabled>About</button>
+        <button class="btn" id="btn-play" disabled>▶ <span data-i18n="menu.play">Play</span></button>
+        <button data-i18n="menu.credits" class="btn btn-secondary" id="btn-credits" disabled>Credits</button>
+        <button data-i18n="menu.about" class="btn btn-secondary" id="btn-about" disabled>About</button>
       </div>
       <div class="lang-selector" id="lang-selector"></div>
     </div>
@@ -128,27 +128,44 @@
   </div>
 
   <script src="../umbra/umbra.js"></script>
+  <script src="../presentation/i18n.js"></script>
+  <script src="../presentation/dom.js"></script>
   <script src="../games/demo.js"></script>
   <script src="../games/rockers.js"></script>
   <script src="script.js"></script>
   <script>
     (() => {
-      const games = { demo: Demo, rockers: Rockers };
+      const games = {
+        demo: Demo,
+        rockers: Rockers,
+        none: {
+          config: {
+            languages: [
+              { code: "en", name: "English" },
+              { code: "es", name: "Español" },
+            ]
+          }
+        }
+      };
+
       const params = new URLSearchParams(window.location.search);
       const name = params.get("game");
       const validGames = ["demo", "rockers", "none"];
 
-      if (validGames.includes(name)) {
-        document.getElementById("btn-play").disabled = false;
-        document.getElementById("btn-credits").disabled = false;
-        document.getElementById("btn-about").disabled = false;
+      if (!validGames.includes(name)) {
+        console.error("umbra: unknown game: " + name);
+        return;
       }
 
-      if (name === "none") return;
+      document.getElementById("btn-play").disabled = false;
+      document.getElementById("btn-credits").disabled = false;
+      document.getElementById("btn-about").disabled = false;
 
       const Game = games[name];
-      if (!Game) { console.error("umbra: unknown game: " + name); return; }
-      loadGame(Game.config);
+      const ui = loadGame(Game.config);
+      const requested = params.get("lang");
+      const languages = ui.languages();
+      ui.setLanguage(languages.includes(requested) ? requested : languages[0]);
     })();
   </script>
 </body>

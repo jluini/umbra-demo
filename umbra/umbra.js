@@ -16,6 +16,7 @@ const engineTranslations = {
     },
     menu: {
       play: "Play",
+      continue: "Continue",
       credits: "Credits",
       about: "About"
     },
@@ -31,6 +32,7 @@ const engineTranslations = {
     },
     menu: {
       play: "Jugar",
+      continue: "Continuar",
       credits: "Créditos",
       about: "Acerca de"
     },
@@ -46,6 +48,7 @@ const engineTranslations = {
     },
     menu: {
       play: "Spielen",
+      continue: "Weiter",
       credits: "Mitwirkende",
       about: "Über uns"
     }
