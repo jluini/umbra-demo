@@ -64,6 +64,12 @@ body {
   background: #0f3460;
 }
 
+.top-bar .nav-btn.active {
+  color: #e0e0e0;
+  border-color: #e94560;
+  background: #0f3460;
+}
+
 .top-bar-right {
   margin-left: auto;
   display: flex;
@@ -74,6 +80,9 @@ body {
 .lang-selector-inline {
   display: flex;
   gap: 4px;
+  margin-right: 32px;
+  padding-right: 32px;
+  border-right: 1px solid #555;
 }
 
 .lang-selector-inline .lang-btn {
@@ -106,6 +115,7 @@ body {
 
 /* Mission bar */
 .mission-bar {
+  position: relative;
   grid-column: 1 / -1;
   background: #16213e;
   border: 1px solid #0f3460;
@@ -273,7 +283,8 @@ body {
   margin: 2px 4px 2px 0;
 }
 
-.actor-panel-close {
+.actor-panel-close,
+.mission-bar-close {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -287,7 +298,8 @@ body {
   transition: all 0.15s;
 }
 
-.actor-panel-close:hover {
+.actor-panel-close:hover,
+.mission-bar-close:hover {
   color: #e0e0e0;
   border-color: #e94560;
   background: #0f3460;

@@ -19,6 +19,7 @@
       <span class="mission-title" id="mission-title">Midnight Run</span>
       <div class="top-bar-right">
         <div class="lang-selector-inline" id="lang-selector-inline"></div>
+        <button class="nav-btn active" id="btn-toggle-briefing" aria-expanded="true">?</button>
         <button class="nav-btn" id="btn-show-menu">☰</button>
       </div>
     </div>
@@ -29,7 +30,8 @@
     </div>
 
     <!-- Mission bar (briefing) -->
-    <div class="mission-bar">
+    <div class="mission-bar" id="mission-bar">
+      <button class="mission-bar-close" id="mission-bar-close">✕</button>
       <div id="mission-briefing">
         <div class="briefing-section">
           <span class="briefing-text">A valuable artifact has been spotted at the museum. The team needs to retrieve it before the night guard shift changes at dawn.</span>

@@ -6,12 +6,15 @@ const btnPlay = document.getElementById("btn-play");
 const btnCredits = document.getElementById("btn-credits");
 const btnAbout = document.getElementById("btn-about");
 const btnShowMenu = document.getElementById("btn-show-menu");
+const btnToggleBriefing = document.getElementById("btn-toggle-briefing");
 const btnPlayGame = document.getElementById("btn-play-game");
 const langSelector = document.getElementById("lang-selector");
 const langSelectorInline = document.getElementById("lang-selector-inline");
 const missionNumber = document.getElementById("mission-number");
 const missionTitle = document.getElementById("mission-title");
 const missionBriefing = document.getElementById("mission-briefing");
+const missionBar = document.getElementById("mission-bar");
+const btnMissionBarClose = document.getElementById("mission-bar-close");
 const locationsList = document.getElementById("locations-list");
 const transit = document.getElementById("transit");
 const transitList = document.getElementById("transit-list");
@@ -378,6 +381,15 @@ locationsList.addEventListener("click", (e) => {
 
 actorPanelClose.addEventListener("click", closeActorPanel);
 
+function setBriefingVisible(visible) {
+  missionBar.hidden = !visible;
+  btnToggleBriefing.classList.toggle("active", visible);
+  btnToggleBriefing.setAttribute("aria-expanded", String(visible));
+}
+
+btnToggleBriefing.addEventListener("click", () => setBriefingVisible(missionBar.hidden));
+btnMissionBarClose.addEventListener("click", () => setBriefingVisible(false));
+
 btnPlayGame.addEventListener("click", startPlay);
 
 btnPlay.addEventListener("click", () => {
@@ -418,6 +430,7 @@ function boot() {
   const requested = params.get("lang") || defaults.lang;
   const languages = activeI18n.languages();
   setLanguage(languages.includes(requested) ? requested : languages[0]);
+  btnPlay.focus();
 }
 
 boot();
