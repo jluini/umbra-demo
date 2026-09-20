@@ -266,7 +266,7 @@ const config = {
   },
   actors: {
     alice: { id: "alice", key: 1, color: "#e94560", avatar: avatarSilhouette("#e94560", { style: "long", color: "#7a4a24" }) },
-    bob: { id: "bob", key: 2, color: "#4ea1d3", avatar: avatarSilhouette("#4ea1d3", { style: "short", color: "#2f2f2f" }) },
+    bob: { id: "bob", key: 2, color: "#4ea1d3", avatarUrl: "../games/demo/assets/stylized_boy_transparent.svg" },
     charles: { id: "charles", key: 3, color: "#e0a458", avatar: avatarSilhouette("#e0a458", { style: "short", color: "#c9a24a" }) },
     dave: { id: "dave", key: 4, color: "#6ab04c", avatar: avatarSilhouette("#6ab04c") },
   },

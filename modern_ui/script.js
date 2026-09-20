@@ -83,7 +83,13 @@ function renderAvatars() {
     box.className = "avatar-box";
     box.dataset.actorId = actor.id;
     if (actor.id === selectedActorId) box.classList.add("active");
-    if (actor.avatar) {
+    if (actor.avatarUrl) {
+      const img = document.createElement("img");
+      img.className = "actor-img";
+      img.src = actor.avatarUrl;
+      img.alt = "";
+      box.appendChild(img);
+    } else if (actor.avatar) {
       box.innerHTML = actor.avatar;
     } else {
       box.textContent = actor.id.charAt(0).toUpperCase();
