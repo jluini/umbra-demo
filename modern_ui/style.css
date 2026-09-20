@@ -125,7 +125,7 @@ body {
   height: 60px;
   border-radius: 8px;
   overflow: hidden;
-  background: #16213e;
+  background: rgba(201, 211, 223, 0.55); /* #c9d3df 55% sobre #16213e */
   border: 1px solid #0f3460;
   display: flex;
   align-items: center;
@@ -142,7 +142,7 @@ body {
 
 .avatar-box.drop-target {
   border-color: #e94560;
-  background: #0f3460;
+  background-image: linear-gradient(rgba(233, 69, 96, 0.35), rgba(233, 69, 96, 0.35));
   box-shadow: 0 0 0 2px #e94560;
 }
 
