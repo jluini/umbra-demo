@@ -4,6 +4,46 @@
 const avatarSilhouette = (color) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="8" fill="#1a1a2e"/><circle cx="32" cy="24" r="11" fill="${color}"/><path d="M14 58a18 18 0 0 1 36 0z" fill="${color}"/></svg>`;
 
+const keyIcon =
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 4 56 52">` +
+  `<circle cx="20" cy="20" r="11" fill="none" stroke="#e0a458" stroke-width="7"/>` +
+  `<line x1="28" y1="28" x2="52" y2="52" stroke="#e0a458" stroke-width="7" stroke-linecap="round"/>` +
+  `<line x1="43" y1="43" x2="50" y2="36" stroke="#e0a458" stroke-width="7" stroke-linecap="round"/>` +
+  `<line x1="49" y1="49" x2="56" y2="42" stroke="#e0a458" stroke-width="7" stroke-linecap="round"/>` +
+  `</svg>`;
+
+const shadeColor = (hex, factor) => {
+  const n = parseInt(hex.slice(1), 16);
+  const parts = [16, 8, 0].map((shift) => {
+    const v = Math.round(((n >> shift) & 255) * factor);
+    return Math.min(255, Math.max(0, v)).toString(16).padStart(2, "0");
+  });
+  return "#" + parts.join("");
+};
+
+const potionIcon = (color, dark = shadeColor(color, 0.65)) => {
+  const clipId = "potion-" + color.replace("#", "");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="13 5 38 54">` +
+    `<defs><clipPath id="${clipId}"><circle cx="32" cy="40" r="18"/></clipPath></defs>` +
+    `<rect x="27" y="6" width="10" height="8" rx="2" fill="#8a5a2b"/>` +
+    `<rect x="28" y="13" width="8" height="10" fill="#c9d3df"/>` +
+    `<circle cx="32" cy="40" r="18" fill="#c9d3df"/>` +
+    `<g clip-path="url(#${clipId})">` +
+    `<path d="M14 40a18 18 0 0 0 36 0z" fill="${color}"/>` +
+    `<ellipse cx="32" cy="58" rx="22" ry="12" fill="${dark}"/>` +
+    `<ellipse cx="32" cy="40" rx="18" ry="3" fill="#ffffff" opacity="0.25"/>` +
+    `</g>` +
+    `<circle cx="25" cy="34" r="3" fill="#ffffff" opacity="0.7"/>` +
+    `</svg>`;
+};
+
+const coinIcon =
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="3 3 58 58">` +
+  `<circle cx="32" cy="32" r="26" fill="#e0a458" stroke="#b8792e" stroke-width="4"/>` +
+  `<circle cx="32" cy="32" r="18" fill="none" stroke="#f2c879" stroke-width="3"/>` +
+  `<polygon points="32,19 35.23,27.55 44.36,27.98 37.23,33.70 39.64,42.52 32,37.5 24.36,42.52 26.77,33.70 19.64,27.98 28.77,27.55" fill="#8a5a2b"/>` +
+  `</svg>`;
+
 const config = {
   languages: [
     { code: "en", name: "English" },
@@ -26,6 +66,12 @@ const config = {
         bike: { name: "Bike" },
         chocolates: { name: "Box of Chocolates" },
         diamond: { name: "Diamond" },
+        key: { name: "Vault Key" },
+        red_potion: { name: "Red Potion" },
+        blue_potion: { name: "Blue Potion" },
+        yellow_potion: { name: "Yellow Potion" },
+        green_potion: { name: "Green Potion" },
+        coin: { name: "Coin" },
       },
       locations: {
         alice_house: { name: "Alice's House" },
@@ -65,6 +111,12 @@ const config = {
         bike: { name: "Bicicleta" },
         chocolates: { name: "Caja de Bombones" },
         diamond: { name: "Diamante" },
+        key: { name: "Llave de la bóveda" },
+        red_potion: { name: "Poción roja" },
+        blue_potion: { name: "Poción azul" },
+        yellow_potion: { name: "Poción amarilla" },
+        green_potion: { name: "Poción verde" },
+        coin: { name: "Moneda" },
       },
       locations: {
         alice_house: { name: "Casa de Alicia" },
@@ -109,6 +161,12 @@ const config = {
         bike: { name: "Bicicleta" },
         chocolates: { name: "Caixa de Bombons" },
         diamond: { name: "Diamante" },
+        key: { name: "Chave do cofre" },
+        red_potion: { name: "Poção vermelha" },
+        blue_potion: { name: "Poção azul" },
+        yellow_potion: { name: "Poção amarela" },
+        green_potion: { name: "Poção verde" },
+        coin: { name: "Moeda" },
       },
       locations: {
         alice_house: { name: "Casa da Alice" },
@@ -151,12 +209,18 @@ const config = {
     bike: { id: "bike", avatarString: "🚲" },
     chocolates: { id: "chocolates", avatarString: "🍫" },
     diamond: { id: "diamond", avatarString: "🔷" },
+    key: { id: "key", avatar: keyIcon },
+    red_potion: { id: "red_potion", avatar: potionIcon("#c62f4c") },
+    blue_potion: { id: "blue_potion", avatar: potionIcon("#3a83ad") },
+    yellow_potion: { id: "yellow_potion", avatar: potionIcon("#c9a93a") },
+    green_potion: { id: "green_potion", avatar: potionIcon("#558f3c") },
+    coin: { id: "coin", avatar: coinIcon },
   },
   actors: {
     alice: { id: "alice", key: 1, color: "#e94560", avatar: avatarSilhouette("#e94560") },
     bob: { id: "bob", key: 2, color: "#4ea1d3", avatar: avatarSilhouette("#4ea1d3") },
     charles: { id: "charles", key: 3, color: "#e0a458", avatar: avatarSilhouette("#e0a458") },
-    dave: { id: "dave", key: 4, color: "#6ab04c" },
+    dave: { id: "dave", key: 4, color: "#6ab04c", avatar: avatarSilhouette("#6ab04c") },
   },
   locations: {
     alice_house: { id: "alice_house" },
@@ -178,9 +242,9 @@ const config = {
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: [
-        { id: "alice", location: "alice_house", items: ["bike", "chocolates"] },
-        { id: "bob", location: "alice_house", items: [] },
-        { id: "charles", location: "charles_house", items: ["cider"] },
+        { id: "alice", location: "alice_house", items: ["coin", "bike", "chocolates"] },
+        { id: "bob", location: "alice_house", items: ["red_potion", "blue_potion", "yellow_potion"] },
+        { id: "charles", location: "charles_house", items: ["cider", "diamond", "green_potion", "key"] },
       ],
       locations: ["alice_house", "charles_house", "market"],
       briefing: [

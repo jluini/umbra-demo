@@ -188,7 +188,13 @@ function renderItems(actor) {
     const box = document.createElement("div");
     box.className = "item-box";
     box.dataset.itemId = item.id;
-    box.textContent = item.avatarString || item.id.charAt(0).toUpperCase();
+    if (item.avatar) {
+      box.innerHTML = item.avatar;
+    } else if (item.avatarString) {
+      box.textContent = item.avatarString;
+    } else {
+      box.textContent = item.id.charAt(0).toUpperCase();
+    }
     box.addEventListener("pointerdown", (e) => startItemDrag(e, box, item));
     box.addEventListener("pointermove", onItemPointerMove);
     box.addEventListener("pointerup", onItemPointerUp);
