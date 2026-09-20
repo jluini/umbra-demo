@@ -205,7 +205,7 @@ const buildLocations = (config, mission) =>
     return loc;
   });
 
-const buildMission = (config) => {
+const buildMission = (config, requestedIndex = getInitialMissionIndex()) => {
   if (!config.missions || config.missions.length === 0) {
     throw new Error("umbra: no missions configured");
   }
@@ -213,7 +213,7 @@ const buildMission = (config) => {
     throw new Error("umbra: no locations configured");
   }
 
-  const index = getInitialMissionIndex();
+  const index = config.missions[requestedIndex] ? requestedIndex : getInitialMissionIndex();
   const missionDef = config.missions[index];
   if (!missionDef) {
     throw new Error("umbra: initial mission '" + index + "' not found");
@@ -336,11 +336,11 @@ const create = (config = {}) => {
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
     emit,
     // lifecycle
-    start() {
+    start(missionIndex) {
       if (state.status !== "idle") {
         throw new Error("umbra: game already started");
       }
-      const { mission, inventory } = buildMission(config);
+      const { mission, inventory } = buildMission(config, missionIndex);
       distMatrix = buildDistanceMatrix(config);
 
       state.status = "playing";

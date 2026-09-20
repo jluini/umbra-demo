@@ -104,6 +104,9 @@ const config = {
         bob: { name: "Bob" },
         charles: { name: "Charles" },
         dave: { name: "Dave" },
+        elena: { name: "Elena" },
+        fiona: { name: "Fiona" },
+        george: { name: "George" },
       },
       items: {
         cider: { name: "Cider" },
@@ -139,6 +142,18 @@ const config = {
             },
           }
         },
+        test2: {
+          name: "The Potion Contest",
+          briefing: {
+            situation: "Elena and Fiona are hosting a potion contest in the square. Alice and Bob promised to bring the red potion, but George accidentally left the recipe at Bob's house. Meanwhile, Charles wanders around looking for a way to cheat.",
+            goal: "Get Alice and Bob to the square with the red potion before the contest ends, and keep Charles away from the judges.",
+            hints: {
+              hint1: "Elena will only start the contest once Fiona arrives, so keep an eye on where Fiona is.",
+              hint2: "George left the recipe at Bob's house; someone may need to pick it up first.",
+              hint3: "Charles is very persuasive — do not let him get close to the red potion.",
+            },
+          }
+        },
       },
     },
     es: {
@@ -150,6 +165,9 @@ const config = {
         bob: { name: "Rober" },
         charles: { name: "Carlos" },
         dave: { name: "David" },
+        elena: { name: "Elena" },
+        fiona: { name: "Fiona" },
+        george: { name: "Jorge" },
       },
       items: {
         cider: { name: "Sidra" },
@@ -185,6 +203,18 @@ const config = {
             },
           },
         },
+        test2: {
+          name: "El concurso de pociones",
+          briefing: {
+            situation: "Elena y Fiona organizan un concurso de pociones en la plaza. Alicia y Rober prometieron llevar la poción roja, pero Jorge dejó la receta por error en la casa de Rober. Mientras tanto, Carlos deambula buscando la manera de hacer trampa.",
+            goal: "Lográ que Alicia y Rober lleguen a la plaza con la poción roja antes de que termine el concurso, y mantené a Carlos lejos de los jueces.",
+            hints: {
+              hint1: "Elena solo comenzará el concurso cuando llegue Fiona, así que prestá atención a dónde está Fiona.",
+              hint2: "Jorge dejó la receta en la casa de Rober; puede que alguien tenga que ir a buscarla primero.",
+              hint3: "Carlos es muy persuasivo: no dejes que se acerque a la poción roja.",
+            },
+          }
+        },
       },
     },
     pt: {
@@ -201,6 +231,9 @@ const config = {
         bob: { name: "Beto" },
         charles: { name: "Carlos" },
         dave: { name: "Davi" },
+        elena: { name: "Helena" },
+        fiona: { name: "Fiona" },
+        george: { name: "Jorge" },
       },
       items: {
         cider: { name: "Sidra" },
@@ -248,6 +281,18 @@ const config = {
             },
           },
         },
+        test2: {
+          name: "O concurso de poções",
+          briefing: {
+            situation: "Helena e Fiona organizam um concurso de poções na praça. Alice e Beto prometeram levar a poção vermelha, mas Jorge deixou a receita por engano na casa do Beto. Enquanto isso, Carlos vagueia procurando uma maneira de trapacear.",
+            goal: "Faça Alice e Beto chegarem à praça com a poção vermelha antes que o concurso termine, e mantenha Carlos longe dos juízes.",
+            hints: {
+              hint1: "Helena só vai começar o concurso quando Fiona chegar, então fique de olho onde a Fiona está.",
+              hint2: "Jorge deixou a receita na casa do Beto; talvez alguém precise buscá-la primeiro.",
+              hint3: "Carlos é muito persuasivo — não deixe que ele chegue perto da poção vermelha.",
+            },
+          }
+        },
       },
     },
   },
@@ -265,10 +310,13 @@ const config = {
     coin: { id: "coin", avatar: coinIcon, /* avatarSize: "2.2rem" */ },
   },
   actors: {
-    alice: { id: "alice", key: 1, color: "#e94560", avatar: avatarSilhouette("#e94560", /* { style: "long", color: "#7a4a24" } */), avatarUrl: "../games/demo/assets/girl2.svg" },
-    bob: { id: "bob", key: 2, color: "#4ea1d3", avatar: avatarSilhouette("#4ea1d3"), avatarUrl: "../games/demo/assets/boy.svg" },
-    charles: { id: "charles", key: 3, color: "#e0a458", avatar: avatarSilhouette("#e0a458", /*{ style: "short", color: "#c9a24a" } */), avatarUrl: "../games/demo/assets/male2.svg" },
-    dave: { id: "dave", key: 4, color: "#6ab04c", avatar: avatarSilhouette("#6ab04c") },
+    alice:   { id: "alice",   key: 1, color: "#e94560", avatarUrl: "../games/demo/assets/girl2.svg",  avatar: avatarSilhouette("#e94560", /* { style: "long", color: "#7a4a24" } */) },
+    bob:     { id: "bob",     key: 2, color: "#4ea1d3", avatarUrl: "../games/demo/assets/boy.svg",    avatar: avatarSilhouette("#4ea1d3") },
+    charles: { id: "charles", key: 3, color: "#e0a458", avatarUrl: "../games/demo/assets/male2.svg",  avatar: avatarSilhouette("#e0a458", /*{ style: "short", color: "#c9a24a" } */) },
+    dave:    { id: "dave",    key: 4, color: "#6ab04c", avatarUrl: "../games/demo/assets/boy2.svg",   avatar: avatarSilhouette("#6ab04c") },
+    elena:   { id: "elena",   key: 5, color: "black",     avatarUrl: "../games/demo/assets/girl.svg" },
+    fiona:   { id: "fiona",   key: 6, color: "black",     avatarUrl: "../games/demo/assets/female_hippie.svg" },
+    george:  { id: "george",  key: 7, color: "black",     avatarUrl: "../games/demo/assets/male_professional.svg" },
   },
   locations: {
     alice_house: { id: "alice_house" },
@@ -291,14 +339,34 @@ const config = {
       deadline: "2025-01-01T00:00:00",
       actors: [
         { id: "alice", location: "alice_house", items: ["coin", "bike", "chocolates"] },
-        { id: "bob", location: "alice_house", items: ["red_potion", "blue_potion", "yellow_potion"] },
-        { id: "charles", location: "charles_house", items: ["diamond", "green_potion", "cider", "starCoin", "key"] },
+        { id: "bob", location: "alice_house", items: [] },
+        { id: "charles", location: "charles_house", items: ["cider"] },
       ],
       locations: ["alice_house", "charles_house", "market"],
       briefing: [
         { text: ".situation" },
         { label: "briefingLabels.goal", text: ".goal" },
-        { label: "briefingLabels.hints", entries: [".hints.relation", ".hints.marketHours", ".hints.chocolates"] }
+        { label: "briefingLabels.hints", entries: [".hints.marketHours", ".hints.chocolates", ".hints.relation"] }
+      ]
+    },
+    {
+      id: "test2",
+      start: "2024-12-31T22:00:00",
+      deadline: "2025-01-01T00:00:00",
+      actors: [
+        { id: "alice", location: "alice_house", items: ["coin", "bike", "chocolates"] },
+        { id: "bob", location: "alice_house", items: ["red_potion", "blue_potion", "yellow_potion"] },
+        { id: "charles", location: "charles_house", items: ["diamond", "green_potion", "cider", "starCoin", "key"] },
+        { id: "dave", location: "charles_house" },
+        { id: "elena", location: "charles_house" },
+        { id: "fiona", location: "square" },
+        { id: "george", location: "bob_house" }
+      ],
+      locations: ["alice_house", "bob_house", "charles_house", "square"],
+      briefing: [
+        { text: ".situation" },
+        { label: "briefingLabels.goal", text: ".goal" },
+        { label: "briefingLabels.hints", entries: [".hints.hint1", ".hints.hint2", ".hints.hint3"] }
       ]
     },
   ],

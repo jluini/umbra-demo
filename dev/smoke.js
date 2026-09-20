@@ -42,6 +42,16 @@ const config = {
     ],
     locations: ["a", "b", "c"],
     briefing: [{ text: "missions.test.briefing.situation" }],
+  }, {
+    id: "test2",
+    start: "2025-06-01T10:00:00",
+    deadline: "2025-06-01T12:00:00",
+    actors: [
+      { id: "alice", location: "b", items: ["cider"] },
+      { id: "bob", location: "c" },
+    ],
+    locations: ["a", "b", "c"],
+    briefing: [{ text: "missions.test2.briefing.situation" }],
   }],
 };
 
@@ -88,6 +98,18 @@ check(game.getActor("alice").locationId === "c", "actor moved to destination");
 check(game.getPlan("alice") === null, "plan cleared on arrival");
 
 check(game.stop().getStatus() === "idle", "stop -> idle");
+
+const game2 = window.Umbra.create(config);
+game2.start(1);
+check(game2.getMission().id === "test2", "start(index) selects the requested mission");
+check(game2.getMission().index === 1, "requested mission index is reported");
+check(game2.getActor("alice").locationId === "b", "requested mission uses its own actor locations");
+game2.stop();
+
+const game3 = window.Umbra.create(config);
+game3.start(99);
+check(game3.getMission().index === 0, "out-of-range index falls back to the initial mission");
+game3.stop();
 
 if (failures > 0) {
   console.error(failures + " failure(s)");

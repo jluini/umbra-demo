@@ -488,9 +488,19 @@ function loadGame(config) {
   }
 }
 
-function startGame() {
-  if (activeEngine) activeEngine.start();
+function startGame(missionIndex) {
+  if (activeEngine) activeEngine.start(missionIndex);
   else hideOverlay();
+}
+
+function enterGame(missionIndex) {
+  if (!started) {
+    started = true;
+    setPlayLabel("menu.continue");
+    startGame(missionIndex);
+  } else {
+    hideOverlay();
+  }
 }
 
 function handleLanguageClick(e) {
@@ -532,23 +542,11 @@ btnMissionBarClose.addEventListener("click", () => setBriefingVisible(false));
 
 btnPlayGame.addEventListener("click", startPlay);
 
-btnPlay.addEventListener("click", () => {
-  if (!started) {
-    started = true;
-    setPlayLabel("menu.continue");
-    startGame();
-  } else {
-    hideOverlay();
-  }
-});
+btnPlay.addEventListener("click", () => enterGame());
 
-btnCredits.addEventListener("click", () => {
-  alert("Credits — not implemented yet");
-});
+btnCredits.addEventListener("click", () => enterGame(1));
 
-btnAbout.addEventListener("click", () => {
-  alert("About — not implemented yet");
-});
+btnAbout.addEventListener("click", () => enterGame(2));
 
 btnShowMenu.addEventListener("click", showOverlay);
 
