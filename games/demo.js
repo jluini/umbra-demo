@@ -147,10 +147,10 @@ const config = {
     },
   },
   items: {
-    cider: { id: "cider" },
-    bike: { id: "bike" },
-    chocolates: { id: "chocolates" },
-    diamond: { id: "diamond" },
+    cider: { id: "cider", avatarString: "🍾" },
+    bike: { id: "bike", avatarString: "🚲" },
+    chocolates: { id: "chocolates", avatarString: "🍫" },
+    diamond: { id: "diamond", avatarString: "🔷" },
   },
   actors: {
     alice: { id: "alice", key: 1, color: "#e94560", avatar: avatarSilhouette("#e94560") },

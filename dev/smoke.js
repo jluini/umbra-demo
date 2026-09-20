@@ -59,7 +59,7 @@ check(missionStarts === 1 && clockSets === 1, "start emits mission:start + clock
 check(game.getMission().index === 0, "initial mission index is 0");
 check(game.getMission().briefing.length === 1, "mission briefing structure passes through");
 check(game.getActor("alice").locationId === "a", "actor location referenced by id");
-check(game.getInventory("alice")[0] === "cider", "starting inventory");
+check(game.getInventory("alice")[0] === config.items.cider, "starting inventory");
 
 check(game.distance("a", "c") === 3.5, "shortest path a->c is 3.5");
 check(game.distance("c", "a") === 3.5, "routes are bidirectional");
@@ -72,8 +72,8 @@ game.play();
 check(game.getPlan("alice").startTime === 0, "play assigns startTime");
 check(game.setPlan("alice", "a") === false, "setPlan rejected while in transit");
 
-check(game.giveItem("alice", "bob", "cider") === true, "giveItem within same location");
-check(game.getInventory("bob").includes("cider"), "bob received the cider");
+check(game.giveItem("alice", "bob", config.items.cider) === true, "giveItem within same location");
+check(game.getInventory("bob").includes(config.items.cider), "bob received the cider");
 
 let arrival = null;
 game.on("plan:done", (data) => { arrival = data; });

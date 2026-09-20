@@ -181,10 +181,10 @@ function renderActorPanel() {
 function renderItems(actor) {
   actorPanelItems.replaceChildren();
   const items = activeEngine.getInventory(actor.id);
-  for (const itemId of items) {
+  for (const item of items) {
     const box = document.createElement("div");
     box.className = "item-box";
-    box.textContent = itemId.charAt(0).toUpperCase();
+    box.textContent = item.avatarString || item.id.charAt(0).toUpperCase();
     actorPanelItems.appendChild(box);
   }
 }

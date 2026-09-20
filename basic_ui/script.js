@@ -84,7 +84,7 @@ const languageNames = {
             li.textContent = activeI18n.t(other.id);
             li.style.cursor = "pointer";
             li.addEventListener("click", () => {
-              game.giveItem(actor.id, other.id, giveMode.itemId);
+              game.giveItem(actor.id, other.id, giveMode.item);
               giveMode = null;
               renderInventory();
               renderAll();
@@ -105,9 +105,9 @@ const languageNames = {
           itemsLabel.textContent = activeI18n.t("items") + ": ";
           itemsDiv.appendChild(itemsLabel);
           for (let i = 0; i < items.length; i++) {
-            const itemId = items[i];
-            const itemConfig = game.getConfig().items[itemId];
-            const itemName = itemConfig ? resolveName(itemConfig.name) : itemId;
+            const item = items[i];
+            const itemConfig = game.getConfig().items[item.id];
+            const itemName = itemConfig ? resolveName(itemConfig.name) : item.id;
             if (i > 0) itemsDiv.appendChild(document.createTextNode(", "));
             if (othersAtLoc.length > 0) {
               const span = document.createElement("span");
@@ -115,7 +115,7 @@ const languageNames = {
               span.style.cursor = "pointer";
               span.style.textDecoration = "underline";
               span.addEventListener("click", () => {
-                giveMode = { itemId, itemName };
+                giveMode = { item, itemName };
                 renderInventory();
               });
               itemsDiv.appendChild(span);

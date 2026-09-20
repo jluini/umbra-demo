@@ -156,14 +156,15 @@ const buildPlan = (actor, destination, matrix) => ({
   walkTime: computeWalkTime(distanceFrom(matrix, actor.locationId, destination)),
 });
 
-const moveItem = (inventory, fromActorId, toActorId, itemId) => {
+
+const moveItem = (inventory, fromActorId, toActorId, item) => {
   const fromItems = inventory[fromActorId];
   if (!fromItems) return false;
-  const idx = fromItems.indexOf(itemId);
+  const idx = fromItems.indexOf(item);
   if (idx === -1) return false;
   fromItems.splice(idx, 1);
   if (!inventory[toActorId]) inventory[toActorId] = [];
-  inventory[toActorId].push(itemId);
+  inventory[toActorId].push(item);
   return true;
 };
 
@@ -190,7 +191,7 @@ const buildInventory = (config, mission) => {
         throw new Error("umbra: actor '" + a.id + "' has unknown item '" + itemId + "'");
       }
     }
-    inventory[a.id] = items.slice();
+    inventory[a.id] = items.map((id) => config.items[id]);
   }
   return inventory;
 };
@@ -284,13 +285,13 @@ const create = (config = {}) => {
       emit("plan:cancel", { actorId });
       return true;
     },
-    giveItem(fromActorId, toActorId, itemId) {
+    giveItem(fromActorId, toActorId, item) {
       if (!isPlaying()) return false;
       const from = findActor(state.mission, fromActorId);
       const to = findActor(state.mission, toActorId);
       if (!from || !to || from.locationId !== to.locationId) return false;
-      if (!moveItem(state.inventory, fromActorId, toActorId, itemId)) return false;
-      emit("item:give", { from: fromActorId, to: toActorId, itemId });
+      if (!moveItem(state.inventory, fromActorId, toActorId, item)) return false;
+      emit("item:give", { from: fromActorId, to: toActorId, item });
       return true;
     },
     advanceTime(minutes) {
