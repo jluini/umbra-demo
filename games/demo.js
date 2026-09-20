@@ -1,6 +1,9 @@
 (() => {
 "use strict";
 
+const avatarSilhouette = (color) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="8" fill="#1a1a2e"/><circle cx="32" cy="24" r="11" fill="${color}"/><path d="M14 58a18 18 0 0 1 36 0z" fill="${color}"/></svg>`;
+
 const config = {
   languages: [
     { code: "en", name: "English" },
@@ -150,10 +153,10 @@ const config = {
     diamond: { id: "diamond" },
   },
   actors: {
-    alice: { id: "alice", key: 1 },
-    bob: { id: "bob", key: 2 },
-    charles: { id: "charles", key: 3 },
-    dave: { id: "dave", key: 4 },
+    alice: { id: "alice", key: 1, color: "#e94560", avatar: avatarSilhouette("#e94560") },
+    bob: { id: "bob", key: 2, color: "#4ea1d3", avatar: avatarSilhouette("#4ea1d3") },
+    charles: { id: "charles", key: 3, color: "#e0a458", avatar: avatarSilhouette("#e0a458") },
+    dave: { id: "dave", key: 4, color: "#6ab04c" },
   },
   locations: {
     alice_house: { id: "alice_house" },

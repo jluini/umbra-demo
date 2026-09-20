@@ -15,6 +15,7 @@ const missionTitle = document.getElementById("mission-title");
 const missionBriefing = document.getElementById("mission-briefing");
 const missionBar = document.getElementById("mission-bar");
 const btnMissionBarClose = document.getElementById("mission-bar-close");
+const avatarsRow = document.getElementById("avatars");
 const locationsList = document.getElementById("locations-list");
 const transit = document.getElementById("transit");
 const transitList = document.getElementById("transit-list");
@@ -66,6 +67,24 @@ function hideOverlay() {
 function renderMission(mission) {
   missionNumber.textContent = mission.index + 1;
   Presentation.setI18nKey(missionTitle, Presentation.key("missions", mission.id, "name"), activeI18n);
+}
+
+function renderAvatars(mission) {
+  const actors = mission.actors.slice().sort((a, b) => a.key - b.key);
+  avatarsRow.hidden = actors.length === 0;
+  avatarsRow.replaceChildren();
+
+  for (const actor of actors) {
+    const box = document.createElement("div");
+    box.className = "avatar-box";
+    if (actor.avatar) {
+      box.innerHTML = actor.avatar;
+    } else {
+      box.textContent = actor.id.charAt(0).toUpperCase();
+      box.style.color = actor.color || "#e0e0e0";
+    }
+    avatarsRow.appendChild(box);
+  }
 }
 
 function renderClock(time) {
@@ -313,6 +332,7 @@ function updateClockText() {
 
 function onMissionStart({ mission }) {
   renderMission(mission);
+  renderAvatars(mission);
   Presentation.renderRichText(missionBriefing, mission.briefing, activeI18n, {
     prefix: "briefing",
     base: Presentation.key("missions", mission.id, "briefing"),
