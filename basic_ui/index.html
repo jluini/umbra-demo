@@ -24,20 +24,25 @@
   </div>
 
   <script src="../umbra/umbra.js"></script>
+  <script src="../presentation/i18n.js"></script>
   <script src="../games/demo.js"></script>
-  <script src="../games/rockers.js"></script>
-  <script src="script.js"></script>
+
   <script>
     (() => {
-      const games = { demo: Demo, rockers: Rockers };
+      const games = { demo: Demo };
       const params = new URLSearchParams(window.location.search);
       const name = params.get("game") || "demo";
       const Game = games[name];
       if (!Game) { console.error("umbra: unknown game: " + name); return; }
-      const game = Game.create();
-      Renderer.create({ root: document.getElementById("app") }).connect(game);
-      game.start();
+
+      // const game = Game.create();
+      // Renderer.create({ root: document.getElementById("app") }).connect(game);
+      // game.start();
+
+      window.game = Game;
     })();
   </script>
+
+  <script src="script.js"></script>
 </body>
 </html>

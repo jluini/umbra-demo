@@ -22,13 +22,15 @@ const languageNames = {
   ja: "日本語",
 };
 
-const create = ({ root }) => {
+//const create = ({ root }) => {
   const widgets = {};
+  const root = document.getElementById("app");
+
   for (const el of root.querySelectorAll("[data-widget]")) {
     widgets[el.getAttribute("data-widget")] = el;
   }
-  return {
-    connect(game) {
+  //return {
+    function connect(game) {
       let selectedActor = null;
       let walkToMode = false;
       let giveMode = null;
@@ -42,17 +44,17 @@ const create = ({ root }) => {
           return;
         }
         widgets.inventory.style.display = "";
-        const mission = game.state.mission;
+        const mission = game.getMission();
         const actor = mission.actors.find((a) => a.id === selectedActor);
         if (!actor) { widgets.inventory.style.display = "none"; return; }
 
-        const plan = game.state.plans[actor.id];
+        const plan = game.getPlans()[actor.id];
         if (plan && plan.startTime !== null) {
           const destLoc = mission.locations.find((l) => l.id === plan.destination);
-          const destName = destLoc ? game.resolveName(destLoc.name) : plan.destination;
+          const destName = destLoc ? resolveName(destLoc.name) : plan.destination;
           const elapsed = game.state.internalTime - plan.startTime;
           const children = [
-            document.createTextNode(game.t(actor.id) + " → " + destName + " (en camino: " + elapsed + "/" + plan.walkTime + " min)")
+            document.createTextNode(activeI18n.t(actor.id) + " → " + destName + " (en camino: " + elapsed + "/" + plan.walkTime + " min)")
           ];
           widgets.inventory.replaceChildren(...children);
           return;
@@ -61,15 +63,15 @@ const create = ({ root }) => {
         const children = [];
 
         const header = document.createElement("div");
-        header.textContent = game.t(actor.id) + " (" + game.resolveName(actor.location.name) + ")";
+        header.textContent = t(actor.id) + " (" + t("actors." + actor.locationId + ".name") + ")";
         children.push(header);
 
-        const items = game.state.inventory[actor.id] || [];
+        const items = game.getInventory(actor.id) || [];
         const othersAtLoc = mission.actors.filter((a) =>
           a.id !== actor.id &&
           a.location &&
           a.location.id === actor.location.id &&
-          !(game.state.plans[a.id] && game.state.plans[a.id].startTime !== null)
+          !(game.getPlans()[a.id] && game.getPlans()[a.id].startTime !== null)
         );
 
         if (giveMode) {
@@ -79,7 +81,7 @@ const create = ({ root }) => {
           const recipientList = document.createElement("ul");
           for (const other of othersAtLoc) {
             const li = document.createElement("li");
-            li.textContent = game.t(other.id);
+            li.textContent = activeI18n.t(other.id);
             li.style.cursor = "pointer";
             li.addEventListener("click", () => {
               game.giveItem(actor.id, other.id, giveMode.itemId);
@@ -100,12 +102,12 @@ const create = ({ root }) => {
         } else if (items.length > 0) {
           const itemsDiv = document.createElement("div");
           const itemsLabel = document.createElement("span");
-          itemsLabel.textContent = game.t("items") + ": ";
+          itemsLabel.textContent = activeI18n.t("items") + ": ";
           itemsDiv.appendChild(itemsLabel);
           for (let i = 0; i < items.length; i++) {
             const itemId = items[i];
-            const itemConfig = game.state.config.items[itemId];
-            const itemName = itemConfig ? game.resolveName(itemConfig.name) : itemId;
+            const itemConfig = game.getConfig().items[itemId];
+            const itemName = itemConfig ? resolveName(itemConfig.name) : itemId;
             if (i > 0) itemsDiv.appendChild(document.createTextNode(", "));
             if (othersAtLoc.length > 0) {
               const span = document.createElement("span");
@@ -134,14 +136,14 @@ const create = ({ root }) => {
             const li = document.createElement("li");
             const dist = game.distance(actor.location.id, loc.id);
             if (loc.id === actor.location.id) {
-              li.textContent = game.resolveName(loc.name) + " — actual";
+              li.textContent = resolveName(loc.name) + " — actual";
               li.style.color = "gray";
             } else if (dist === Infinity) {
-              li.textContent = game.resolveName(loc.name) + " — sin ruta";
+              li.textContent = resolveName(loc.name) + " — sin ruta";
               li.style.color = "gray";
             } else {
               const walkTime = Math.round(game.computeWalkTime(dist));
-              li.textContent = game.resolveName(loc.name) + " — " + walkTime + " min (" + dist + " km)";
+              li.textContent = resolveName(loc.name) + " — " + walkTime + " min (" + dist + " km)";
               li.style.cursor = "pointer";
               li.addEventListener("click", () => {
                 game.setPlan(actor.id, loc.id);
@@ -162,10 +164,10 @@ const create = ({ root }) => {
           });
           children.push(cancelBtn);
         } else {
-          const plan = game.state.plans[actor.id];
+          const plan = game.getPlans()[actor.id];
           if (plan && plan.startTime === null) {
             const destLoc = mission.locations.find((l) => l.id === plan.destination);
-            const destName = destLoc ? game.resolveName(destLoc.name) : plan.destination;
+            const destName = destLoc ? resolveName(destLoc.name) : plan.destination;
             const planDiv = document.createElement("div");
             planDiv.textContent = "→ Walk to " + destName + " (" + plan.walkTime + " min)";
             children.push(planDiv);
@@ -204,34 +206,34 @@ const create = ({ root }) => {
       };
 
       const renderAll = () => {
-        const lang = game.state.language;
-        const mission = game.state.mission;
+        const lang = activeI18n.language();
+        const mission = game.getMission();
         if (widgets.mission && mission) {
           const header = document.createElement("div");
           header.textContent =
-            game.t("mission") + ": " + game.resolveName(mission.name) +
-            " | " + game.t("startsAt") + ": " + formatTime(mission.start, lang) +
-            " | " + game.t("deadline") + ": " + formatTime(mission.deadline, lang);
+            activeI18n.t("mission") + ": " + resolveName(mission.name) +
+            " | " + activeI18n.t("startsAt") + ": " + formatTime(mission.start, lang) +
+            " | " + activeI18n.t("deadline") + ": " + formatTime(mission.deadline, lang);
           const children = [header];
           if (mission.briefing) {
             const p = document.createElement("p");
-            p.textContent = game.t("briefing") + ": " + game.resolveName(mission.briefing);
+            p.textContent = activeI18n.t("briefing") + ": " + resolveName(mission.briefing);
             children.push(p);
           }
           widgets.mission.replaceChildren(...children);
         }
         if (widgets.actors && mission) {
           const title = document.createElement("h3");
-          title.textContent = game.t("actors") + ":";
+          title.textContent = activeI18n.t("actors") + ":";
           const list = document.createElement("ul");
           for (const actor of mission.actors) {
             const item = document.createElement("li");
-            const plan = game.state.plans[actor.id];
-            const loc = actor.location ? " (" + game.resolveName(actor.location.name) + ")" : "";
+            const plan = game.getPlans()[actor.id];
+            const loc = actor.location ? " (" + resolveName(actor.location.name) + ")" : "";
             let planText = "";
             if (plan) {
               const destLoc = mission.locations.find((l) => l.id === plan.destination);
-              const destName = destLoc ? game.resolveName(destLoc.name) : plan.destination;
+              const destName = destLoc ? resolveName(destLoc.name) : plan.destination;
               if (plan.startTime !== null) {
                 const elapsed = game.state.internalTime - plan.startTime;
                 planText = " → " + destName + " (en camino: " + elapsed + "/" + plan.walkTime + " min)";
@@ -239,7 +241,7 @@ const create = ({ root }) => {
                 planText = " → " + destName + " (" + plan.walkTime + " min)";
               }
             }
-            item.textContent = actor.key + ". " + game.t(actor.id) + loc + planText;
+            item.textContent = actor.key + ". " + activeI18n.t(actor.id) + loc + planText;
             item.style.cursor = "pointer";
             item.addEventListener("click", () => {
               if (plan && plan.startTime !== null) return;
@@ -253,16 +255,16 @@ const create = ({ root }) => {
         }
         if (widgets.locations && mission) {
           const title = document.createElement("h3");
-          title.textContent = game.t("locations") + ":";
+          title.textContent = activeI18n.t("locations") + ":";
           const children = [title];
           for (const loc of mission.locations) {
             const subtitle = document.createElement("h4");
-            subtitle.textContent = game.resolveName(loc.name);
+            subtitle.textContent = resolveName(loc.name);
             children.push(subtitle);
             const actorsAtLoc = mission.actors
               .filter((a) => {
                 if (!a.location) return false;
-                const plan = game.state.plans[a.id];
+                const plan = game.getPlans()[a.id];
                 if (plan && plan.startTime !== null) return false;
                 return a.location.id === loc.id;
               })
@@ -271,7 +273,7 @@ const create = ({ root }) => {
               const list = document.createElement("ul");
               for (const actor of actorsAtLoc) {
                 const item = document.createElement("li");
-                item.textContent = game.t(actor.id);
+                item.textContent = activeI18n.t(actor.id);
                 item.style.cursor = "pointer";
                 item.addEventListener("click", () => {
                   selectedActor = actor.id;
@@ -283,9 +285,9 @@ const create = ({ root }) => {
               children.push(list);
             }
           }
-          
+
           const inTransit = mission.actors.filter((a) => {
-            const plan = game.state.plans[a.id];
+            const plan = game.getPlans()[a.id];
             return plan && plan.startTime !== null;
           });
           if (inTransit.length > 0) {
@@ -294,24 +296,24 @@ const create = ({ root }) => {
             children.push(transitDiv);
             const list = document.createElement("ul");
             for (const actor of inTransit) {
-              const plan = game.state.plans[actor.id];
+              const plan = game.getPlans()[actor.id];
               const destLoc = mission.locations.find((l) => l.id === plan.destination);
-              const destName = destLoc ? game.resolveName(destLoc.name) : plan.destination;
+              const destName = destLoc ? resolveName(destLoc.name) : plan.destination;
               const elapsed = game.state.internalTime - plan.startTime;
               const item = document.createElement("li");
-              item.textContent = game.t(actor.id) + " → " + destName + " (" + elapsed + "/" + plan.walkTime + " min)";
+              item.textContent = activeI18n.t(actor.id) + " → " + destName + " (" + elapsed + "/" + plan.walkTime + " min)";
               list.appendChild(item);
             }
             children.push(list);
           }
-          
+
           widgets.locations.replaceChildren(...children);
         }
-        if (widgets.clock && game.state.clock) {
+        if (widgets.clock && game.getClock()) {
           const clockDiv = document.createElement("div");
-          clockDiv.textContent = game.t("clock") + ": " + formatTime(game.state.clock, lang);
-          
-          const hasPlans = Object.keys(game.state.plans).length > 0;
+          clockDiv.textContent = activeI18n.t("clock") + ": " + formatTime(game.getClock(), lang);
+
+          const hasPlans = Object.keys(game.getPlans()).length > 0;
           if (!playing && hasPlans) {
             const playBtn = document.createElement("button");
             playBtn.textContent = "▶ Play";
@@ -336,12 +338,12 @@ const create = ({ root }) => {
             });
             clockDiv.appendChild(playBtn);
           }
-          
+
           widgets.clock.textContent = "";
           widgets.clock.appendChild(clockDiv);
         }
-        if (widgets.analog_clock && game.state.clock) {
-          const clock = game.state.clock;
+        if (widgets.analog_clock && game.getClock()) {
+          const clock = game.getClock();
           const h = clock.getHours();
           const m = clock.getMinutes();
           const hourAngle = ((h % 12) + m / 60) * 30;
@@ -422,7 +424,7 @@ const create = ({ root }) => {
       }
 
       if (widgets.languages) {
-        const langs = game.languages();
+        const langs = game.getConfig().languages;
         if (langs.length <= 1) {
           widgets.languages.style.display = "none";
         } else {
@@ -443,9 +445,46 @@ const create = ({ root }) => {
           el.replaceChildren();
         }
       });
-    },
-  };
-};
+    }
+  // };
+// };
 
-window.Renderer = { create };
+// window.Renderer = { create };
+
+let activeI18n = null;
+let activeEngine = null;
+
+function boot() {
+  loadGame(window.game.config);
+  // set language ?
+}
+
+function loadGame(config) {
+  activeI18n = Presentation.createI18n({ config, base: Umbra.baseTranslations });
+  activeI18n.setLanguage("en");
+  activeEngine = Umbra.create(config);
+
+  connect(activeEngine);
+
+  activeEngine.start();
+
+  // activeEngine.on("mission:start", onMissionStart);
+  // activeEngine.on("clock:set", onClockSet);
+  // activeEngine.on("plan:set", onPlansChanged);
+  // activeEngine.on("plan:cancel", onPlansChanged);
+  // activeEngine.on("plan:done", onPlansChanged);
+}
+
+// function onMissionStart() { // ({ mission }) {
+//   renderAll();
+// }
+
+function t(key) { return activeI18n.t(key); }
+
+function resolveName(nameToResolve) {
+  return nameToResolve;
+}
+
+boot();
+
 })();
