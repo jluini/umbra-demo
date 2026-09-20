@@ -140,6 +140,12 @@ body {
   box-shadow: 0 0 0 2px #e94560;
 }
 
+.avatar-box.drop-target {
+  border-color: #e94560;
+  background: #0f3460;
+  box-shadow: 0 0 0 2px #e94560;
+}
+
 .avatar-box svg {
   width: 100%;
   height: 100%;
@@ -327,6 +333,15 @@ body {
   font-weight: 700;
   font-size: 1rem;
   color: #e0e0e0;
+  cursor: grab;
+}
+
+.item-box:active {
+  cursor: grabbing;
+}
+
+.item-box.dragging {
+  opacity: 0.4;
 }
 
 .actor-panel-close,

@@ -34,6 +34,7 @@ let walkToMode = false;
 let playing = false;
 let playTimer = null;
 let started = false;
+let draggedItem = null;
 
 const REAL_MS_PER_GAME_MIN = 250;
 
@@ -184,7 +185,20 @@ function renderItems(actor) {
   for (const item of items) {
     const box = document.createElement("div");
     box.className = "item-box";
+    box.draggable = true;
+    box.dataset.itemId = item.id;
     box.textContent = item.avatarString || item.id.charAt(0).toUpperCase();
+    box.addEventListener("dragstart", (e) => {
+      draggedItem = item;
+      box.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", item.id);
+    });
+    box.addEventListener("dragend", () => {
+      draggedItem = null;
+      box.classList.remove("dragging");
+      clearDropTargets();
+    });
     actorPanelItems.appendChild(box);
   }
 }
@@ -263,6 +277,12 @@ function closeActorPanel() {
   actorPanel.hidden = true;
   renderLocations();
   renderAvatars();
+}
+
+function clearDropTargets() {
+  avatarsRow.querySelectorAll(".avatar-box.drop-target").forEach((box) => {
+    box.classList.remove("drop-target");
+  });
 }
 
 function renderTransit() {
@@ -410,6 +430,36 @@ avatarsRow.addEventListener("click", (e) => {
   if (box && !playing) {
     setBriefingVisible(false);
     selectActor(box.dataset.actorId);
+  }
+});
+
+avatarsRow.addEventListener("dragover", (e) => {
+  if (!draggedItem || !selectedActorId) return;
+  const box = e.target.closest(".avatar-box");
+  if (!box || box.dataset.actorId === selectedActorId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  box.classList.add("drop-target");
+});
+
+avatarsRow.addEventListener("dragleave", (e) => {
+  const box = e.target.closest(".avatar-box");
+  if (!box) return;
+  if (e.relatedTarget && box.contains(e.relatedTarget)) return;
+  box.classList.remove("drop-target");
+});
+
+avatarsRow.addEventListener("drop", (e) => {
+  const box = e.target.closest(".avatar-box");
+  const item = draggedItem;
+  draggedItem = null;
+  clearDropTargets();
+  if (!box || !item || !selectedActorId) return;
+  e.preventDefault();
+  const toActorId = box.dataset.actorId;
+  if (toActorId === selectedActorId) return;
+  if (activeEngine.giveItem(selectedActorId, toActorId, item)) {
+    renderActorPanel();
   }
 });
 
