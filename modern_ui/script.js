@@ -569,6 +569,11 @@ function boot() {
   const languages = activeI18n.languages();
   setLanguage(languages.includes(requested) ? requested : languages[0]);
   btnPlay.focus();
+
+  const play = params.get("play");
+  if (play !== null && /^\d+$/.test(play)) {
+    enterGame(Number(play) - 1);
+  }
 }
 
 boot();
