@@ -131,7 +131,13 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.avatar-box.active {
+  border-color: #e94560;
+  box-shadow: 0 0 0 2px #e94560;
 }
 
 .avatar-box svg {

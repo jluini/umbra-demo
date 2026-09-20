@@ -69,7 +69,8 @@ function renderMission(mission) {
   Presentation.setI18nKey(missionTitle, Presentation.key("missions", mission.id, "name"), activeI18n);
 }
 
-function renderAvatars(mission) {
+function renderAvatars() {
+  const mission = activeEngine.getMission();
   const actors = mission.actors.slice().sort((a, b) => a.key - b.key);
   avatarsRow.hidden = actors.length === 0;
   avatarsRow.replaceChildren();
@@ -77,6 +78,8 @@ function renderAvatars(mission) {
   for (const actor of actors) {
     const box = document.createElement("div");
     box.className = "avatar-box";
+    box.dataset.actorId = actor.id;
+    if (actor.id === selectedActorId) box.classList.add("active");
     if (actor.avatar) {
       box.innerHTML = actor.avatar;
     } else {
@@ -228,6 +231,7 @@ function selectActor(actorId) {
   walkToMode = false;
   renderActorPanel();
   renderLocations();
+  renderAvatars();
 }
 
 function enterWalkTo() {
@@ -259,6 +263,7 @@ function closeActorPanel() {
   walkToMode = false;
   actorPanel.hidden = true;
   renderLocations();
+  renderAvatars();
 }
 
 function renderTransit() {
@@ -332,7 +337,7 @@ function updateClockText() {
 
 function onMissionStart({ mission }) {
   renderMission(mission);
-  renderAvatars(mission);
+  renderAvatars();
   Presentation.renderRichText(missionBriefing, mission.briefing, activeI18n, {
     prefix: "briefing",
     base: Presentation.key("missions", mission.id, "briefing"),
@@ -400,6 +405,14 @@ locationsList.addEventListener("click", (e) => {
 });
 
 actorPanelClose.addEventListener("click", closeActorPanel);
+
+avatarsRow.addEventListener("click", (e) => {
+  const box = e.target.closest("[data-actor-id]");
+  if (box && !playing) {
+    setBriefingVisible(false);
+    selectActor(box.dataset.actorId);
+  }
+});
 
 function setBriefingVisible(visible) {
   missionBar.hidden = !visible;
