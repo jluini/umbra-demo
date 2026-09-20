@@ -1,8 +1,25 @@
 (() => {
 "use strict";
 
-const avatarSilhouette = (color) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="8" fill="#1a1a2e"/><circle cx="32" cy="24" r="11" fill="${color}"/><path d="M14 58a18 18 0 0 1 36 0z" fill="${color}"/></svg>`;
+const avatarSilhouette = (color, hair = null) => {
+  const hairColor = hair && hair.color;
+  const parts = [
+    `<rect width="64" height="64" rx="8" fill="#1a1a2e"/>`,
+    `<path d="M14 58a18 18 0 0 1 36 0z" fill="${color}"/>`,
+  ];
+  if (hair && hair.style === "long") {
+    parts.push(`<rect x="18" y="13" width="28" height="33" rx="13" fill="${hairColor}"/>`);
+  }
+  parts.push(`<circle cx="32" cy="24" r="11" fill="${color}"/>`);
+  if (hair) {
+    parts.push(`<path d="M21 24a11 11 0 0 1 22 0z" fill="${hairColor}"/>`);
+    if (hair.style === "short") {
+      parts.push(`<rect x="20.4" y="21" width="2.2" height="5" rx="1.1" fill="${hairColor}"/>`);
+      parts.push(`<rect x="41.4" y="21" width="2.2" height="5" rx="1.1" fill="${hairColor}"/>`);
+    }
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${parts.join("")}</svg>`;
+};
 
 const keyIcon =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 4 56 52">` +
@@ -248,9 +265,9 @@ const config = {
     coin: { id: "coin", avatar: coinIcon, /* avatarSize: "2.2rem" */ },
   },
   actors: {
-    alice: { id: "alice", key: 1, color: "#e94560", avatar: avatarSilhouette("#e94560") },
-    bob: { id: "bob", key: 2, color: "#4ea1d3", avatar: avatarSilhouette("#4ea1d3") },
-    charles: { id: "charles", key: 3, color: "#e0a458", avatar: avatarSilhouette("#e0a458") },
+    alice: { id: "alice", key: 1, color: "#e94560", avatar: avatarSilhouette("#e94560", { style: "long", color: "#7a4a24" }) },
+    bob: { id: "bob", key: 2, color: "#4ea1d3", avatar: avatarSilhouette("#4ea1d3", { style: "short", color: "#2f2f2f" }) },
+    charles: { id: "charles", key: 3, color: "#e0a458", avatar: avatarSilhouette("#e0a458", { style: "short", color: "#c9a24a" }) },
     dave: { id: "dave", key: 4, color: "#6ab04c", avatar: avatarSilhouette("#6ab04c") },
   },
   locations: {
