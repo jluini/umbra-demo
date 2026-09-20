@@ -37,11 +37,38 @@ const potionIcon = (color, dark = shadeColor(color, 0.65)) => {
     `</svg>`;
 };
 
-const coinIcon =
+const starCoinIcon =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="3 3 58 58">` +
   `<circle cx="32" cy="32" r="26" fill="#e0a458" stroke="#b8792e" stroke-width="4"/>` +
   `<circle cx="32" cy="32" r="18" fill="none" stroke="#f2c879" stroke-width="3"/>` +
   `<polygon points="32,19 35.23,27.55 44.36,27.98 37.23,33.70 39.64,42.52 32,37.5 24.36,42.52 26.77,33.70 19.64,27.98 28.77,27.55" fill="#8a5a2b"/>` +
+  `</svg>`;
+
+const coinIcon =
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="6.5 9.5 51 44.5">` +
+  `<ellipse cx="32" cy="34" rx="24" ry="19" fill="#6f5420"/>` +
+  `<ellipse cx="32" cy="30" rx="24" ry="19" fill="#b28f42"/>` +
+  `<ellipse cx="32" cy="30" rx="24" ry="19" fill="none" stroke="#8a6a28" stroke-width="1.5"/>` +
+  `<ellipse cx="32" cy="30" rx="18" ry="14" fill="none" stroke="#8a6a28" stroke-width="1" opacity="0.45"/>` +
+  `<path d="M35.5 24a7 6 0 1 0 0 12" fill="none" stroke="#6f5420" stroke-width="2.2" stroke-linecap="round"/>` +
+  `<line x1="32" y1="22.5" x2="32" y2="37.5" stroke="#6f5420" stroke-width="2.2" stroke-linecap="round"/>` +
+  `</svg>`;
+
+const bikeIcon = (accent = "#e94560") =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 21 56 35">` +
+  `<circle cx="16" cy="44" r="10" fill="none" stroke="#9aa7b8" stroke-width="3"/>` +
+  `<circle cx="48" cy="44" r="10" fill="none" stroke="#9aa7b8" stroke-width="3"/>` +
+  `<g fill="none" stroke="#d0d6e0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">` +
+  `<line x1="16" y1="44" x2="25" y2="28"/>` +
+  `<line x1="16" y1="44" x2="30" y2="45"/>` +
+  `<line x1="30" y1="45" x2="25" y2="28"/>` +
+  `<line x1="25" y1="28" x2="45" y2="27"/>` +
+  `<line x1="30" y1="45" x2="45" y2="27"/>` +
+  `<line x1="45" y1="27" x2="48" y2="44"/>` +
+  `</g>` +
+  `<line x1="21" y1="27" x2="29" y2="27" stroke="${accent}" stroke-width="3" stroke-linecap="round"/>` +
+  `<line x1="44" y1="27" x2="42" y2="23" stroke="${accent}" stroke-width="2.5" stroke-linecap="round"/>` +
+  `<line x1="37" y1="23" x2="47" y2="23" stroke="${accent}" stroke-width="2.5" stroke-linecap="round"/>` +
   `</svg>`;
 
 const config = {
@@ -71,6 +98,7 @@ const config = {
         blue_potion: { name: "Blue Potion" },
         yellow_potion: { name: "Yellow Potion" },
         green_potion: { name: "Green Potion" },
+        starCoin: { name: "Star Coin" },
         coin: { name: "Coin" },
       },
       locations: {
@@ -116,6 +144,7 @@ const config = {
         blue_potion: { name: "Poción azul" },
         yellow_potion: { name: "Poción amarilla" },
         green_potion: { name: "Poción verde" },
+        starCoin: { name: "Moneda con estrella" },
         coin: { name: "Moneda" },
       },
       locations: {
@@ -166,6 +195,7 @@ const config = {
         blue_potion: { name: "Poção azul" },
         yellow_potion: { name: "Poção amarela" },
         green_potion: { name: "Poção verde" },
+        starCoin: { name: "Moeda com estrela" },
         coin: { name: "Moeda" },
       },
       locations: {
@@ -206,7 +236,7 @@ const config = {
   },
   items: {
     cider: { id: "cider", avatarString: "🍾" },
-    bike: { id: "bike", avatarString: "🚲" },
+    bike: { id: "bike", avatar: bikeIcon(), avatarString: "🚲", /* avatarSize: "2.2rem" */ },
     chocolates: { id: "chocolates", avatarString: "🍫" },
     diamond: { id: "diamond", avatarString: "🔷" },
     key: { id: "key", avatar: keyIcon },
@@ -214,7 +244,8 @@ const config = {
     blue_potion: { id: "blue_potion", avatar: potionIcon("#3a83ad") },
     yellow_potion: { id: "yellow_potion", avatar: potionIcon("#c9a93a") },
     green_potion: { id: "green_potion", avatar: potionIcon("#558f3c") },
-    coin: { id: "coin", avatar: coinIcon },
+    starCoin: { id: "starCoin", avatar: starCoinIcon },
+    coin: { id: "coin", avatar: coinIcon, /* avatarSize: "2.2rem" */ },
   },
   actors: {
     alice: { id: "alice", key: 1, color: "#e94560", avatar: avatarSilhouette("#e94560") },
@@ -244,7 +275,7 @@ const config = {
       actors: [
         { id: "alice", location: "alice_house", items: ["coin", "bike", "chocolates"] },
         { id: "bob", location: "alice_house", items: ["red_potion", "blue_potion", "yellow_potion"] },
-        { id: "charles", location: "charles_house", items: ["cider", "diamond", "green_potion", "key"] },
+        { id: "charles", location: "charles_house", items: ["diamond", "green_potion", "cider", "starCoin", "key"] },
       ],
       locations: ["alice_house", "charles_house", "market"],
       briefing: [

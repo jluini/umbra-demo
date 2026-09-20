@@ -346,6 +346,8 @@ body {
 
 .item-box img,
 .item-box svg {
+  /* width: var(--item-avatar-size, 1.9rem);
+  height: var(--item-avatar-size, 1.9rem); */
   width: 1.9rem;
   height: 1.9rem;
   display: block;

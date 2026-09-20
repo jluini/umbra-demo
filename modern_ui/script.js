@@ -188,6 +188,7 @@ function renderItems(actor) {
     const box = document.createElement("div");
     box.className = "item-box";
     box.dataset.itemId = item.id;
+    // if (item.avatarSize) box.style.setProperty("--item-avatar-size", item.avatarSize);
     if (item.avatar) {
       box.innerHTML = item.avatar;
     } else if (item.avatarString) {
