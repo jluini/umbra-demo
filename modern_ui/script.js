@@ -3,7 +3,7 @@
 //   common/utils.js          (Utils.buildKey)
 //   umbra/umbra.js           (Umbra)
 //   presentation/i18n.js     (Presentation.createI18n)
-//   presentation/i18n-dom.js (Presentation.setI18nKey, Presentation.applyI18n)
+//   presentation/i18n-dom.js (Presentation.setI18nText, Presentation.applyI18n)
 //   presentation/format.js   (Presentation.formatDateTime/Distance/Duration)
 //   presentation/richtext.js (Presentation.renderRichText)
 (() => {
@@ -64,7 +64,7 @@ function setLanguage(code) {
 
 function setPlayLabel(key) {
   const label = btnPlay.querySelector("[data-i18n]");
-  if (label) Presentation.setI18nKey(label, key, activeI18n);
+  if (label) Presentation.setI18nText(label, key, activeI18n);
 }
 
 function showOverlay() {
@@ -77,7 +77,7 @@ function hideOverlay() {
 
 function renderMission(mission) {
   missionNumber.textContent = mission.index + 1;
-  Presentation.setI18nKey(missionTitle, Utils.buildKey("missions", mission.id, "name"), activeI18n);
+  Presentation.setI18nText(missionTitle, Utils.buildKey("missions", mission.id, "name"), activeI18n);
 }
 
 function renderAvatars() {
@@ -127,7 +127,7 @@ function renderLocations() {
 
     const name = document.createElement("div");
     name.className = "loc-name";
-    Presentation.setI18nKey(name, Utils.buildKey("locations", loc.id, "name"), activeI18n);
+    Presentation.setI18nText(name, Utils.buildKey("locations", loc.id, "name"), activeI18n);
     info.appendChild(name);
 
     const here = document.createElement("div");
@@ -142,7 +142,7 @@ function renderLocations() {
         span.className = "actor-link";
         span.dataset.actorId = a.id;
       }
-      Presentation.setI18nKey(span, Utils.buildKey("actors", a.id, "name"), activeI18n);
+      Presentation.setI18nText(span, Utils.buildKey("actors", a.id, "name"), activeI18n);
       here.appendChild(span);
     });
     info.appendChild(here);
@@ -170,7 +170,7 @@ function renderLocations() {
 function makeActionButton(key, onClick) {
   const button = document.createElement("button");
   button.className = "btn";
-  Presentation.setI18nKey(button, key, activeI18n);
+  Presentation.setI18nText(button, key, activeI18n);
   button.addEventListener("click", onClick);
   return button;
 }
@@ -187,7 +187,7 @@ function renderActorPanel() {
   }
 
   actorPanel.hidden = false;
-  Presentation.setI18nKey(actorPanelName, Utils.buildKey("actors", selectedActorId, "name"), activeI18n);
+  Presentation.setI18nText(actorPanelName, Utils.buildKey("actors", selectedActorId, "name"), activeI18n);
   renderItems(actor);
   renderActions(actor);
 }
@@ -235,7 +235,7 @@ function renderActions(actor) {
 
 function makeLocationName(locationId) {
   const span = document.createElement("span");
-  Presentation.setI18nKey(span, Utils.buildKey("locations", locationId, "name"), activeI18n);
+  Presentation.setI18nText(span, Utils.buildKey("locations", locationId, "name"), activeI18n);
   return span;
 }
 
@@ -437,11 +437,11 @@ function renderTransit() {
     const line = document.createElement("div");
     line.className = "transit-line";
     const actorEl = document.createElement("span");
-    Presentation.setI18nKey(actorEl, Utils.buildKey("actors", actor.id, "name"), activeI18n);
+    Presentation.setI18nText(actorEl, Utils.buildKey("actors", actor.id, "name"), activeI18n);
     line.appendChild(actorEl);
     line.appendChild(document.createTextNode(" → "));
     const dest = document.createElement("span");
-    Presentation.setI18nKey(dest, Utils.buildKey("locations", activity.to, "name"), activeI18n);
+    Presentation.setI18nText(dest, Utils.buildKey("locations", activity.to, "name"), activeI18n);
     line.appendChild(dest);
     line.appendChild(document.createTextNode(" (" + (now - activity.startedAt) + "/" + activity.duration + " min)"));
     transitList.appendChild(line);

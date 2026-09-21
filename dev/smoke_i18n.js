@@ -9,6 +9,7 @@ global.window = global;
 require(path.join(root, "common/utils.js"));
 require(path.join(root, "umbra/umbra.js"));
 require(path.join(root, "presentation/i18n.js"));
+require(path.join(root, "presentation/i18n-dom.js"));
 
 let failures = 0;
 const check = (cond, label) => {
@@ -75,6 +76,52 @@ german.setLanguage("de");
 check(german.t("briefingLabels.goal") === "Ziel", "German label comes from the Umbra base");
 check(german.t("briefingLabels.hints") === "Hinweise", "German hints label comes from the Umbra base");
 check(german.t("plan.cancel") === "Abbrechen", "German plan label comes from the Umbra base");
+
+// --- i18n DOM binding (minimal DOM stub, no dependencies) ---
+const P = window.Presentation;
+const makeEl = (attrs = {}) => {
+  const map = { ...attrs };
+  return {
+    textContent: "",
+    getAttribute: (name) => (name in map ? map[name] : null),
+    setAttribute: (name, value) => { map[name] = value; },
+    hasAttribute: (name) => name in map,
+  };
+};
+
+i18n.setLanguage("es");
+
+const el = makeEl({ "data-i18n": "plan.walkTo", "data-i18n-title": "plan.cancel" });
+P.translateElement(el, i18n);
+check(el.textContent === "Caminar a...", "translateElement translates textContent");
+check(el.getAttribute("title") === "Cancelar", "translateElement translates title");
+
+const elIgnored = makeEl({ "data-i18n-foo": "plan.cancel" });
+P.translateElement(elIgnored, i18n);
+check(elIgnored.getAttribute("foo") === null, "translateElement ignores attributes outside I18N_ATTRS");
+
+const elText = makeEl();
+P.setI18nText(elText, "plan.walkTo", i18n);
+check(elText.getAttribute("data-i18n") === "plan.walkTo" && elText.textContent === "Caminar a...", "setI18nText sets key and text");
+
+const elAttr = makeEl();
+P.setI18nAttr(elAttr, "aria-label", "plan.cancel", i18n);
+check(elAttr.getAttribute("data-i18n-aria-label") === "plan.cancel" && elAttr.getAttribute("aria-label") === "Cancelar", "setI18nAttr sets key and attribute");
+
+let rejected = false;
+try { P.setI18nAttr(makeEl(), "foo", "plan.cancel", i18n); } catch (e) { rejected = true; }
+check(rejected, "setI18nAttr rejects unsupported attributes");
+
+let selector = null;
+P.applyI18n({ querySelectorAll: (sel) => { selector = sel; return [el]; } }, i18n);
+check(
+  selector.includes("[data-i18n]") &&
+  selector.includes("[data-i18n-title]") &&
+  selector.includes("[data-i18n-alt]") &&
+  selector.includes("[data-i18n-placeholder]") &&
+  selector.includes("[data-i18n-aria-label]"),
+  "applyI18n queries text and every I18N_ATTRS attribute"
+);
 
 if (failures > 0) {
   console.error(failures + " failure(s)");
