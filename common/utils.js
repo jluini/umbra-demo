@@ -1,3 +1,5 @@
+// Base, DOM-free utilities.
+// Dependencies: none.
 (() => {
 "use strict";
 
@@ -23,8 +25,15 @@ const getPath = (obj, path) => {
   return node;
 };
 
+const buildKey = (type, id, field = "name") => type + "." + id + "." + field;
+
+const resolveKey = (path, base = "") =>
+  path && path.startsWith(".") ? base + path : path;
+
 window.Utils = window.Utils || {};
-window.Utils.isPlainObject = isPlainObject;
+// window.Utils.isPlainObject = isPlainObject;
 window.Utils.deepMerge = deepMerge;
 window.Utils.getPath = getPath;
+window.Utils.buildKey = buildKey;
+window.Utils.resolveKey = resolveKey;
 })();

@@ -1,3 +1,11 @@
+// Modern UI controller.
+// Dependencies:
+//   common/utils.js          (Utils.buildKey)
+//   umbra/umbra.js           (Umbra)
+//   presentation/i18n.js     (Presentation.createI18n)
+//   presentation/i18n-dom.js (Presentation.setI18nKey, Presentation.applyI18n)
+//   presentation/format.js   (Presentation.formatDateTime/Distance/Duration)
+//   presentation/richtext.js (Presentation.renderRichText)
 (() => {
 "use strict";
 
@@ -69,7 +77,7 @@ function hideOverlay() {
 
 function renderMission(mission) {
   missionNumber.textContent = mission.index + 1;
-  Presentation.setI18nKey(missionTitle, Presentation.buildKey("missions", mission.id, "name"), activeI18n);
+  Presentation.setI18nKey(missionTitle, Utils.buildKey("missions", mission.id, "name"), activeI18n);
 }
 
 function renderAvatars() {
@@ -119,7 +127,7 @@ function renderLocations() {
 
     const name = document.createElement("div");
     name.className = "loc-name";
-    Presentation.setI18nKey(name, Presentation.buildKey("locations", loc.id, "name"), activeI18n);
+    Presentation.setI18nKey(name, Utils.buildKey("locations", loc.id, "name"), activeI18n);
     info.appendChild(name);
 
     const here = document.createElement("div");
@@ -134,7 +142,7 @@ function renderLocations() {
         span.className = "actor-link";
         span.dataset.actorId = a.id;
       }
-      Presentation.setI18nKey(span, Presentation.buildKey("actors", a.id, "name"), activeI18n);
+      Presentation.setI18nKey(span, Utils.buildKey("actors", a.id, "name"), activeI18n);
       here.appendChild(span);
     });
     info.appendChild(here);
@@ -150,7 +158,7 @@ function renderLocations() {
         const walkTime = activeEngine.computeWalkTime(distance);
         const dist = document.createElement("div");
         dist.className = "loc-distance";
-        dist.textContent = Presentation.formatDistance(distance) + " · " + Presentation.formatWalkTime(walkTime);
+        dist.textContent = Presentation.formatDistance(distance) + " · " + Presentation.formatDuration(walkTime);
         card.appendChild(dist);
       }
     }
@@ -179,7 +187,7 @@ function renderActorPanel() {
   }
 
   actorPanel.hidden = false;
-  Presentation.setI18nKey(actorPanelName, Presentation.buildKey("actors", selectedActorId, "name"), activeI18n);
+  Presentation.setI18nKey(actorPanelName, Utils.buildKey("actors", selectedActorId, "name"), activeI18n);
   renderItems(actor);
   renderActions(actor);
 }
@@ -227,7 +235,7 @@ function renderActions(actor) {
 
 function makeLocationName(locationId) {
   const span = document.createElement("span");
-  Presentation.setI18nKey(span, Presentation.buildKey("locations", locationId, "name"), activeI18n);
+  Presentation.setI18nKey(span, Utils.buildKey("locations", locationId, "name"), activeI18n);
   return span;
 }
 
@@ -263,7 +271,7 @@ function makeActivityLine(actor, plan) {
   if (plan) {
     line.appendChild(document.createTextNode(" → "));
     line.appendChild(makeLocationName(plan.destination));
-    line.appendChild(document.createTextNode(" (" + Presentation.formatWalkTime(plan.duration) + ")"));
+    line.appendChild(document.createTextNode(" (" + Presentation.formatDuration(plan.duration) + ")"));
   }
   return line;
 }
@@ -429,11 +437,11 @@ function renderTransit() {
     const line = document.createElement("div");
     line.className = "transit-line";
     const actorEl = document.createElement("span");
-    Presentation.setI18nKey(actorEl, Presentation.buildKey("actors", actor.id, "name"), activeI18n);
+    Presentation.setI18nKey(actorEl, Utils.buildKey("actors", actor.id, "name"), activeI18n);
     line.appendChild(actorEl);
     line.appendChild(document.createTextNode(" → "));
     const dest = document.createElement("span");
-    Presentation.setI18nKey(dest, Presentation.buildKey("locations", activity.to, "name"), activeI18n);
+    Presentation.setI18nKey(dest, Utils.buildKey("locations", activity.to, "name"), activeI18n);
     line.appendChild(dest);
     line.appendChild(document.createTextNode(" (" + (now - activity.startedAt) + "/" + activity.duration + " min)"));
     transitList.appendChild(line);
@@ -493,7 +501,7 @@ function onMissionStart({ mission }) {
   renderAvatars();
   Presentation.renderRichText(missionBriefing, mission.briefing, activeI18n, {
     prefix: "briefing",
-    base: Presentation.buildKey("missions", mission.id, "briefing"),
+    base: Utils.buildKey("missions", mission.id, "briefing"),
   });
   renderLocations();
   renderTransit();

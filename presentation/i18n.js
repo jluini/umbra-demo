@@ -1,3 +1,5 @@
+// i18n core: language state, dictionary and translation lookup. DOM-free.
+// Dependencies: common/utils.js (Utils.deepMerge, Utils.getPath).
 (() => {
 "use strict";
 
@@ -34,13 +36,6 @@ const createI18n = ({ config = {}, base = {} } = {}) => {
   return i18n;
 };
 
-const buildKey = (type, id, field = "name") => type + "." + id + "." + field;
-
-const resolveKey = (path, base = "") =>
-  path && path.startsWith(".") ? base + path : path;
-
 window.Presentation = window.Presentation || {};
 window.Presentation.createI18n = createI18n;
-window.Presentation.buildKey = buildKey;
-window.Presentation.resolveKey = resolveKey;
 })();

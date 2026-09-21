@@ -1,3 +1,5 @@
+// Presentation formatting helpers (Intl-based). DOM-free.
+// Dependencies: none.
 (() => {
 "use strict";
 
@@ -12,10 +14,10 @@ const formatDateTime = (date, lang) =>
 
 const formatDistance = (km) => Math.round(km * 100) / 100 + " km";
 
-const formatWalkTime = (minutes) => minutes + " min";
+const formatDuration = (minutes) => minutes + " min";
 
 window.Presentation = window.Presentation || {};
 window.Presentation.formatDateTime = formatDateTime;
 window.Presentation.formatDistance = formatDistance;
-window.Presentation.formatWalkTime = formatWalkTime;
+window.Presentation.formatDuration = formatDuration;
 })();
