@@ -10,7 +10,7 @@ const formatDateTime = (date, lang) =>
     minute: "2-digit",
   }).format(date);
 
-const formatDistance = (km) => km + " km";
+const formatDistance = (km) => Math.round(km * 100) / 100 + " km";
 
 const formatWalkTime = (minutes) => minutes + " min";
 
