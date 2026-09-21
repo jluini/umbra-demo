@@ -425,9 +425,29 @@ body {
   gap: 8px;
 }
 
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .activity-line {
   font-size: 0.9rem;
   color: #e0e0e0;
+}
+
+.activity-cancel {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #888;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.activity-cancel:hover {
+  color: #e94560;
 }
 
 /*

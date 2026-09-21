@@ -210,7 +210,8 @@ function renderItems(actor) {
 
 function renderActions(actor) {
   actorPanelActions.replaceChildren();
-  actorPanelActions.appendChild(makeActivityLine(actor));
+  const plan = activeEngine.getPlan(actor.id);
+  actorPanelActions.appendChild(makeActivityRow(actor, plan));
 
   if (walkToMode) {
     actorPanelActions.appendChild(makeActionButton("plan.cancel", exitWalkTo));
@@ -219,11 +220,7 @@ function renderActions(actor) {
 
   if (actor.activity.kind === "transit") return;
 
-  const plan = activeEngine.getPlan(actor.id);
-  if (plan) {
-    actorPanelActions.appendChild(makeActionButton("plan.cancel", () => cancelPlan(actor.id)));
-    return;
-  }
+  if (plan) return;
 
   actorPanelActions.appendChild(makeActionButton("plan.walkTo", enterWalkTo));
 }
@@ -234,7 +231,21 @@ function makeLocationName(locationId) {
   return span;
 }
 
-function makeActivityLine(actor) {
+function makeActivityRow(actor, plan) {
+  const row = document.createElement("div");
+  row.className = "activity-row";
+  row.appendChild(makeActivityLine(actor, plan));
+  if (plan) {
+    const cancel = document.createElement("button");
+    cancel.className = "activity-cancel";
+    cancel.textContent = "✕";
+    cancel.addEventListener("click", () => cancelPlan(actor.id));
+    row.appendChild(cancel);
+  }
+  return row;
+}
+
+function makeActivityLine(actor, plan) {
   const line = document.createElement("div");
   line.className = "activity-line";
 
@@ -249,7 +260,6 @@ function makeActivityLine(actor) {
   }
 
   line.appendChild(makeLocationName(actor.activity.at));
-  const plan = activeEngine.getPlan(actor.id);
   if (plan) {
     line.appendChild(document.createTextNode(" → "));
     line.appendChild(makeLocationName(plan.destination));
