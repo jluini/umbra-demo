@@ -80,7 +80,7 @@ function renderMission(mission) {
   Presentation.setI18nText(missionTitle, Utils.buildKey("missions", mission.id, "name"), activeI18n);
 }
 
-function renderAvatars() {
+function buildAvatars() {
   const mission = activeEngine.getMission();
   const actors = mission.actors.slice().sort((a, b) => a.preset.key - b.preset.key);
   avatarsRow.hidden = actors.length === 0;
@@ -91,7 +91,6 @@ function renderAvatars() {
     const box = document.createElement("div");
     box.className = "avatar-box";
     box.dataset.actorId = actor.id;
-    if (actor.id === selectedActorId) box.classList.add("active");
     if (preset.avatarUrl) {
       const img = document.createElement("img");
       img.className = "actor-img";
@@ -104,8 +103,17 @@ function renderAvatars() {
       box.textContent = actor.id.charAt(0).toUpperCase();
       box.style.color = preset.color || "#e0e0e0";
     }
+    const actorName = Utils.buildKey("actors", actor.id, "name");
+    Presentation.setI18nAttr(box, "title", actorName, activeI18n);
+    Presentation.setI18nAttr(box, "aria-label", actorName, activeI18n);
     avatarsRow.appendChild(box);
   }
+}
+
+function updateActiveAvatar() {
+  avatarsRow.querySelectorAll(".avatar-box").forEach((box) => {
+    box.classList.toggle("active", box.dataset.actorId === selectedActorId);
+  });
 }
 
 function renderClock(time) {
@@ -281,7 +289,7 @@ function selectActor(actorId) {
   walkToMode = false;
   renderActorPanel();
   renderLocations();
-  renderAvatars();
+  updateActiveAvatar();
 }
 
 function enterWalkTo() {
@@ -313,7 +321,7 @@ function closeActorPanel() {
   walkToMode = false;
   actorPanel.hidden = true;
   renderLocations();
-  renderAvatars();
+  updateActiveAvatar();
 }
 
 function clearDropTargets() {
@@ -498,7 +506,7 @@ function updateClockText() {
 
 function onMissionStart({ mission }) {
   renderMission(mission);
-  renderAvatars();
+  buildAvatars();
   Presentation.renderRichText(missionBriefing, mission.briefing, activeI18n, {
     prefix: "briefing",
     base: Utils.buildKey("missions", mission.id, "briefing"),
