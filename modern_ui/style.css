@@ -140,7 +140,13 @@ body {
   box-shadow: 0 0 0 2px #e94560;
 }
 
+.avatar-box.valid-target {
+  border-color: #f2c879;
+  box-shadow: 0 0 0 2px #f2c879;
+}
+
 .avatar-box.drop-target {
+  border-style: solid;
   border-color: #e94560;
   background-image: linear-gradient(rgba(233, 69, 96, 0.35), rgba(233, 69, 96, 0.35));
   box-shadow: 0 0 0 2px #e94560;

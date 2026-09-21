@@ -304,6 +304,27 @@ function clearDropTargets() {
   });
 }
 
+function clearValidTargets() {
+  avatarsRow.querySelectorAll(".avatar-box.valid-target").forEach((box) => {
+    box.classList.remove("valid-target");
+  });
+}
+
+function isValidDropTarget(actorId) {
+  if (!selectedActorId || actorId === selectedActorId) return false;
+  const giver = activeEngine.getActor(selectedActorId);
+  const target = activeEngine.getActor(actorId);
+  if (!giver || !target) return false;
+  if (giver.activity.kind !== "idle" || target.activity.kind !== "idle") return false;
+  return giver.activity.at === target.activity.at;
+}
+
+function markValidTargets() {
+  avatarsRow.querySelectorAll(".avatar-box").forEach((box) => {
+    box.classList.toggle("valid-target", isValidDropTarget(box.dataset.actorId));
+  });
+}
+
 function startItemDrag(e, box, item) {
   if (!selectedActorId) return;
   if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -337,9 +358,7 @@ function updateGhostPosition(ghost, pointerType, x, y) {
 function findDropTarget(x, y) {
   const el = document.elementFromPoint(x, y);
   const box = el && el.closest(".avatar-box");
-  if (!box || box.dataset.actorId === selectedActorId) return null;
-  const target = activeEngine.getActor(box.dataset.actorId);
-  if (!target || target.activity.kind !== "idle") return null;
+  if (!box || !isValidDropTarget(box.dataset.actorId)) return null;
   return box;
 }
 
@@ -353,6 +372,7 @@ function onItemPointerMove(e) {
     dragState.box.classList.add("dragging");
     dragState.ghost = createDragGhost(dragState.box);
     document.body.appendChild(dragState.ghost);
+    markValidTargets();
   }
   e.preventDefault();
   updateGhostPosition(dragState.ghost, dragState.pointerType, e.clientX, e.clientY);
@@ -385,6 +405,7 @@ function cleanupItemDrag(box, pointerId) {
     if (box.hasPointerCapture(pointerId)) box.releasePointerCapture(pointerId);
   }
   clearDropTargets();
+  clearValidTargets();
 }
 
 function renderTransit() {
