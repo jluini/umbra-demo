@@ -6,6 +6,7 @@ const path = require("path");
 const root = path.join(__dirname, "..");
 
 global.window = global;
+require(path.join(root, "common/utils.js"));
 require(path.join(root, "umbra/umbra.js"));
 require(path.join(root, "presentation/i18n.js"));
 
@@ -48,18 +49,18 @@ check(i18n.t("umbra.mission") === "Quest", "game translation overrides the base"
 check(i18n.t("menu.play") === "Play", "base term resolves when the game does not override it");
 check(i18n.t("umbra.missing") === "umbra.missing", "missing key returns the key");
 
-check(window.Presentation.key("actors", "alice") === "actors.alice.name", "key defaults to the name field");
-check(window.Presentation.key("missions", "test", "briefing") === "missions.test.briefing", "key uses the given field");
+check(window.Presentation.buildKey("actors", "alice") === "actors.alice.name", "key defaults to the name field");
+check(window.Presentation.buildKey("missions", "test", "briefing") === "missions.test.briefing", "key uses the given field");
 check(window.Presentation.resolveKey(".situation", "missions.test.briefing") === "missions.test.briefing.situation", "relative key resolves against the base");
 check(window.Presentation.resolveKey("briefingLabels.goal", "missions.test.briefing") === "briefingLabels.goal", "absolute key ignores the base");
 
 i18n.setLanguage("en");
-check(i18n.t(window.Presentation.key("actors", "alice")) === "Alice", "entity name resolves (en)");
-check(i18n.t(window.Presentation.key("missions", "test")) === "Test", "mission name resolves (en)");
+check(i18n.t(window.Presentation.buildKey("actors", "alice")) === "Alice", "entity name resolves (en)");
+check(i18n.t(window.Presentation.buildKey("missions", "test")) === "Test", "mission name resolves (en)");
 
 i18n.setLanguage("es");
-check(i18n.t(window.Presentation.key("actors", "alice")) === "Alicia", "entity name resolves (es)");
-check(i18n.t(window.Presentation.key("actors", "bob")) === "actors.bob.name", "missing entity name returns the key");
+check(i18n.t(window.Presentation.buildKey("actors", "alice")) === "Alicia", "entity name resolves (es)");
+check(i18n.t(window.Presentation.buildKey("actors", "bob")) === "actors.bob.name", "missing entity name returns the key");
 
 check(i18n.t("briefingLabels.goal") === "Objetivo", "base briefing label resolves (es)");
 check(i18n.t("plan.walkTo") === "Caminar a...", "base plan label resolves (es)");

@@ -1,33 +1,11 @@
 (() => {
 "use strict";
 
-const isPlainObject = (value) =>
-  value !== null && typeof value === "object" && !Array.isArray(value);
-
-const deepMerge = (base, override) => {
-  const out = { ...base };
-  for (const [key, value] of Object.entries(override || {})) {
-    out[key] = isPlainObject(out[key]) && isPlainObject(value)
-      ? deepMerge(out[key], value)
-      : value;
-  }
-  return out;
-};
-
-const getPath = (obj, path) => {
-  let node = obj;
-  for (const part of path.split(".")) {
-    if (node === null || typeof node !== "object") return undefined;
-    node = node[part];
-  }
-  return node;
-};
-
 const createI18n = ({ config = {}, base = {} } = {}) => {
   const languages = (config.languages || []).map((lang) => lang.code).filter(Boolean);
   const dictionary = {};
   for (const code of languages) {
-    dictionary[code] = deepMerge(base[code] || {}, config.translations?.[code] || {});
+    dictionary[code] = Utils.deepMerge(base[code] || {}, config.translations?.[code] || {});
   }
 
   let current = null;
@@ -47,7 +25,7 @@ const createI18n = ({ config = {}, base = {} } = {}) => {
       return current;
     },
     t(key) {
-      const value = getPath(dictionary[current], key);
+      const value = Utils.getPath(dictionary[current], key);
       return value === undefined ? key : value;
     },
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
@@ -56,13 +34,13 @@ const createI18n = ({ config = {}, base = {} } = {}) => {
   return i18n;
 };
 
-const key = (type, id, field = "name") => type + "." + id + "." + field;
+const buildKey = (type, id, field = "name") => type + "." + id + "." + field;
 
 const resolveKey = (path, base = "") =>
   path && path.startsWith(".") ? base + path : path;
 
 window.Presentation = window.Presentation || {};
 window.Presentation.createI18n = createI18n;
-window.Presentation.key = key;
+window.Presentation.buildKey = buildKey;
 window.Presentation.resolveKey = resolveKey;
 })();

@@ -69,7 +69,7 @@ function hideOverlay() {
 
 function renderMission(mission) {
   missionNumber.textContent = mission.index + 1;
-  Presentation.setI18nKey(missionTitle, Presentation.key("missions", mission.id, "name"), activeI18n);
+  Presentation.setI18nKey(missionTitle, Presentation.buildKey("missions", mission.id, "name"), activeI18n);
 }
 
 function renderAvatars() {
@@ -119,7 +119,7 @@ function renderLocations() {
 
     const name = document.createElement("div");
     name.className = "loc-name";
-    Presentation.setI18nKey(name, Presentation.key("locations", loc.id, "name"), activeI18n);
+    Presentation.setI18nKey(name, Presentation.buildKey("locations", loc.id, "name"), activeI18n);
     info.appendChild(name);
 
     const here = document.createElement("div");
@@ -134,7 +134,7 @@ function renderLocations() {
         span.className = "actor-link";
         span.dataset.actorId = a.id;
       }
-      Presentation.setI18nKey(span, Presentation.key("actors", a.id, "name"), activeI18n);
+      Presentation.setI18nKey(span, Presentation.buildKey("actors", a.id, "name"), activeI18n);
       here.appendChild(span);
     });
     info.appendChild(here);
@@ -179,7 +179,7 @@ function renderActorPanel() {
   }
 
   actorPanel.hidden = false;
-  Presentation.setI18nKey(actorPanelName, Presentation.key("actors", selectedActorId, "name"), activeI18n);
+  Presentation.setI18nKey(actorPanelName, Presentation.buildKey("actors", selectedActorId, "name"), activeI18n);
   renderItems(actor);
   renderActions(actor);
 }
@@ -227,7 +227,7 @@ function renderActions(actor) {
 
 function makeLocationName(locationId) {
   const span = document.createElement("span");
-  Presentation.setI18nKey(span, Presentation.key("locations", locationId, "name"), activeI18n);
+  Presentation.setI18nKey(span, Presentation.buildKey("locations", locationId, "name"), activeI18n);
   return span;
 }
 
@@ -429,11 +429,11 @@ function renderTransit() {
     const line = document.createElement("div");
     line.className = "transit-line";
     const actorEl = document.createElement("span");
-    Presentation.setI18nKey(actorEl, Presentation.key("actors", actor.id, "name"), activeI18n);
+    Presentation.setI18nKey(actorEl, Presentation.buildKey("actors", actor.id, "name"), activeI18n);
     line.appendChild(actorEl);
     line.appendChild(document.createTextNode(" → "));
     const dest = document.createElement("span");
-    Presentation.setI18nKey(dest, Presentation.key("locations", activity.to, "name"), activeI18n);
+    Presentation.setI18nKey(dest, Presentation.buildKey("locations", activity.to, "name"), activeI18n);
     line.appendChild(dest);
     line.appendChild(document.createTextNode(" (" + (now - activity.startedAt) + "/" + activity.duration + " min)"));
     transitList.appendChild(line);
@@ -493,7 +493,7 @@ function onMissionStart({ mission }) {
   renderAvatars();
   Presentation.renderRichText(missionBriefing, mission.briefing, activeI18n, {
     prefix: "briefing",
-    base: Presentation.key("missions", mission.id, "briefing"),
+    base: Presentation.buildKey("missions", mission.id, "briefing"),
   });
   renderLocations();
   renderTransit();
