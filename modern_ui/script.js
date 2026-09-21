@@ -210,20 +210,17 @@ function renderItems(actor) {
 
 function renderActions(actor) {
   actorPanelActions.replaceChildren();
+  actorPanelActions.appendChild(makeActivityLine(actor));
 
   if (walkToMode) {
     actorPanelActions.appendChild(makeActionButton("plan.cancel", exitWalkTo));
     return;
   }
 
-  if (actor.activity.kind === "transit") {
-    actorPanelActions.appendChild(makeTransitLine(actor.activity));
-    return;
-  }
+  if (actor.activity.kind === "transit") return;
 
   const plan = activeEngine.getPlan(actor.id);
   if (plan) {
-    actorPanelActions.appendChild(makePlanLine(plan));
     actorPanelActions.appendChild(makeActionButton("plan.cancel", () => cancelPlan(actor.id)));
     return;
   }
@@ -231,27 +228,33 @@ function renderActions(actor) {
   actorPanelActions.appendChild(makeActionButton("plan.walkTo", enterWalkTo));
 }
 
-function makePlanLine(plan) {
-  const line = document.createElement("div");
-  line.className = "plan-line";
-  line.appendChild(document.createTextNode("→ "));
-  const dest = document.createElement("span");
-  Presentation.setI18nKey(dest, Presentation.key("locations", plan.destination, "name"), activeI18n);
-  line.appendChild(dest);
-  line.appendChild(document.createTextNode(" (" + Presentation.formatWalkTime(plan.duration) + ")"));
-  return line;
+function makeLocationName(locationId) {
+  const span = document.createElement("span");
+  Presentation.setI18nKey(span, Presentation.key("locations", locationId, "name"), activeI18n);
+  return span;
 }
 
-function makeTransitLine(activity) {
+function makeActivityLine(actor) {
   const line = document.createElement("div");
-  line.className = "plan-line";
-  line.appendChild(document.createTextNode("→ "));
-  const dest = document.createElement("span");
-  Presentation.setI18nKey(dest, Presentation.key("locations", activity.to, "name"), activeI18n);
-  line.appendChild(dest);
-  line.appendChild(document.createTextNode(
-    " (" + (activeEngine.getInternalTime() - activity.startedAt) + "/" + activity.duration + " min)"
-  ));
+  line.className = "activity-line";
+
+  if (actor.activity.kind === "transit") {
+    line.appendChild(makeLocationName(actor.activity.from));
+    line.appendChild(document.createTextNode(" → "));
+    line.appendChild(makeLocationName(actor.activity.to));
+    line.appendChild(document.createTextNode(
+      " (" + (activeEngine.getInternalTime() - actor.activity.startedAt) + "/" + actor.activity.duration + " min)"
+    ));
+    return line;
+  }
+
+  line.appendChild(makeLocationName(actor.activity.at));
+  const plan = activeEngine.getPlan(actor.id);
+  if (plan) {
+    line.appendChild(document.createTextNode(" → "));
+    line.appendChild(makeLocationName(plan.destination));
+    line.appendChild(document.createTextNode(" (" + Presentation.formatWalkTime(plan.duration) + ")"));
+  }
   return line;
 }
 

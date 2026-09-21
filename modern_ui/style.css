@@ -414,11 +414,12 @@ body {
 .actor-panel-actions {
   margin-top: 12px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
 }
 
-.plan-line {
+.activity-line {
   font-size: 0.9rem;
   color: #e0e0e0;
 }
