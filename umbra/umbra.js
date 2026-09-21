@@ -147,53 +147,38 @@ const findActor = (mission, id) =>
 const findLocation = (mission, id) =>
   mission ? (mission.locations.find((l) => l.id === id) || null) : null;
 
-const canReplacePlan = (plan) => !plan || plan.startTime === null;
-
 const buildPlan = (actor, destination, matrix) => ({
   destination,
-  from: actor.locationId,
-  startTime: null,
-  walkTime: computeWalkTime(distanceFrom(matrix, actor.locationId, destination)),
+  duration: computeWalkTime(distanceFrom(matrix, actor.activity.at, destination)),
 });
 
-
-const moveItem = (inventory, fromActorId, toActorId, item) => {
-  const fromItems = inventory[fromActorId];
-  if (!fromItems) return false;
-  const idx = fromItems.indexOf(item);
+const moveItem = (fromActor, toActor, item) => {
+  const idx = fromActor.items.indexOf(item);
   if (idx === -1) return false;
-  fromItems.splice(idx, 1);
-  if (!inventory[toActorId]) inventory[toActorId] = [];
-  inventory[toActorId].push(item);
+  fromActor.items.splice(idx, 1);
+  toActor.items.push(item);
   return true;
 };
 
-const buildActors = (config, mission, missionLocs) =>
-  (mission.actors || []).map((a) => {
-    const base = config.actors && config.actors[a.id];
-    if (!base) {
+const buildActors = (config, mission, missionLocs) => {
+  const validItems = new Set(Object.keys(config.items || {}));
+  return (mission.actors || []).map((a) => {
+    const preset = config.actors && config.actors[a.id];
+    if (!preset) {
       throw new Error("umbra: actor '" + a.id + "' is not defined in config.actors");
     }
     const loc = config.locations[a.location];
     if (!loc || !missionLocs.has(a.location)) {
       throw new Error("umbra: actor '" + a.id + "' starts at '" + a.location + "' which is not in mission locations");
     }
-    return { ...base, locationId: a.location, items: (a.items || []).slice() };
-  });
-
-const buildInventory = (config, mission) => {
-  const validItems = new Set(Object.keys(config.items || {}));
-  const inventory = {};
-  for (const a of mission.actors || []) {
-    const items = a.items || [];
-    for (const itemId of items) {
-      if (!validItems.has(itemId)) {
-        throw new Error("umbra: actor '" + a.id + "' has unknown item '" + itemId + "'");
+    const items = (a.items || []).map((id) => {
+      if (!validItems.has(id)) {
+        throw new Error("umbra: actor '" + a.id + "' has unknown item '" + id + "'");
       }
-    }
-    inventory[a.id] = items.map((id) => config.items[id]);
-  }
-  return inventory;
+      return config.items[id];
+    });
+    return { id: a.id, preset, activity: { kind: "idle", at: a.location }, items };
+  });
 };
 
 const buildLocations = (config, mission) =>
@@ -221,7 +206,6 @@ const buildMission = (config, requestedIndex = getInitialMissionIndex()) => {
 
   const missionLocs = new Set(missionDef.locations || []);
   const actors = buildActors(config, missionDef, missionLocs);
-  const inventory = buildInventory(config, missionDef);
   const locations = buildLocations(config, missionDef);
 
   const mission = {
@@ -233,7 +217,7 @@ const buildMission = (config, requestedIndex = getInitialMissionIndex()) => {
     actors,
     locations,
   };
-  return { mission, inventory };
+  return { mission };
 };
 
 const create = (config = {}) => {
@@ -246,7 +230,6 @@ const create = (config = {}) => {
     clock: null,
     internalTime: 0,
     plans: {},
-    inventory: {},
   };
 
   const listeners = {};
@@ -265,15 +248,18 @@ const create = (config = {}) => {
     getLocation(id) { return findLocation(state.mission, id); },
     getPlans() { return state.plans; },
     getPlan(actorId) { return state.plans[actorId] || null; },
-    getInventory(actorId) { return state.inventory[actorId] || []; },
+    getInventory(actorId) {
+      const actor = findActor(state.mission, actorId);
+      return actor ? actor.items : [];
+    },
     distance(from, to) { return distanceFrom(distMatrix, from, to); },
     computeWalkTime,
     // actions
     setPlan(actorId, destination) {
       if (!isPlaying()) return false;
       const actor = findActor(state.mission, actorId);
-      if (!actor) return false;
-      if (!canReplacePlan(state.plans[actorId])) return false;
+      if (!actor || actor.activity.kind !== "idle") return false;
+      if (!findLocation(state.mission, destination)) return false;
       state.plans[actorId] = buildPlan(actor, destination, distMatrix);
       emit("plan:set", { actorId, plan: state.plans[actorId] });
       return true;
@@ -289,8 +275,10 @@ const create = (config = {}) => {
       if (!isPlaying()) return false;
       const from = findActor(state.mission, fromActorId);
       const to = findActor(state.mission, toActorId);
-      if (!from || !to || from.locationId !== to.locationId) return false;
-      if (!moveItem(state.inventory, fromActorId, toActorId, item)) return false;
+      if (!from || !to) return false;
+      if (from.activity.kind !== "idle" || to.activity.kind !== "idle") return false;
+      if (from.activity.at !== to.activity.at) return false;
+      if (!moveItem(from, to, item)) return false;
       emit("item:give", { from: fromActorId, to: toActorId, item });
       return true;
     },
@@ -303,33 +291,39 @@ const create = (config = {}) => {
     play() {
       if (!isPlaying()) return;
       let started = false;
-      for (const plan of Object.values(state.plans)) {
-        if (plan.startTime === null) {
-          plan.startTime = state.internalTime;
-          started = true;
-        }
+      for (const [actorId, plan] of Object.entries(state.plans)) {
+        const actor = findActor(state.mission, actorId);
+        if (!actor) continue;
+        actor.activity = {
+          kind: "transit",
+          vehicle: "walk",
+          from: actor.activity.at,
+          to: plan.destination,
+          startedAt: state.internalTime,
+          duration: plan.duration,
+        };
+        delete state.plans[actorId];
+        started = true;
       }
       if (started) emit("plans:started", { startTime: state.internalTime });
     },
     checkPlans() {
       const completed = [];
-      for (const [actorId, plan] of Object.entries(state.plans)) {
-        if (plan.startTime === null) continue;
-        const elapsed = state.internalTime - plan.startTime;
-        if (elapsed >= plan.walkTime) {
-          completed.push({ actorId, plan });
+      for (const actor of state.mission.actors) {
+        if (actor.activity.kind !== "transit") continue;
+        const elapsed = state.internalTime - actor.activity.startedAt;
+        if (elapsed >= actor.activity.duration) {
+          completed.push({ actorId: actor.id });
         }
       }
       return completed;
     },
     completePlan(actorId) {
       if (!isPlaying()) return false;
-      const plan = state.plans[actorId];
-      if (!plan) return false;
       const actor = findActor(state.mission, actorId);
-      if (actor) actor.locationId = plan.destination;
-      delete state.plans[actorId];
-      emit("plan:done", { actorId, locationId: plan.destination });
+      if (!actor || actor.activity.kind !== "transit") return false;
+      actor.activity = { kind: "idle", at: actor.activity.to };
+      emit("plan:done", { actorId, locationId: actor.activity.at });
       return true;
     },
     // events
@@ -340,7 +334,7 @@ const create = (config = {}) => {
       if (state.status !== "idle") {
         throw new Error("umbra: game already started");
       }
-      const { mission, inventory } = buildMission(config, missionIndex);
+      const { mission } = buildMission(config, missionIndex);
       distMatrix = buildDistanceMatrix(config);
 
       state.status = "playing";
@@ -348,7 +342,6 @@ const create = (config = {}) => {
       state.internalTime = 0;
       state.clock = mission.start;
       state.plans = {};
-      state.inventory = inventory;
 
       emit("mission:start", { mission });
       emit("clock:set", { time: state.clock });
@@ -361,7 +354,6 @@ const create = (config = {}) => {
       state.clock = null;
       state.internalTime = 0;
       state.plans = {};
-      state.inventory = {};
       emit("mission:end");
       return api;
     },

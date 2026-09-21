@@ -74,26 +74,27 @@ function renderMission(mission) {
 
 function renderAvatars() {
   const mission = activeEngine.getMission();
-  const actors = mission.actors.slice().sort((a, b) => a.key - b.key);
+  const actors = mission.actors.slice().sort((a, b) => a.preset.key - b.preset.key);
   avatarsRow.hidden = actors.length === 0;
   avatarsRow.replaceChildren();
 
   for (const actor of actors) {
+    const preset = actor.preset;
     const box = document.createElement("div");
     box.className = "avatar-box";
     box.dataset.actorId = actor.id;
     if (actor.id === selectedActorId) box.classList.add("active");
-    if (actor.avatarUrl) {
+    if (preset.avatarUrl) {
       const img = document.createElement("img");
       img.className = "actor-img";
-      img.src = actor.avatarUrl;
+      img.src = preset.avatarUrl;
       img.alt = "";
       box.appendChild(img);
-    } else if (actor.avatar) {
-      box.innerHTML = actor.avatar;
+    } else if (preset.avatar) {
+      box.innerHTML = preset.avatar;
     } else {
       box.textContent = actor.id.charAt(0).toUpperCase();
-      box.style.color = actor.color || "#e0e0e0";
+      box.style.color = preset.color || "#e0e0e0";
     }
     avatarsRow.appendChild(box);
   }
@@ -124,12 +125,8 @@ function renderLocations() {
     const here = document.createElement("div");
     here.className = "actors-here";
     const present = mission.actors
-      .filter((a) => {
-        if (a.locationId !== loc.id) return false;
-        const plan = activeEngine.getPlan(a.id);
-        return !plan || plan.startTime === null;
-      })
-      .sort((a, b) => a.key - b.key);
+      .filter((a) => a.activity.kind === "idle" && a.activity.at === loc.id)
+      .sort((a, b) => a.preset.key - b.preset.key);
     present.forEach((a, i) => {
       if (i > 0) here.appendChild(document.createTextNode(", "));
       const span = document.createElement("span");
@@ -144,8 +141,8 @@ function renderLocations() {
     card.appendChild(info);
 
     if (actor) {
-      const distance = activeEngine.distance(actor.locationId, loc.id);
-      if (loc.id === actor.locationId || distance === Infinity) {
+      const distance = activeEngine.distance(actor.activity.at, loc.id);
+      if (loc.id === actor.activity.at || distance === Infinity) {
         card.classList.add("disabled");
       } else {
         card.classList.add("selectable");
@@ -189,6 +186,7 @@ function renderActorPanel() {
 
 function renderItems(actor) {
   actorPanelItems.replaceChildren();
+  if (actor.activity.kind !== "idle") return;
   const items = activeEngine.getInventory(actor.id);
   for (const item of items) {
     const box = document.createElement("div");
@@ -218,13 +216,14 @@ function renderActions(actor) {
     return;
   }
 
-  const plan = activeEngine.getPlan(actor.id);
-  if (plan && plan.startTime !== null) {
-    actorPanelActions.appendChild(makePlanLine(plan, true));
+  if (actor.activity.kind === "transit") {
+    actorPanelActions.appendChild(makeTransitLine(actor.activity));
     return;
   }
+
+  const plan = activeEngine.getPlan(actor.id);
   if (plan) {
-    actorPanelActions.appendChild(makePlanLine(plan, false));
+    actorPanelActions.appendChild(makePlanLine(plan));
     actorPanelActions.appendChild(makeActionButton("plan.cancel", () => cancelPlan(actor.id)));
     return;
   }
@@ -232,17 +231,27 @@ function renderActions(actor) {
   actorPanelActions.appendChild(makeActionButton("plan.walkTo", enterWalkTo));
 }
 
-function makePlanLine(plan, started) {
+function makePlanLine(plan) {
   const line = document.createElement("div");
   line.className = "plan-line";
   line.appendChild(document.createTextNode("→ "));
   const dest = document.createElement("span");
   Presentation.setI18nKey(dest, Presentation.key("locations", plan.destination, "name"), activeI18n);
   line.appendChild(dest);
-  const progress = started
-    ? " (" + (activeEngine.getInternalTime() - plan.startTime) + "/" + plan.walkTime + " min)"
-    : " (" + Presentation.formatWalkTime(plan.walkTime) + ")";
-  line.appendChild(document.createTextNode(progress));
+  line.appendChild(document.createTextNode(" (" + Presentation.formatWalkTime(plan.duration) + ")"));
+  return line;
+}
+
+function makeTransitLine(activity) {
+  const line = document.createElement("div");
+  line.className = "plan-line";
+  line.appendChild(document.createTextNode("→ "));
+  const dest = document.createElement("span");
+  Presentation.setI18nKey(dest, Presentation.key("locations", activity.to, "name"), activeI18n);
+  line.appendChild(dest);
+  line.appendChild(document.createTextNode(
+    " (" + (activeEngine.getInternalTime() - activity.startedAt) + "/" + activity.duration + " min)"
+  ));
   return line;
 }
 
@@ -326,6 +335,8 @@ function findDropTarget(x, y) {
   const el = document.elementFromPoint(x, y);
   const box = el && el.closest(".avatar-box");
   if (!box || box.dataset.actorId === selectedActorId) return null;
+  const target = activeEngine.getActor(box.dataset.actorId);
+  if (!target || target.activity.kind !== "idle") return null;
   return box;
 }
 
@@ -375,32 +386,33 @@ function cleanupItemDrag(box, pointerId) {
 
 function renderTransit() {
   const now = activeEngine.getInternalTime();
-  const entries = Object.entries(activeEngine.getPlans())
-    .filter(([, plan]) => plan.startTime !== null);
-  transit.hidden = entries.length === 0;
+  const inTransit = activeEngine.getActors().filter((a) => a.activity.kind === "transit");
+  transit.hidden = inTransit.length === 0;
   transitList.replaceChildren();
 
-  for (const [actorId, plan] of entries) {
+  for (const actor of inTransit) {
+    const activity = actor.activity;
     const line = document.createElement("div");
     line.className = "transit-line";
-    const actor = document.createElement("span");
-    Presentation.setI18nKey(actor, Presentation.key("actors", actorId, "name"), activeI18n);
-    line.appendChild(actor);
+    const actorEl = document.createElement("span");
+    Presentation.setI18nKey(actorEl, Presentation.key("actors", actor.id, "name"), activeI18n);
+    line.appendChild(actorEl);
     line.appendChild(document.createTextNode(" → "));
     const dest = document.createElement("span");
-    Presentation.setI18nKey(dest, Presentation.key("locations", plan.destination, "name"), activeI18n);
+    Presentation.setI18nKey(dest, Presentation.key("locations", activity.to, "name"), activeI18n);
     line.appendChild(dest);
-    line.appendChild(document.createTextNode(" (" + (now - plan.startTime) + "/" + plan.walkTime + " min)"));
+    line.appendChild(document.createTextNode(" (" + (now - activity.startedAt) + "/" + activity.duration + " min)"));
     transitList.appendChild(line);
   }
 }
 
-function hasPlans() {
-  return Object.keys(activeEngine.getPlans()).length > 0;
+function hasWork() {
+  if (Object.keys(activeEngine.getPlans()).length > 0) return true;
+  return activeEngine.getActors().some((a) => a.activity.kind === "transit");
 }
 
 function updatePlayButton() {
-  btnPlayGame.disabled = playing || !activeEngine || !hasPlans();
+  btnPlayGame.disabled = playing || !activeEngine || !hasWork();
 }
 
 function onPlansChanged() {
@@ -411,7 +423,7 @@ function onPlansChanged() {
 }
 
 function startPlay() {
-  if (playing || !activeEngine || !hasPlans()) return;
+  if (playing || !activeEngine || !hasWork()) return;
   playing = true;
   closeActorPanel();
   activeEngine.play();
