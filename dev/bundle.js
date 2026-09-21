@@ -23,23 +23,34 @@ const ASSET_MIME = {
   gif: "image/gif",
   webp: "image/webp",
 };
-const ASSET_REF = /"((?:\.\.?\/)[^"]+\.(svg|png|jpe?g|gif|webp))"/g;
+const ASSET_EXT = "(svg|png|jpe?g|gif|webp)";
+// Asset paths inside JS string literals (relative, "./" or "../").
+const JS_ASSET_REF = new RegExp('"((?:\\.\\.?/)[^"]+\\.' + ASSET_EXT + ')"', "g");
+// Asset paths inside HTML href/src attributes (local relative, not scheme/absolute).
+const HTML_ASSET_REF = new RegExp(
+  '([\\s])(href|src)="((?!https?:|//|data:|#|/)[^"]+\\.' + ASSET_EXT + ')"',
+  "g"
+);
 
 const escapeForScript = (js) => js.replace(/<\/script>/gi, "<\\/script>");
 const escapeForStyle = (css) => css.replace(/<\/style>/gi, "<\\/style>");
 
-// Replace local asset references (paths relative to the HTML document) with data URIs.
+// Resolve a local asset (path relative to the HTML document) into a data URI.
+const assetToDataUri = (rel) => {
+  const file = path.resolve(uiDir, rel);
+  if (!fs.existsSync(file)) {
+    console.error("bundle: asset not found: " + rel);
+    process.exit(1);
+  }
+  const mime = ASSET_MIME[path.extname(file).slice(1).toLowerCase()];
+  return `data:${mime};base64,${fs.readFileSync(file).toString("base64")}`;
+};
+
 const inlineAssets = (code) =>
-  code.replace(ASSET_REF, (match, rel, ext) => {
-    const file = path.resolve(uiDir, rel);
-    if (!fs.existsSync(file)) {
-      console.error("bundle: asset not found: " + rel);
-      process.exit(1);
-    }
-    const mime = ASSET_MIME[ext.toLowerCase()];
-    const data = fs.readFileSync(file).toString("base64");
-    return `"data:${mime};base64,${data}"`;
-  });
+  code.replace(JS_ASSET_REF, (match, rel) => `"${assetToDataUri(rel)}"`);
+
+const inlineHtmlAssets = (html) =>
+  html.replace(HTML_ASSET_REF, (match, ws, attr, rel) => `${ws}${attr}="${assetToDataUri(rel)}"`);
 
 let html = fs.readFileSync(path.join(uiDir, "index.html"), "utf8");
 
@@ -54,14 +65,17 @@ let html = fs.readFileSync(path.join(uiDir, "index.html"), "utf8");
 //   ].join("\n")
 // );
 
-// 2. Inline the stylesheet.
+// 2. Inline assets referenced from the HTML itself (e.g. <link rel="icon" href="favicon.svg">).
+html = inlineHtmlAssets(html);
+
+// 3. Inline the stylesheet.
 const css = escapeForStyle(fs.readFileSync(path.join(uiDir, "style.css"), "utf8"));
 html = html.replace(
   /[ \t]*<link rel="stylesheet" href="[^"]+"\s*\/>\n?/,
   `<style>\n${css}\n  </style>\n`
 );
 
-// 3. Inline every referenced script (except the skipped ones).
+// 4. Inline every referenced script (except the skipped ones).
 html = html.replace(/[ \t]*<script src="([^"]+)"><\/script>\n?/g, (match, src) => {
   if (SKIP_SCRIPTS.has(src)) return "";
   const file = path.resolve(uiDir, src);
@@ -78,6 +92,12 @@ if (leftovers) {
 const assetLeftovers = html.match(/"\.\.?\/[^"]+\.(svg|png|jpe?g|gif|webp)"/g);
 if (assetLeftovers) {
   console.error("bundle: local asset references remain: " + assetLeftovers.join(", "));
+  process.exit(1);
+}
+
+const htmlAssetLeftovers = html.match(HTML_ASSET_REF);
+if (htmlAssetLeftovers) {
+  console.error("bundle: local asset references remain in HTML: " + htmlAssetLeftovers.join(", "));
   process.exit(1);
 }
 
