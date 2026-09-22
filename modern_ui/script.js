@@ -89,8 +89,13 @@ function buildAvatars() {
   for (const actor of actors) {
     const preset = actor.preset;
     const box = document.createElement("div");
+    const actorName = Utils.buildKey("actors", actor.id, "name");
+
     box.className = "avatar-box";
     box.dataset.actorId = actor.id;
+    Presentation.setI18nAttr(box, "title", actorName, activeI18n);
+    Presentation.setI18nAttr(box, "aria-label", actorName, activeI18n);
+
     if (preset.avatarUrl) {
       const img = document.createElement("img");
       img.className = "actor-img";
@@ -103,9 +108,6 @@ function buildAvatars() {
       box.textContent = actor.id.charAt(0).toUpperCase();
       box.style.color = preset.color || "#e0e0e0";
     }
-    const actorName = Utils.buildKey("actors", actor.id, "name");
-    Presentation.setI18nAttr(box, "title", actorName, activeI18n);
-    Presentation.setI18nAttr(box, "aria-label", actorName, activeI18n);
     avatarsRow.appendChild(box);
   }
 }
@@ -206,8 +208,13 @@ function renderItems(actor) {
   const items = activeEngine.getInventory(actor.id);
   for (const item of items) {
     const box = document.createElement("div");
+    const itemName = Utils.buildKey("items", item.id, "name");
+
     box.className = "item-box";
     box.dataset.itemId = item.id;
+    Presentation.setI18nAttr(box, "title", itemName, activeI18n);
+    Presentation.setI18nAttr(box, "aria-label", itemName, activeI18n);
+
     // if (item.avatarSize) box.style.setProperty("--item-avatar-size", item.avatarSize);
     if (item.avatar) {
       box.innerHTML = item.avatar;
