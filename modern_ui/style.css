@@ -305,15 +305,28 @@ body {
   color: #888;
   text-transform: uppercase;
   margin-bottom: 4px;
+  display: none;
 }
 
-.actor-panel .item-tag {
-  display: inline-block;
-  background: #0f3460;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  margin: 2px 4px 2px 0;
+.actor-panel .item-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.item-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #e0e0e0;
 }
 
 .actor-panel-close,

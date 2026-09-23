@@ -181,13 +181,12 @@ function renderActorPanel() {
 function renderItems(actor) {
   actorPanelItems.replaceChildren();
   const items = activeEngine.getInventory(actor.id);
-  items.forEach((itemId, i) => {
-    if (i > 0) actorPanelItems.appendChild(document.createTextNode(", "));
-    const tag = document.createElement("span");
-    tag.className = "item-tag";
-    Presentation.setI18nKey(tag, Presentation.key("items", itemId, "name"), activeI18n);
-    actorPanelItems.appendChild(tag);
-  });
+  for (const itemId of items) {
+    const box = document.createElement("div");
+    box.className = "item-box";
+    box.textContent = itemId.charAt(0).toUpperCase();
+    actorPanelItems.appendChild(box);
+  }
 }
 
 function renderActions(actor) {
