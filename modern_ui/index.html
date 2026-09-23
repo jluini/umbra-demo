@@ -6,6 +6,7 @@
   <title>Umbra</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../components/map-view.css" />
 </head>
 <body>
 
@@ -63,6 +64,12 @@
 
     <!-- Main area: Locations -->
     <div class="main-area">
+      <div class="panel map-panel">
+        <h2 data-i18n="ui.map">Map</h2>
+        <div class="map-viewport" id="map-viewport">
+          <div class="map-content" id="map-content"></div>
+        </div>
+      </div>
       <div class="panel locations-panel" id="locations-panel">
         <h2 data-i18n="umbra.locations">Locations</h2>
         <div id="locations-list">
@@ -156,11 +163,13 @@
   </div>
 
   <script src="../common/utils.js"></script>
+  <script src="../common/geometry.js"></script>
   <script src="../umbra/umbra.js"></script>
   <script src="../presentation/i18n.js"></script>
   <script src="../presentation/i18n-dom.js"></script>
   <script src="../presentation/format.js"></script>
   <script src="../presentation/richtext.js"></script>
+  <script src="../components/map-view.js"></script>
   <script src="../games/demo/icons.js"></script>
   <script src="../games/demo.js"></script>
 

@@ -32,14 +32,22 @@ The game defines one item type:
 
 ## Locations
 
-The game defines the following locations (of which only the first two are presented in mission 1):
+The game defines the following locations (of which only the first two are presented in mission 1).
+Each location carries presentation geometry under `location.map`: a center point `(x, y)` and a
+`width`/`height` in game pixels, used by the map widget to lay out the world.
 
-- Alice's House
-- Bob's House
-- Charles's House
-- Market
-- Square
-- Forest
+| Location | map.x | map.y | map.width | map.height |
+| --- | --- | --- | --- | --- |
+| Alice's House | -600 | -400 | 200 | 200 |
+| Bob's House | -100 | -450 | 200 | 200 |
+| Charles's House | 400 | -380 | 200 | 200 |
+| Market | -500 | 450 | 220 | 220 |
+| Square | 0 | 0 | 260 | 260 |
+| Forest | 600 | 500 | 240 | 240 |
+
+The engine ignores `location.map`; the `map-view` component reads it through
+`Geometry.computeBounds` to derive the size and offset of the map content, and draws a
+rectangle and the location name (centered on the location) for each entry.
 
 ## Routes
 

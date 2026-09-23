@@ -238,12 +238,12 @@ const config = {
     george:  { id: "george",  key: 7, color: "black",     avatarUrl: "../games/demo/assets/actors/male_professional.svg" },
   },
   locations: {
-    aliceHouse:   { id: "aliceHouse",   pictureUrl: "../games/demo/assets/locations/blue_house.svg" },
-    bobHouse:     { id: "bobHouse",     pictureUrl: "../games/demo/assets/locations/blue_house.svg" },
-    charlesHouse: { id: "charlesHouse", pictureUrl: "../games/demo/assets/locations/blue_house.svg" },
-    market:       { id: "market",       pictureUrl: "../games/demo/assets/locations/supermarket.svg" },
-    square:       { id: "square" },
-    forest:       { id: "forest" },
+    aliceHouse:   { id: "aliceHouse",   pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x: 0, y: -300, width: 200, height: 200 } },
+    bobHouse:     { id: "bobHouse",     pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x: -400, y: 0, width: 200, height: 200 } },
+    charlesHouse: { id: "charlesHouse", pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x:  400, y: 0, width: 200, height: 200 } },
+    market:       { id: "market",       pictureUrl: "../games/demo/assets/locations/supermarket.svg", map: { x: 0, y:  300, width: 220, height: 220 } },
+    square:       { id: "square",       map: { x:    0, y:    0, width: 260, height: 260 } },
+    forest:       { id: "forest",       map: { x:  350, y:  350, width: 240, height: 240 } },
   },
   routes: [
     { from: "aliceHouse", to: "square", distance: 1 },
@@ -279,9 +279,9 @@ const config = {
         { id: "dave", location: "charlesHouse" },
         { id: "elena", location: "charlesHouse" },
         { id: "fiona", location: "square" },
-        { id: "george", location: "bobHouse" }
+        { id: "george", location: "forest" }
       ],
-      locations: ["aliceHouse", "bobHouse", "charlesHouse", "square"],
+      locations: ["aliceHouse", "bobHouse", "charlesHouse", "square", "forest", "market"],
       briefing: [
         { text: ".situation" },
         { label: "briefingLabels.goal", text: ".goal" },

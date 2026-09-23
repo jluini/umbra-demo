@@ -45,7 +45,11 @@ const actorPanelName = document.getElementById("actor-panel-name");
 const actorPanelItems = document.getElementById("actor-panel-items");
 const actorPanelClose = document.getElementById("actor-panel-close");
 const actorPanelActions = document.getElementById("actor-panel-actions");
+const mapViewport = document.getElementById("map-viewport");
+const mapContent = document.getElementById("map-content");
 const clockEl = document.getElementById("clock");
+
+const mapView = Components.createMapView(mapViewport, mapContent);
 
 let activeI18n = null;
 let activeEngine = null;
@@ -526,6 +530,7 @@ function updateClockText() {
 
 function onMissionStart({ mission }) {
   renderMission(mission);
+  mapView.setLocations(mission.locations, activeI18n);
   buildAvatars();
   Presentation.renderRichText(missionBriefing, mission.briefing, activeI18n, {
     prefix: "briefing",

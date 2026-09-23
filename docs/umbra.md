@@ -10,7 +10,9 @@ The engine is built on two abstract concepts:
 - **locations** — the places where actors can be or where events can happen.
   Each game defines its own locations. A mission can expose a subset of the game's
   locations. Like actors, locations are defined by unique ids and carry
-  per-language names.
+  per-language names. Locations may carry extra fields (for example presentation
+  geometry under a `map` object); the engine passes them through untouched and
+  never interprets them.
 - **routes** — the connections between locations, each with a distance. Routes
   are defined as `{ from, to, distance }` objects. They are bidirectional by
   default: `from → to` implies `to → from`. The engine pre-computes shortest

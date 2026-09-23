@@ -68,11 +68,14 @@ let html = fs.readFileSync(path.join(uiDir, "index.html"), "utf8");
 // 2. Inline assets referenced from the HTML itself (e.g. <link rel="icon" href="favicon.svg">).
 html = inlineHtmlAssets(html);
 
-// 3. Inline the stylesheet.
-const css = escapeForStyle(fs.readFileSync(path.join(uiDir, "style.css"), "utf8"));
+// 3. Inline every referenced stylesheet, preserving document order.
 html = html.replace(
-  /[ \t]*<link rel="stylesheet" href="[^"]+"\s*\/>\n?/,
-  `<style>\n${css}\n  </style>\n`
+  /[ \t]*<link rel="stylesheet" href="([^"]+)"\s*\/>\n?/g,
+  (match, href) => {
+    const file = path.resolve(uiDir, href);
+    const css = escapeForStyle(fs.readFileSync(file, "utf8"));
+    return `<style>\n${css}\n  </style>\n`;
+  }
 );
 
 // 4. Inline every referenced script (except the skipped ones).

@@ -26,15 +26,25 @@ Current games:
 ## Repository structure
 
 ```
-umbra/umbra.js        — engine (pure logic, no DOM)
-renderer.js           — DOM adapter (pluggable)
-index.html            — host page, widgets, bootstrap
+umbra/umbra.js          — engine (pure logic, no DOM)
+common/                 — pure, DOM-free utilities
+  utils.js              — generic helpers
+  geometry.js           — placements bounding box and coordinate translation
+presentation/           — shared presentation helpers and DOM bindings
+  i18n.js               — translations
+  i18n-dom.js           — data-i18n DOM binding
+  format.js             — value formatting
+  richtext.js           — rich text rendering
+components/             — reusable DOM widgets
+  map-view.js           — map widget (draggable viewport + markers)
+  map-view.css          — map widget styles
+modern_ui/              — default UI (markup, styles, controller)
 games/
-  demo.js             — demo game config
-  rockers.js          — rockers game config (placeholder)
+  demo.js               — demo game config
+  rockers.js            — rockers game config (placeholder)
 docs/
-  index.md            — this file
-  umbra.md            — engine spec
-  demo.md             — demo game spec
-  rockers.md          — rockers game spec
+  index.md              — this file
+  umbra.md              — engine spec
+  demo.md               — demo game spec
+  rockers.md            — rockers game spec
 ```

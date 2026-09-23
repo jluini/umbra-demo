@@ -229,6 +229,14 @@ body {
   flex: 1;
 }
 
+/* Map panel */
+.map-panel {
+  height: 350px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 /* Locations panel */
 .locations-panel {
   flex: 1;
