@@ -9,6 +9,19 @@
 (() => {
 "use strict";
 
+const uiTranslations = {
+  en: {
+    ui: {
+      map: "Map"
+    }
+  },
+  es: {
+    ui: {
+      map: "Mapa"
+    }
+  },
+};
+
 const overlay = document.getElementById("overlay");
 const btnPlay = document.getElementById("btn-play");
 const btnCredits = document.getElementById("btn-credits");
@@ -529,9 +542,9 @@ function onClockSet({ time }) {
   renderTransit();
 }
 
-function renderLanguageSelector(container, config, caption) {
+function renderLanguageSelector(container, gameConfig, caption) {
   container.replaceChildren();
-  for (const lang of config.languages || []) {
+  for (const lang of gameConfig.languages || []) {
     const btn = document.createElement("button");
     btn.className = "lang-btn";
     btn.dataset.lang = lang.code;
@@ -540,17 +553,21 @@ function renderLanguageSelector(container, config, caption) {
   }
 }
 
-function loadGame(config) {
-  config = config || {};
+function loadGame(gameConfig) {
+  gameConfig = gameConfig || {};
   activeI18n = Presentation.createI18n({
-    languages: config.languages.map((lang) => lang.code),
-    dictionaries: [Umbra.baseTranslations, config.translations],
+    languages: gameConfig.languages.map((lang) => lang.code),
+    dictionaries: [
+      Umbra.baseTranslations,
+      uiTranslations,
+      gameConfig.translations
+    ],
   });
-  renderLanguageSelector(langSelector, config, "name");
-  renderLanguageSelector(langSelectorInline, config, "code");
+  renderLanguageSelector(langSelector, gameConfig, "name");
+  renderLanguageSelector(langSelectorInline, gameConfig, "code");
 
-  const playable = Array.isArray(config.missions) && config.missions.length > 0;
-  activeEngine = playable ? Umbra.create(config) : null;
+  const playable = Array.isArray(gameConfig.missions) && gameConfig.missions.length > 0;
+  activeEngine = playable ? Umbra.create(gameConfig) : null;
   if (activeEngine) {
     activeEngine.on("mission:start", onMissionStart);
     activeEngine.on("clock:set", onClockSet);
