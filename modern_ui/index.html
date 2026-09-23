@@ -153,7 +153,6 @@
       </div>
       <div class="lang-selector" id="lang-selector"></div>
     </div>
-
   </div>
 
   <script src="../umbra/umbra.js"></script>
@@ -162,11 +161,11 @@
   <script src="../presentation/format.js"></script>
   <script src="../presentation/richtext.js"></script>
   <script src="../games/demo.js"></script>
-  <script src="../games/rockers.js"></script>
+
   <script>
     window.games = {
       demo: Demo,
-      rockers: Rockers,
+      // rockers: Rockers,
       none: {
         config: {
           languages: [
@@ -176,6 +175,8 @@
         },
       },
     };
+
+    window.umbraDefaults = { game: "demo", lang: "es" };
   </script>
   <script src="script.js"></script>
 </body>

@@ -37,7 +37,7 @@ const config = {
       },
       missions: {
         test: {
-          name: "Test",
+          name: "End of year toast",
           briefing: {
             situation: "Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.",
             goal: "You must get Alice and Bob together at the house, with at least one cider and no one else present, before midnight.",
@@ -76,7 +76,7 @@ const config = {
       },
       missions: {
         test: {
-          name: "Prueba",
+          name: "Brindis de fin de año",
           briefing: {
             situation: "Alicia y Rober terminaron la cena de fin de año en la casa de Alicia. Deben comprar una sidra y traerla a la casa antes de que comience el nuevo año.",
             goal: "Debes lograr que Alicia y Rober estén juntos en la casa, con al menos una sidra y sin ningún otro acompañante antes de las doce de la noche.",
@@ -132,7 +132,7 @@ const config = {
       },
       missions: {
         test: {
-          name: "Teste",
+          name: "Brinde de fim de ano",
           briefing: {
             situation: "Alice e o Beto terminaram o jantar de Réveillon na casa da Alice. Precisam comprar sidra e trazer de volta antes do ano novo começar.",
             goal: "Você deve conseguir que Alice e o Beto fiquem juntos na casa, com pelo menos uma sidra e sem mais ninguém, antes da meia-noite.",

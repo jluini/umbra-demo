@@ -1,5 +1,5 @@
 // Builds a single self-contained HTML file from modern_ui/.
-// Usage: node dev/bundle.js
+// Usage: node dev/bundle.js [outFile]
 "use strict";
 
 const fs = require("fs");
@@ -8,7 +8,10 @@ const path = require("path");
 const root = path.join(__dirname, "..");
 const uiDir = path.join(root, "modern_ui");
 const outDir = path.join(root, "dist");
-const outFile = path.join(outDir, "demo.html");
+const outArg = process.argv[2];
+const outFile = outArg
+  ? path.resolve(outArg)
+  : path.join(outDir, "demo.html");
 
 const SKIP_SCRIPTS = new Set(["../games/rockers.js"]);
 
@@ -18,15 +21,15 @@ const escapeForStyle = (css) => css.replace(/<\/style>/gi, "<\\/style>");
 let html = fs.readFileSync(path.join(uiDir, "index.html"), "utf8");
 
 // 1. Replace the inline games registry with the demo-only bundle defaults.
-html = html.replace(
-  /[ \t]*<script>\s*window\.games\s*=[\s\S]*?<\/script>/,
-  [
-    "<script>",
-    '    window.umbraDefaults = { game: "demo", lang: "es" };',
-    "    window.games = { demo: Demo };",
-    "  </script>",
-  ].join("\n")
-);
+// html = html.replace(
+//   /[ \t]*<script>\s*window\.games\s*=[\s\S]*?<\/script>/,
+//   [
+//     "<script>",
+//     '    window.umbraDefaults = { game: "demo", lang: "es" };',
+//     "    window.games = { demo: Demo };",
+//     "  </script>",
+//   ].join("\n")
+// );
 
 // 2. Inline the stylesheet.
 const css = escapeForStyle(fs.readFileSync(path.join(uiDir, "style.css"), "utf8"));
