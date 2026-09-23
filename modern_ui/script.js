@@ -287,12 +287,26 @@ function startItemDrag(e, box, item) {
   dragState = {
     item,
     pointerId: e.pointerId,
+    pointerType: e.pointerType,
     startX: e.clientX,
     startY: e.clientY,
     active: false,
     target: null,
+    ghost: null,
     box,
   };
+}
+
+function createDragGhost(box) {
+  const ghost = document.createElement("div");
+  ghost.className = "item-drag-ghost";
+  for (const child of box.childNodes) ghost.appendChild(child.cloneNode(true));
+  return ghost;
+}
+
+function updateGhostPosition(ghost, pointerType, x, y) {
+  ghost.style.left = x + "px";
+  ghost.style.top = (pointerType === "touch" ? y - 48 : y) + "px";
 }
 
 function findDropTarget(x, y) {
@@ -310,8 +324,11 @@ function onItemPointerMove(e) {
     if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
     dragState.active = true;
     dragState.box.classList.add("dragging");
+    dragState.ghost = createDragGhost(dragState.box);
+    document.body.appendChild(dragState.ghost);
   }
   e.preventDefault();
+  updateGhostPosition(dragState.ghost, dragState.pointerType, e.clientX, e.clientY);
   clearDropTargets();
   const target = findDropTarget(e.clientX, e.clientY);
   dragState.target = target;
@@ -334,6 +351,7 @@ function onItemPointerCancel(e) {
 }
 
 function cleanupItemDrag(box, pointerId) {
+  if (dragState && dragState.ghost) dragState.ghost.remove();
   dragState = null;
   if (box) {
     box.classList.remove("dragging");

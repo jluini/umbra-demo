@@ -331,7 +331,7 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.9rem;
   color: #e0e0e0;
   cursor: grab;
   touch-action: none;
@@ -344,8 +344,34 @@ body {
   cursor: grabbing;
 }
 
+.item-box img,
+.item-box svg {
+  width: 1.9rem;
+  height: 1.9rem;
+  display: block;
+}
+
 .item-box.dragging {
   opacity: 0.4;
+}
+
+.item-drag-ghost {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  color: #e0e0e0;
+  font-weight: 700;
+  font-size: 3rem;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.item-drag-ghost img,
+.item-drag-ghost svg {
+  width: 1em;
+  height: 1em;
+  display: block;
 }
 
 .actor-panel-close,
