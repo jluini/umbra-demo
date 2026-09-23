@@ -1,2 +1,8 @@
-# Original avatar sources (kept locally, not tracked)
+# Local scratch notes
+todo.txt
+
+# Original avatar sources
 games/demo/assets/**/original_*.svg
+
+# Generated bundles
+dist/
