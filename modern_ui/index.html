@@ -11,8 +11,7 @@
 
   <!-- Game screen (always rendered) -->
   <div class="game-container">
-
-    <div class="top-bar">
+    <div class="panel top-bar">
       <span class="mission-label">
         <span id="mission-prefix" data-i18n="umbra.mission">Mission</span>
         <span id="mission-number">3</span>
@@ -25,14 +24,14 @@
       </div>
     </div>
 
-    <div class="status-bar">
+    <div class="panel status-bar">
       <div class="avatars" id="avatars" hidden></div>
       <span class="clock" id="clock">09/17/2026, 22:34</span>
       <button class="btn" id="btn-play-game" disabled>▶ <span data-i18n="actions.play">Play</span></button>
     </div>
 
     <!-- Mission bar (briefing) -->
-    <div class="mission-bar" id="mission-bar">
+    <div class="panel mission-bar" id="mission-bar">
       <button class="mission-bar-close" id="mission-bar-close">✕</button>
       <div id="mission-briefing">
         <div class="briefing-section">
@@ -64,7 +63,7 @@
 
     <!-- Main area: Locations -->
     <div class="main-area">
-      <div class="locations-panel" id="locations-panel">
+      <div class="panel locations-panel" id="locations-panel">
         <h2 data-i18n="umbra.locations">Locations</h2>
         <div id="locations-list">
           <div class="location-card">
