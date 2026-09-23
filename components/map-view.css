@@ -24,6 +24,7 @@
   position: absolute;
   top: 0;
   left: 0;
+  transform-origin: 0 0;
   will-change: transform;
   background-color: #1a1a2e;
 }

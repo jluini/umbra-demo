@@ -7,9 +7,12 @@
 (() => {
 "use strict";
 
+const MIN_SCALE = 0.6;
+
 const createMapView = (viewport, content) => {
   let posX = 0;
   let posY = 0;
+  let scale = 1;
   let pan = null;
   let bounds = null;
 
@@ -18,16 +21,27 @@ const createMapView = (viewport, content) => {
   }
 
   function apply() {
-    content.style.transform = "translate(" + posX + "px, " + posY + "px)";
+    content.style.transform =
+      "translate(" + posX + "px, " + posY + "px) scale(" + scale + ")";
   }
 
   function setPos(x, y) {
-    const minX = Math.min(0, viewport.clientWidth - content.offsetWidth);
-    const minY = Math.min(0, viewport.clientHeight - content.offsetHeight);
+    const minX = Math.min(0, viewport.clientWidth - content.offsetWidth * scale);
+    const minY = Math.min(0, viewport.clientHeight - content.offsetHeight * scale);
     posX = clamp(x, minX, 0);
     posY = clamp(y, minY, 0);
     apply();
   }
+
+  // Zooms out so the content fits the viewport width, but never below MIN_SCALE.
+  function updateScale() {
+    if (!content.offsetWidth) return;
+    scale = clamp(viewport.clientWidth / content.offsetWidth, MIN_SCALE, 1);
+    setPos(posX, posY);
+  }
+
+  const resizeObserver = new ResizeObserver(updateScale);
+  resizeObserver.observe(viewport);
 
   function onDown(e) {
     if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -99,6 +113,7 @@ const createMapView = (viewport, content) => {
     content.style.width = bounds.width + "px";
     content.style.height = bounds.height + "px";
     renderMarkers(locations, i18n);
+    updateScale();
     setPos(0, 0);
   }
 

@@ -231,7 +231,9 @@ body {
 
 /* Map panel */
 .map-panel {
-  height: 350px;
+  aspect-ratio: 16 / 9;
+  min-height: 350px;
+  max-height: 620px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
