@@ -26,11 +26,7 @@ const base = {
   es: { umbra: { mission: "Misión" }, briefingLabels: { goal: "Objetivo", hints: "Pistas" }, plan: { walkTo: "Caminar a...", cancel: "Cancelar" } },
 };
 const config = {
-  languages: [
-    { code: "en", name: "English" },
-    { code: "es", name: "Español" },
-    { code: "pt", name: "Português" },
-  ],
+  languages: ["en", "es", "pt"],
   translations: {
     en: {
       umbra: { mission: "Quest" },
@@ -43,11 +39,14 @@ const config = {
 };
 
 const i18n = window.Presentation.createI18n({
-  languages: config.languages.map((lang) => lang.code),
+  languages: config.languages,
   dictionaries: [base, config.translations],
 });
 
 check(JSON.stringify(i18n.languages()) === JSON.stringify(["en", "es", "pt"]), "languages come from the game only");
+check(window.Presentation.languageName("en") === "english", "languageName returns the endonym, lowercased");
+check(window.Presentation.languageName("es") === "español", "languageName resolves the Spanish endonym");
+check(window.Presentation.languageName("zz") === "zz", "unknown language code falls back to the code");
 check(i18n.setLanguage("zz") === "en", "invalid language falls back to the first");
 check(i18n.t("umbra.mission") === "Quest", "game translation overrides the base");
 check(i18n.t("menu.play") === "Play", "base term resolves when the game does not override it");

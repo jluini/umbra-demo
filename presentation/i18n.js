@@ -39,6 +39,17 @@ const createI18n = ({ languages = [], dictionaries = [] } = {}) => {
   return i18n;
 };
 
+const languageName = (code) => {
+  if (!code) return "";
+  try {
+    const name = new Intl.DisplayNames([code], { type: "language" }).of(code);
+    return (name || code).toLowerCase();
+  } catch {
+    return String(code).toLowerCase();
+  }
+};
+
 window.Presentation = window.Presentation || {};
 window.Presentation.createI18n = createI18n;
+window.Presentation.languageName = languageName;
 })();

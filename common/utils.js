@@ -30,10 +30,14 @@ const buildKey = (type, id, field = "name") => type + "." + id + "." + field;
 const resolveKey = (path, base = "") =>
   path && path.startsWith(".") ? base + path : path;
 
+const capitalizeFirst = (str) =>
+  str.charAt(0).toUpperCase() + str.slice(1);
+
 window.Utils = window.Utils || {};
 // window.Utils.isPlainObject = isPlainObject;
 window.Utils.deepMerge = deepMerge;
 window.Utils.getPath = getPath;
 window.Utils.buildKey = buildKey;
 window.Utils.resolveKey = resolveKey;
+window.Utils.capitalizeFirst = capitalizeFirst;
 })();

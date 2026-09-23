@@ -12,11 +12,7 @@ const {
 } = window.DemoIcons;
 
 const config = {
-  languages: [
-    { code: "en", name: "English" },
-    { code: "es", name: "Español" },
-    { code: "pt", name: "Português" }
-  ],
+  languages: ["en", "es", "pt"],
   translations: {
     en: {
       umbra: {

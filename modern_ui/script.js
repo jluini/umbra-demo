@@ -542,13 +542,17 @@ function onClockSet({ time }) {
   renderTransit();
 }
 
+function languageName(code) {
+  return Utils.capitalizeFirst(Presentation.languageName(code));
+}
+
 function renderLanguageSelector(container, gameConfig, caption) {
   container.replaceChildren();
-  for (const lang of gameConfig.languages || []) {
+  for (const code of gameConfig.languages || []) {
     const btn = document.createElement("button");
     btn.className = "lang-btn";
-    btn.dataset.lang = lang.code;
-    btn.textContent = caption === "code" ? lang.code : lang.name;
+    btn.dataset.lang = code;
+    btn.textContent = caption === "code" ? code : languageName(code);
     container.appendChild(btn);
   }
 }
@@ -556,7 +560,7 @@ function renderLanguageSelector(container, gameConfig, caption) {
 function loadGame(gameConfig) {
   gameConfig = gameConfig || {};
   activeI18n = Presentation.createI18n({
-    languages: gameConfig.languages.map((lang) => lang.code),
+    languages: gameConfig.languages,
     dictionaries: [
       Umbra.baseTranslations,
       uiTranslations,

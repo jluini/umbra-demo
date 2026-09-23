@@ -2,10 +2,7 @@
 "use strict";
 
 const config = {
-  languages: [
-    { code: "en", name: "English" },
-    { code: "es", name: "Español" }
-  ],
+  languages: ["en", "es"],
   translations: {
     en: { actors: "Rockers", items: "Objects", alicia: "Alice", bob: "Bob", carlos: "Charles" },
     es: { actors: "Rockers", items: "Objetos", alicia: "Alicia", bob: "Rober", carlos: "Carlos" },

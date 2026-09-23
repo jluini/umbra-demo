@@ -12,16 +12,6 @@ const formatTime = (date, lang) =>
     minute: "2-digit",
   }).format(date);
 
-const languageNames = {
-  en: "English",
-  es: "Español",
-  de: "Deutsch",
-  pt: "Português",
-  fr: "Français",
-  it: "Italiano",
-  ja: "日本語",
-};
-
 //const create = ({ root }) => {
   const widgets = {};
   const root = document.getElementById("app");
@@ -428,10 +418,10 @@ const languageNames = {
         if (langs.length <= 1) {
           widgets.languages.style.display = "none";
         } else {
-          for (const lang of langs) {
+          for (const code of langs) {
             const btn = document.createElement("button");
-            btn.textContent = languageNames[lang] || lang;
-            btn.addEventListener("click", () => game.setLanguage(lang));
+            btn.textContent = Presentation.languageName(code);
+            btn.addEventListener("click", () => activeI18n.setLanguage(code));
             widgets.languages.appendChild(btn);
           }
         }
@@ -461,7 +451,7 @@ function boot() {
 
 function loadGame(config) {
   activeI18n = Presentation.createI18n({
-    languages: config.languages.map((lang) => lang.code),
+    languages: config.languages,
     dictionaries: [Umbra.baseTranslations, config.translations],
   });
   activeI18n.setLanguage("en");
