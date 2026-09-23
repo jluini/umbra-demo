@@ -460,7 +460,10 @@ function boot() {
 }
 
 function loadGame(config) {
-  activeI18n = Presentation.createI18n({ config, base: Umbra.baseTranslations });
+  activeI18n = Presentation.createI18n({
+    languages: config.languages.map((lang) => lang.code),
+    dictionaries: [Umbra.baseTranslations, config.translations],
+  });
   activeI18n.setLanguage("en");
   activeEngine = Umbra.create(config);
 

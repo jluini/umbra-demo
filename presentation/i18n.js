@@ -3,11 +3,14 @@
 (() => {
 "use strict";
 
-const createI18n = ({ config = {}, base = {} } = {}) => {
-  const languages = (config.languages || []).map((lang) => lang.code).filter(Boolean);
+const createI18n = ({ languages = [], dictionaries = [] } = {}) => {
+  const codes = languages.filter(Boolean);
   const dictionary = {};
-  for (const code of languages) {
-    dictionary[code] = Utils.deepMerge(base[code] || {}, config.translations?.[code] || {});
+  for (const code of codes) {
+    dictionary[code] = dictionaries.reduce(
+      (acc, dict) => Utils.deepMerge(acc, (dict && dict[code]) || {}),
+      {}
+    );
   }
 
   let current = null;

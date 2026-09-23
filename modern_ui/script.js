@@ -542,7 +542,10 @@ function renderLanguageSelector(container, config, caption) {
 
 function loadGame(config) {
   config = config || {};
-  activeI18n = Presentation.createI18n({ config, base: Umbra.baseTranslations });
+  activeI18n = Presentation.createI18n({
+    languages: config.languages.map((lang) => lang.code),
+    dictionaries: [Umbra.baseTranslations, config.translations],
+  });
   renderLanguageSelector(langSelector, config, "name");
   renderLanguageSelector(langSelectorInline, config, "code");
 

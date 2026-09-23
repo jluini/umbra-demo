@@ -42,7 +42,10 @@ const config = {
   },
 };
 
-const i18n = window.Presentation.createI18n({ config, base });
+const i18n = window.Presentation.createI18n({
+  languages: config.languages.map((lang) => lang.code),
+  dictionaries: [base, config.translations],
+});
 
 check(JSON.stringify(i18n.languages()) === JSON.stringify(["en", "es", "pt"]), "languages come from the game only");
 check(i18n.setLanguage("zz") === "en", "invalid language falls back to the first");
@@ -69,8 +72,8 @@ i18n.setLanguage("pt");
 check(i18n.t("briefingLabels.hints") === "Dicas", "game override of a base label resolves (pt)");
 
 const german = window.Presentation.createI18n({
-  config: { languages: [{ code: "de", name: "Deutsch" }] },
-  base: window.Umbra.baseTranslations,
+  languages: ["de"],
+  dictionaries: [window.Umbra.baseTranslations],
 });
 german.setLanguage("de");
 check(german.t("briefingLabels.goal") === "Ziel", "German label comes from the Umbra base");
