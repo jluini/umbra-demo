@@ -179,10 +179,6 @@ const config = {
         square: { name: "Praça" },
         forest: { name: "Floresta" },
       },
-      briefingLabels: {
-        goal: "Objetivo",
-        hints: "Dicas"
-      },
       plan: {
         walkTo: "Caminhar até...",
         cancel: "Cancelar",
@@ -190,6 +186,10 @@ const config = {
       },
       actions: {
         play: "Jogar"
+      },
+      briefingLabels: {
+        goal: "Objetivo",
+        hints: "Dicas"
       },
       missions: {
         test: {

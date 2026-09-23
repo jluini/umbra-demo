@@ -15,15 +15,12 @@ const engineTranslations = {
       items: "Items",
       locations: "Locations",
     },
+    /* TODO: menu, plan, actions namespaces could belong to the UI */
     menu: {
       play: "Play",
       continue: "Continue",
       credits: "Credits",
       about: "About"
-    },
-    briefingLabels: {
-      goal: "Goal",
-      hints: "Hints"
     },
     plan: {
       walkTo: "Walk to...",
@@ -32,6 +29,11 @@ const engineTranslations = {
     },
     actions: {
       play: "Play"
+    },
+    /* TODO: briefingLabels namespace could belong to the game */
+    briefingLabels: {
+      goal: "Goal",
+      hints: "Hints"
     },
   },
   es: {
@@ -49,10 +51,6 @@ const engineTranslations = {
       credits: "Créditos",
       about: "Acerca de"
     },
-    briefingLabels: {
-      goal: "Objetivo",
-      hints: "Pistas"
-    },
     plan: {
       walkTo: "Caminar a...",
       cancel: "Cancelar",
@@ -60,6 +58,10 @@ const engineTranslations = {
     },
     actions: {
       play: "Jugar"
+    },
+    briefingLabels: {
+      goal: "Objetivo",
+      hints: "Pistas"
     },
   },
   de: {
@@ -77,10 +79,6 @@ const engineTranslations = {
       credits: "Mitwirkende",
       about: "Über uns"
     },
-    briefingLabels: {
-      goal: "Ziel",
-      hints: "Hinweise"
-    },
     plan: {
       walkTo: "Gehen zu...",
       cancel: "Abbrechen",
@@ -88,7 +86,11 @@ const engineTranslations = {
     },
     actions: {
       play: "Spielen"
-    }
+    },
+    briefingLabels: {
+      goal: "Ziel",
+      hints: "Hinweise"
+    },
   }
 };
 
