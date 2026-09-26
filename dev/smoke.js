@@ -172,6 +172,109 @@ check(game5.getActor("alice").activity.kind === "idle" && game5.getActor("alice"
 check(game5.getInventory("alice").length === 0, "restart resets inventory");
 game5.stop();
 
+// Rules: victory/defeat conditions evaluated when a plan completes.
+const rulesConfig = {
+  items: { cider: { id: "cider" } },
+  actors: {
+    alice: { id: "alice", key: 1 },
+    bob: { id: "bob", key: 2 },
+  },
+  locations: { a: { id: "a" }, b: { id: "b" }, c: { id: "c" } },
+  routes: [
+    { from: "a", to: "b", distance: 1 },
+    { from: "b", to: "c", distance: 1 },
+  ],
+  missions: [
+    {
+      id: "rules",
+      start: "2024-12-31T22:00:00",
+      deadline: "2025-01-01T00:00:00",
+      actors: [
+        { id: "alice", location: "a", items: [] },
+        { id: "bob", location: "c", items: [] },
+      ],
+      locations: ["a", "b", "c"],
+      rules: [
+        { effect: "victory", conditions: [{ kind: "actorsAt", actors: ["alice"], at: "b" }], message: "rules.victory" },
+        { effect: "defeat", conditions: [{ kind: "actorsTogether", actors: ["alice", "bob"] }], message: "rules.defeat" },
+      ],
+    },
+    {
+      id: "precedence",
+      start: "2024-12-31T22:00:00",
+      deadline: "2025-01-01T00:00:00",
+      actors: [
+        { id: "alice", location: "a", items: [] },
+        { id: "bob", location: "a", items: [] },
+      ],
+      locations: ["a", "b", "c"],
+      rules: [
+        { effect: "victory", conditions: [{ kind: "actorsAt", actors: ["alice", "bob"], at: "b" }], message: "rules.victory" },
+        { effect: "defeat", conditions: [{ kind: "actorsTogether", actors: ["alice", "bob"] }], message: "rules.defeat" },
+      ],
+    },
+  ],
+};
+
+// Victory rule fires when its completion makes the condition true.
+const rg1 = window.Umbra.create(rulesConfig);
+rg1.start(0);
+let rulesEnd = null;
+rg1.on("mission:end", (e) => { rulesEnd = e; });
+rg1.setPlan("alice", "b");
+rg1.commitPlans();
+rg1.advance();
+check(rulesEnd === null, "no ending before the rule condition holds");
+for (let i = 0; i < 50 && !rulesEnd; i++) rg1.advance();
+check(rulesEnd && rulesEnd.effect === "victory" && rulesEnd.reason === "rule", "victory rule fires on completion");
+check(rulesEnd.message === "rules.victory", "victory rule carries its message");
+check(rg1.getStatus() === "ended", "status ended after rule victory");
+rg1.stop();
+
+// Defeat rule fires on the actor that joins the others.
+const rg2 = window.Umbra.create(rulesConfig);
+rg2.start(0);
+let rulesEnd2 = null;
+rg2.on("mission:end", (e) => { rulesEnd2 = e; });
+rg2.setPlan("bob", "a");
+rg2.commitPlans();
+for (let i = 0; i < 50 && !rulesEnd2; i++) rg2.advance();
+check(rulesEnd2 && rulesEnd2.effect === "defeat" && rulesEnd2.reason === "rule", "defeat rule fires on completion");
+rg2.stop();
+
+// Defeat takes precedence over victory when both match.
+const rg3 = window.Umbra.create(rulesConfig);
+rg3.start(1);
+let rulesEnd3 = null;
+rg3.on("mission:end", (e) => { rulesEnd3 = e; });
+rg3.setPlan("alice", "b");
+rg3.setPlan("bob", "b");
+rg3.commitPlans();
+for (let i = 0; i < 50 && !rulesEnd3; i++) rg3.advance();
+check(rulesEnd3 && rulesEnd3.effect === "defeat", "defeat takes precedence over victory");
+rg3.stop();
+
+// Rule validation rejects typos.
+const rulesConfigWith = (rules) => ({
+  ...rulesConfig,
+  missions: [{ ...rulesConfig.missions[0], rules }],
+});
+const expectStartThrow = (label, rules) => {
+  let threw = false;
+  try {
+    window.Umbra.create(rulesConfigWith(rules)).start(0);
+  } catch {
+    threw = true;
+  }
+  check(threw, label);
+};
+expectStartThrow("unknown condition kind is rejected", [{ effect: "victory", conditions: [{ kind: "nope" }] }]);
+expectStartThrow("unknown effect is rejected", [{ effect: "draw", conditions: [{ kind: "actorsAt", actors: ["alice"], at: "b" }] }]);
+expectStartThrow("unknown actor is rejected", [{ effect: "victory", conditions: [{ kind: "actorsTogether", actors: ["ghost"] }] }]);
+expectStartThrow("unknown location is rejected", [{ effect: "victory", conditions: [{ kind: "actorsAt", actors: ["alice"], at: "nowhere" }] }]);
+expectStartThrow("unknown item is rejected", [{ effect: "victory", conditions: [{ kind: "itemAt", item: "nope", at: "b" }] }]);
+expectStartThrow("empty conditions are rejected", [{ effect: "victory", conditions: [] }]);
+
 if (failures > 0) {
   console.error(failures + " failure(s)");
   process.exit(1);

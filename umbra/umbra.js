@@ -207,6 +207,110 @@ const buildLocations = (config, mission) =>
     return loc;
   });
 
+// --- Rules / conditions ---------------------------------------------------
+// A rule is { effect, conditions: [...], message? }. Conditions are combined
+// with AND; rules of the same effect are combined with OR (config order).
+// Effects are evaluated by precedence: defeat before victory.
+
+const EFFECT_PRIORITY = ["defeat", "victory"];
+
+const actorLocation = (actor) => actor.activity.at;
+
+const itemAt = ({ item, at }, mission) =>
+  mission.actors.some((actor) =>
+    actorLocation(actor) === at && actor.items.some((it) => it.id === item));
+
+const actorsAt = ({ actors, at, exact }, mission) => {
+  const present = mission.actors.filter((actor) => actorLocation(actor) === at);
+  if (!actors.every((id) => present.some((actor) => actor.id === id))) return false;
+  if (exact && present.some((actor) => !actors.includes(actor.id))) return false;
+  return true;
+};
+
+const actorsTogether = ({ actors }, mission) => {
+  const positions = actors.map((id) => {
+    const actor = findActor(mission, id);
+    return actor ? actorLocation(actor) : undefined;
+  });
+  if (positions.some((p) => p === undefined)) return false;
+  return positions.every((p) => p === positions[0]);
+};
+
+const conditionHolds = (condition, mission) => {
+  switch (condition.kind) {
+    case "itemAt": return itemAt(condition, mission);
+    case "actorsAt": return actorsAt(condition, mission);
+    case "actorsTogether": return actorsTogether(condition, mission);
+    default:
+      throw new Error("umbra: unknown condition kind '" + condition.kind + "'");
+  }
+};
+
+const conditionsHold = (conditions, mission) =>
+  conditions.every((condition) => conditionHolds(condition, mission));
+
+const evaluateRules = (rules, mission) => {
+  for (const effect of EFFECT_PRIORITY) {
+    for (const rule of rules) {
+      if (rule.effect !== effect) continue;
+      if (conditionsHold(rule.conditions, mission)) {
+        return { effect, message: rule.message !== undefined ? rule.message : null };
+      }
+    }
+  }
+  return null;
+};
+
+const validateRules = (config, missionDef, missionLocs) => {
+  const rules = missionDef.rules || [];
+  const actorIds = new Set((missionDef.actors || []).map((a) => a.id));
+  const itemIds = new Set(Object.keys(config.items || {}));
+
+  const checkActorsCondition = (condition) => {
+    if (!Array.isArray(condition.actors) || condition.actors.length === 0) {
+      throw new Error("umbra: rule condition '" + condition.kind + "' requires a non-empty 'actors' array");
+    }
+    for (const id of condition.actors) {
+      if (!actorIds.has(id)) {
+        throw new Error("umbra: rule condition references unknown actor '" + id + "'");
+      }
+    }
+  };
+
+  for (const rule of rules) {
+    if (!EFFECT_PRIORITY.includes(rule.effect)) {
+      throw new Error("umbra: rule has unknown effect '" + rule.effect + "'");
+    }
+    if (!Array.isArray(rule.conditions) || rule.conditions.length === 0) {
+      throw new Error("umbra: rule '" + rule.effect + "' has no conditions");
+    }
+    for (const condition of rule.conditions) {
+      switch (condition.kind) {
+        case "itemAt":
+          if (!itemIds.has(condition.item)) {
+            throw new Error("umbra: rule condition references unknown item '" + condition.item + "'");
+          }
+          if (!missionLocs.has(condition.at)) {
+            throw new Error("umbra: rule condition references unknown location '" + condition.at + "'");
+          }
+          break;
+        case "actorsAt":
+          checkActorsCondition(condition);
+          if (!missionLocs.has(condition.at)) {
+            throw new Error("umbra: rule condition references unknown location '" + condition.at + "'");
+          }
+          break;
+        case "actorsTogether":
+          checkActorsCondition(condition);
+          break;
+        default:
+          throw new Error("umbra: rule condition has unknown kind '" + condition.kind + "'");
+      }
+    }
+  }
+  return rules;
+};
+
 const buildMission = (config, requestedIndex = getInitialMissionIndex()) => {
   if (!config.missions || config.missions.length === 0) {
     throw new Error("umbra: no missions configured");
@@ -224,6 +328,7 @@ const buildMission = (config, requestedIndex = getInitialMissionIndex()) => {
   const missionLocs = new Set(missionDef.locations || []);
   const actors = buildActors(config, missionDef, missionLocs);
   const locations = buildLocations(config, missionDef);
+  const rules = validateRules(config, missionDef, missionLocs);
 
   const mission = {
     id: missionDef.id,
@@ -233,6 +338,7 @@ const buildMission = (config, requestedIndex = getInitialMissionIndex()) => {
     deadline: parseDate(missionDef.deadline),
     actors,
     locations,
+    rules,
   };
   return { mission };
 };
@@ -331,6 +437,10 @@ const create = (config = {}) => {
       if (from.activity.at !== to.activity.at) return false;
       if (!moveItem(from, to, item)) return false;
       emit("item:give", { from: fromActorId, to: toActorId, item });
+      // Rules are only evaluated when a plan completes. If item transfers should
+      // be able to end the mission, evaluate here:
+      // const ending = evaluateRules(state.mission.rules, state.mission);
+      // if (ending) endMission({ ...ending, reason: "rule" }, { completed: [], ended: null });
       return true;
     },
     advance() {
@@ -356,8 +466,8 @@ const create = (config = {}) => {
       }
 
       if (result.completed.length > 0) {
-        // TODO: evaluate rules here (defeat first, then victory, then others);
-        // if a rule fires, call endMission(...) with its effect and message.
+        const ending = evaluateRules(state.mission.rules, state.mission);
+        if (ending) return endMission({ ...ending, reason: "rule" }, result);
       }
 
       return result;
