@@ -652,7 +652,7 @@ body {
   margin-bottom: 16px;
 }
 
-.screen-titles .menu-buttons {
+.menu-buttons {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -660,7 +660,7 @@ body {
   max-width: 240px;
 }
 
-.screen-titles .menu-buttons .btn {
+.menu-buttons .btn {
   width: 100%;
 }
 
@@ -668,6 +668,18 @@ body {
   display: flex;
   gap: 8px;
   margin-top: 8px;
+}
+
+/* Result screen */
+.screen-result .result-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.screen-result .result-message {
+  color: #aaa;
+  line-height: 1.5;
 }
 
 .lang-btn {

@@ -51,8 +51,8 @@ const config = {
       missions: {
         test: {
           name: "End of year toast",
-          victory: "TODO",
-          defeat: "TODO",
+          victory: "Alice and Bob got the cider; now they can celebrate the arrival of 2025.",
+          defeat: "Charles found out Alice and Bob are together. The night ended badly.",
           briefing: {
             situation: "Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.",
             goal: "You must get Alice and Bob together at the house, with at least one cider and no one else present, before midnight.",
@@ -65,7 +65,7 @@ const config = {
         },
         test2: {
           name: "The Potion Contest",
-          victory: "TODO",
+          victory: "Elena and Fiona crowned Alice and Bob winners of the potion contest.",
           briefing: {
             situation: "Elena and Fiona are hosting a potion contest in the square. Alice and Bob promised to bring the red potion, but George accidentally left the recipe at Bob's house. Meanwhile, Charles wanders around looking for a way to cheat.",
             goal: "Get Alice and Bob to the square with the red potion before the contest ends, and keep Charles away from the judges.",
@@ -129,7 +129,7 @@ const config = {
         },
         test2: {
           name: "El concurso de pociones",
-          victory: "TODO",
+          victory: "Elena y Fiona coronaron a Alicia y Rober como ganadores del concurso de pociones.",
           briefing: {
             situation: "Elena y Fiona organizan un concurso de pociones en la plaza. Alicia y Rober prometieron llevar la poción roja, pero Jorge dejó la receta por error en la casa de Rober. Mientras tanto, Carlos deambula buscando la manera de hacer trampa.",
             goal: "Lográ que Alicia y Rober lleguen a la plaza con la poción roja antes de que termine el concurso, y mantené a Carlos lejos de los jueces.",
@@ -189,6 +189,11 @@ const config = {
       actions: {
         run: "Avançar"
       },
+      messages: {
+        defeat: {
+          deadline: "O tempo acabou."
+        }
+      },
       briefingLabels: {
         goal: "Objetivo",
         hints: "Dicas"
@@ -196,8 +201,8 @@ const config = {
       missions: {
         test: {
           name: "Brinde de fim de ano",
-          victory: "TODO",
-          defeat: "TODO",
+          victory: "Alice e Beto conseguiram a sidra; agora podem celebrar a chegada de 2025.",
+          defeat: "Carlos descobriu que Alice e Beto estão juntos. A noite terminou mal.",
           briefing: {
             situation: "Alice e o Beto terminaram o jantar de Réveillon na casa da Alice. Precisam comprar sidra e trazer de volta antes do ano novo começar.",
             goal: "Você deve conseguir que Alice e o Beto fiquem juntos na casa, com pelo menos uma sidra e sem mais ninguém, antes da meia-noite.",
@@ -210,7 +215,7 @@ const config = {
         },
         test2: {
           name: "O concurso de poções",
-          victory: "TODO",
+          victory: "Helena e Fiona coroaram Alice e Beto vencedores do concurso de poções.",
           briefing: {
             situation: "Helena e Fiona organizam um concurso de poções na praça. Alice e Beto prometeram levar a poção vermelha, mas Jorge deixou a receita por engano na casa do Beto. Enquanto isso, Carlos vagueia procurando uma maneira de trapacear.",
             goal: "Faça Alice e Beto chegarem à praça com a poção vermelha antes que o concurso termine, e mantenha Carlos longe dos juízes.",

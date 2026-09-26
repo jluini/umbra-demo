@@ -158,11 +158,19 @@ game5.setPlan("alice", "b");
 game5.commitPlans();
 for (let i = 0; i < 50 && !ending; i++) game5.advance();
 check(ending && ending.effect === "defeat" && ending.reason === "deadline", "deadline triggers defeat");
+check(ending.message === "messages.defeat.deadline", "deadline ending carries its message key");
 check(game5.getStatus() === "ended", "status is ended after deadline");
 check(game5.getEnding() && game5.getEnding().effect === "defeat", "getEnding reports defeat");
 check(game5.canAdvance() === false, "canAdvance false after ending");
 check(game5.advance().ended === null, "advance is a no-op after ending");
 check(game5.stop().getStatus() === "ready", "stop from ended -> ready");
+
+// Restarting a mission rebuilds its initial state.
+game5.start();
+check(game5.getInternalTime() === 0, "restart resets the clock");
+check(game5.getActor("alice").activity.kind === "idle" && game5.getActor("alice").activity.at === "a", "restart resets actor activity");
+check(game5.getInventory("alice").length === 0, "restart resets inventory");
+game5.stop();
 
 if (failures > 0) {
   console.error(failures + " failure(s)");

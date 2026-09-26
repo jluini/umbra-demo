@@ -12,12 +12,29 @@
 const uiTranslations = {
   en: {
     ui: {
-      map: "Map"
+      map: "Map",
+      victory: "Mission accomplished",
+      defeat: "Mission failed",
+      restart: "Restart",
+      backToMenu: "Back to menu"
     }
   },
   es: {
     ui: {
-      map: "Mapa"
+      map: "Mapa",
+      victory: "Misión cumplida",
+      defeat: "Misión fallida",
+      restart: "Reiniciar",
+      backToMenu: "Volver al menú"
+    }
+  },
+  pt: {
+    ui: {
+      map: "Mapa",
+      victory: "Missão cumprida",
+      defeat: "Missão falhada",
+      restart: "Reiniciar",
+      backToMenu: "Voltar ao menu"
     }
   },
 };
@@ -48,6 +65,10 @@ const actorPanelActions = document.getElementById("actor-panel-actions");
 const mapViewport = document.getElementById("map-viewport");
 const mapContent = document.getElementById("map-content");
 const clockEl = document.getElementById("clock");
+const resultTitle = document.getElementById("result-title");
+const resultMessage = document.getElementById("result-message");
+const btnRestart = document.getElementById("btn-restart");
+const btnBackMenu = document.getElementById("btn-back-menu");
 
 const mapView = Components.createMapView(mapViewport, mapContent);
 
@@ -59,6 +80,7 @@ let walkToMode = false;
 let advancing = false;
 let advanceTimer = null;
 let started = false;
+let currentMissionIndex = 0;
 let dragState = null;
 
 const DRAG_THRESHOLD = 8;
@@ -84,8 +106,15 @@ function setPlayLabel(key) {
   if (label) Presentation.setI18nText(label, key, activeI18n);
 }
 
-function showOverlay() {
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach((el) => {
+    el.classList.toggle("active", el.id === id);
+  });
   overlay.classList.add("active");
+}
+
+function showOverlay() {
+  showScreen("screen-titles");
 }
 
 function hideOverlay() {
@@ -523,11 +552,50 @@ function stopAdvancing() {
   updateRunButton();
 }
 
+function onMissionEnd(ending) {
+  stopAdvancing();
+  Presentation.setI18nText(resultTitle, "ui." + ending.effect, activeI18n);
+  if (ending.message) {
+    Presentation.setI18nText(resultMessage, ending.message, activeI18n);
+  } else {
+    resultMessage.removeAttribute("data-i18n");
+    resultMessage.textContent = "";
+  }
+  showScreen("screen-result");
+}
+
+function resetGameUI() {
+  selectedActorId = null;
+  walkToMode = false;
+  dragState = null;
+  advancing = false;
+  clearInterval(advanceTimer);
+  advanceTimer = null;
+  actorPanel.hidden = true;
+  updateActiveAvatar();
+  // If needed, the game widgets could be cleared here, e.g.:
+  // avatarsRow.replaceChildren(); locationsList.replaceChildren(); mapContent.replaceChildren();
+}
+
+function restartMission() {
+  if (!activeEngine) return;
+  activeEngine.stop();
+  activeEngine.start(currentMissionIndex);
+}
+
+function backToMenu() {
+  if (activeEngine) activeEngine.stop();
+  started = false;
+  setPlayLabel("menu.play");
+  showScreen("screen-titles");
+}
+
 function updateClockText() {
   if (activeClock) clockEl.textContent = Presentation.formatDateTime(activeClock, activeI18n.language());
 }
 
 function onMissionStart({ mission }) {
+  currentMissionIndex = mission.index;
   renderMission(mission);
   mapView.setLocations(mission.locations, activeI18n);
   buildAvatars();
@@ -535,6 +603,7 @@ function onMissionStart({ mission }) {
     prefix: "briefing",
     base: Utils.buildKey("missions", mission.id, "briefing"),
   });
+  setBriefingVisible(true);
   renderLocations();
   renderTransit();
   updateRunButton();
@@ -582,7 +651,8 @@ function loadGame(gameConfig) {
     activeEngine.on("plan:set", onPlansChanged);
     activeEngine.on("plan:cancel", onPlansChanged);
     activeEngine.on("plans:completed", onPlansCompleted);
-    activeEngine.on("mission:end", stopAdvancing);
+    activeEngine.on("mission:end", onMissionEnd);
+    activeEngine.on("mission:reset", resetGameUI);
   }
 }
 
@@ -639,6 +709,10 @@ btnToggleBriefing.addEventListener("click", () => setBriefingVisible(missionBar.
 btnMissionBarClose.addEventListener("click", () => setBriefingVisible(false));
 
 btnRun.addEventListener("click", startAdvancing);
+
+btnRestart.addEventListener("click", restartMission);
+
+btnBackMenu.addEventListener("click", backToMenu);
 
 btnPlay.addEventListener("click", () => enterGame());
 

@@ -32,7 +32,7 @@ const engineTranslations = {
     },
     messages: {
       defeat: {
-        deadline: "TODO"
+        deadline: "Time has run out."
       }
     },
     /* TODO: briefingLabels namespace could belong to the game */
@@ -99,7 +99,7 @@ const engineTranslations = {
     },
     messages: {
       defeat: {
-        deadline: "TODO"
+        deadline: "Die Zeit ist abgelaufen."
       }
     },
     briefingLabels: {
@@ -352,7 +352,7 @@ const create = (config = {}) => {
       }
 
       if (state.internalTime >= state.deadlineTime) {
-        return endMission({ effect: "defeat", message: null, reason: "deadline" }, result);
+        return endMission({ effect: "defeat", message: "messages.defeat.deadline", reason: "deadline" }, result);
       }
 
       if (result.completed.length > 0) {
