@@ -1,165 +1,159 @@
 # The umbra engine
 
-`umbra/` is a general-purpose engine for non-realtime, decision-based games: the
-player makes choices for each actor on a turn, then the game runs and clocks advance.
+`umbra/umbra.js` is a general-purpose, DOM-free engine for non-realtime,
+decision-based games: the player makes choices for each actor on a turn, then the
+game runs and the clock advances.
 
-The engine is built on two abstract concepts:
+## Concepts
 
-- **actors** — the entities that live in a game world.
-- **items** — the objects with which actors interact.
-- **locations** — the places where actors can be or where events can happen.
-  Each game defines its own locations. A mission can expose a subset of the game's
-  locations. Like actors, locations are defined by unique ids and carry
-  per-language names. Locations may carry extra fields (for example presentation
-  geometry under a `map` object); the engine passes them through untouched and
-  never interprets them.
-- **routes** — the connections between locations, each with a distance. Routes
-  are defined as `{ from, to, distance }` objects. They are bidirectional by
-  default: `from → to` implies `to → from`. The engine pre-computes shortest
-  paths using Floyd-Warshall and exposes `distance(from, to)` on the API.
+- **actors** — the entities that live in a game world. A game defines them in
+  `config.actors` as a hash keyed by id; each carries a `key` (a stable number,
+  used e.g. for hotkeys) and may carry presentation fields. A mission exposes a
+  subset of the game's actors, each with a starting `location` and optional
+  starting `items`.
+- **items** — the objects actors can possess, defined in `config.items` keyed by
+  id.
+- **locations** — the places where actors can be or events can happen, defined in
+  `config.locations`. A mission exposes a subset. Locations may carry extra
+  presentation fields (for example `map` geometry or `pictureUrl`); the engine
+  passes them through untouched and never interprets them.
+- **routes** — the connections between locations, defined as
+  `{ from, to, distance }`. They are bidirectional: `from → to` implies
+  `to → from`. The engine pre-computes shortest paths using Floyd-Warshall and
+  exposes `distance(from, to)` on the API.
 
 The engine:
 
-- manages one or more independent game instances, each with its own state.
+- manages independent instances, each with its own state.
 - knows nothing about the DOM or about how it is rendered.
-- exposes its state and changes through events; the host application connects an
-  external renderer that listens to those events.
-- never references any specific game.
+- exposes its state and changes through events; a host connects an external
+  renderer that listens to those events.
+- never references a specific game.
 
-The host (for example `index.html`) declares the view as **widgets** — markup and
-CSS it owns. The renderer feeds only the widgets that are present, translating
-engine events into presentation. Because the renderer is pluggable, the engine can
-run with a different renderer on a different architecture without rewriting its
-logic.
+Because it supports several independent instances, more than one game can run at
+a time in the same page — for example, a split screen comparing two games.
 
-Because the engine supports several independent instances, more than one game can
-run at a time in the same page — for example, a split screen comparing two games.
+## Games and missions
 
-Every game built on umbra follows the same shape: its own actors, its own
-missions, and its own aesthetics.
+A game is a plain config object: `window.<Game> = { id, config }`. It defines
+`languages`, `translations`, `items`, `actors`, `locations`, `routes` and
+`missions`. See `games/demo.js` for a working example.
 
-A game defines its actors as a set identified by unique ids, each carrying a
-`key` — a stable number that can be used, for example, to map an actor to a
-hotkey. Each mission exposes a subset of the game's actors as objects with an `id`
-and a starting `location`:
+`Umbra.create(config)` builds an instance. `start(index)` starts a mission
+(default index 0) and emits `mission:start` + `clock:set`. Starting with an empty
+mission list or no locations is an error.
 
-Each mission has a **start time** and a **deadline**: the game clock starts at the
-mission's start time and advances as the player makes decisions.
-Starting the engine begins at the first mission and emits events the renderer
-feeds into the widgets. The engine requires at least one mission — starting with an
-empty mission list is an error.
+Each mission defines:
 
-Missions include a **briefing** — a per-language text that
-introduces the mission's situation and objective. Like mission names, the
-briefing can be a string (same in all languages) or a per-language object.
+- `id`, `start` and `deadline` (date strings).
+- `actors` — a subset of the game's actors with a starting `location` and
+  optional starting `items` (item ids).
+- `locations` — the subset of the game's locations the mission exposes.
+- `rules` — optional ending conditions (see [Rules](#rules-endings)).
+- `briefing` — rich-text blocks for the mission screen.
+
+Each mission also has a **start time** and a **deadline**: the game clock starts
+at the mission's start time and advances as the player makes decisions.
+
+## Time and turns
+
+- The player registers plans with `setPlan(actorId, destination)`. A plan is
+  `{ destination, duration }`, stored in `state.plans` keyed by actor id.
+- `advance()` advances exactly one minute and processes that step. It first
+  commits any pending plans, then (if there is an activity in progress) updates
+  the clock (`clock:set`), moves actors whose plan completed to their destination
+  (`plans:completed`), checks the deadline and evaluates rules. It is a no-op
+  unless the mission is running and there is something to advance. It returns
+  `{ completed, ended }`.
+- Committing a plan turns it into a transit activity holding `from`, `to`,
+  `startedAt` and `duration`, and emits `plans:started`. Committing is internal to
+  `advance()`; the public method is disabled for now.
+- `canAdvance()` reports whether there is work to advance (pending plans or
+  activities in progress). Hosts use it to enable their run control.
+- The host decides wall-clock pacing (the modern UI advances one minute every
+  250ms); the engine decides how much time passes and which plans complete.
+- `stop()` tears the mission down and emits `mission:reset`.
+
+Time is tracked by an internal minute counter (`state.internalTime`) that starts
+at 0 when the mission begins; the displayed clock is `mission.start +
+internalTime`. This decouples time display from time progression.
+
+## Rules (endings)
+
+A mission can define `rules`: a list of `{ effect, conditions, message? }`.
+
+- `effect` is `"victory"` or `"defeat"`.
+- `conditions` is a non-empty list combined with AND. Multiple rules of the same
+  effect are combined with OR (in config order).
+- `message` is an optional i18n key, shown by the host when the rule fires.
+
+Condition kinds (an actor is considered "present" when its `activity.at` is
+defined, so actors in transit are excluded):
+
+- `{ kind: "itemAt", item, at }` — some actor at `at` holds `item`.
+- `{ kind: "actorsAt", actors, at, exact? }` — all listed actors are at `at`;
+  with `exact`, no other actor is there.
+- `{ kind: "actorsTogether", actors }` — all listed actors share the same
+  location.
+
+Rules are evaluated only when a plan completes, in effect order **defeat before
+victory** (and config order within an effect). The deadline is checked on every
+`advance()` and is an implicit defeat (`messages.defeat.deadline`) with priority
+over rules.
+
+When a rule or the deadline fires, the engine sets `status = "ended"`, stores the
+ending and emits `mission:end` with `{ effect, message, reason }`.
+`getEnding()` returns it. Rules referencing unknown effects, kinds, actors, items
+or locations throw at `start()`.
+
+## State and API
+
+Status: `ready` → `running` → `ended`; `stop()` returns to `ready`.
+
+Getters:
+
+- `getStatus()`, `getEnding()`, `getConfig()`, `getMission()`, `getClock()`,
+  `getInternalTime()`.
+- `getActors()`, `getActor(id)`, `getPlans()`, `getPlan(actorId)`,
+  `getInventory(actorId)`.
+
+Actions:
+
+- `setPlan(actorId, destination)` — emits `plan:set`.
+- `cancelPlan(actorId)` — emits `plan:cancel`.
+- `giveItem(fromActorId, toActorId, item)` — transfers an item between two idle
+  actors at the same location; emits `item:give`.
+- `advance()` / `canAdvance()`.
+- `start(missionIndex)` / `stop()`.
+
+Helpers: `distance(from, to)` (km, `Infinity` if no path) and
+`computeWalkTime(distance)` (minutes, `WALKING_PACE` = 10 min/km).
+
+Events, via `on(name, fn)` and `emit`: `mission:start`, `clock:set`, `plan:set`,
+`plan:cancel`, `item:give`, `plans:started`, `plans:completed`, `mission:end`
+(payload `{ effect, message, reason }`) and `mission:reset`.
+
+Actors hold their items in `actor.items` as arrays of item objects. Items do not
+consume time.
 
 ## Languages and translations
 
-The engine includes built-in translations for its own concepts (mission, actors,
-items, etc...) in a fixed set of languages (`en`, `es`, `de`).
+The engine ships `Umbra.baseTranslations` for its own concepts in `en`, `es` and
+`de` (for example `umbra.mission` or `messages.defeat.deadline`). The engine does
+not track the current language nor render text itself.
 
-Each game defines:
+The presentation layer (`presentation/i18n.js`) merges dictionaries per language
+in order: engine base → UI → game, and resolves keys with `t(key)`, returning the
+key itself when missing. A game defines `config.languages` and
+`config.translations` keyed by entity id, for example
+`translations.es.actors.alice.name`, `translations.es.locations.market.name` or
+`translations.es.missions.test.victory`.
 
-- `config.languages` — the list of languages available in that game.
-- `config.translations` — a per-language object of game-specific terms that
-  override the engine's defaults. Any term the game does not define falls back
-  to the engine's translation. If the game chooses a language the engine does
-  not have, it falls back to `en`. The game can also provide engine concept
-  translations (mission, startsAt, etc.) for languages the engine does not
-  support.
+## Hosts / UIs
 
-Mission names can be a string (same in all languages) or a per-language object
-(`{ en: "Test", es: "Prueba" }`). The engine resolves the name for the current
-language.
+The engine has no built-in renderer. Hosts declare their own widgets and translate
+engine events into presentation, decide the real-time pacing and own all DOM. Two
+hosts live in this repo:
 
-The instance tracks the current language and exposes:
-
-- `t(key)` — returns the translation of a key in the current language.
-- `setLanguage(lang)` — switches the language and emits `language:set`.
-- `languages()` — returns the game's available languages.
-- `distance(from, to)` — returns the shortest distance between two locations
-  in km. Returns `Infinity` if no path exists. Requires `start()` to be called
-  first (distances are computed at mission start).
-- `computeWalkTime(distance)` — returns walking time in minutes for a given
-  distance in km. Uses the engine's `WALKING_PACE` constant (10 min/km).
-- `setPlan(actorId, destination)` — registers a plan for an actor to walk to a
-  destination location. Emits `plan:set`.
-- `cancelPlan(actorId)` — cancels an actor's plan. Emits `plan:cancel`.
-- `advance()` — advances the clock by exactly one minute and processes that
-  step: emits `clock:set`, commits any pending plans first, moves actors whose
-  plan completed to their destination and emits `plans:completed`, and checks the
-  mission deadline. It is a no-op unless the mission is running and there is an
-  activity in progress (or pending plans to commit). Returns `{ completed, ended }`.
-- `commitPlans()` — starts the turn: turns every pending plan into a transit
-  activity. Returns `false` if there are no pending plans. Emits `plans:started`.
-- `canAdvance()` — `true` if the mission is running and there are pending plans
-  or activities in progress. The host uses it to enable its run control.
-- `pause()` — pauses time progression.
-
-The engine emits `mission:start`, `clock:set`, `plan:set`, `plan:cancel`,
-`plans:started`, `plans:completed`, `mission:end` (with `{ effect, message,
-reason }`) and `mission:reset`. The mission status is `ready`, `running` or
-`ended`; `getEnding()` returns the ending object when `ended`.
-
-Plans are stored in `state.plans` as a hash keyed by actor id:
-`{ actorId: { destination, duration } }`.
-
-- `destination` — the target location id.
-- `duration` — computed walking time in minutes from the actor's location to `destination`.
-
-Once committed, the actor's activity becomes a transit holding `from`, `to`,
-`startedAt` and `duration`.
-
-Time tracking uses an internal counter (`state.internalTime`) that starts at 0 when the mission begins. The displayed clock is `mission.start + internalTime`. This decouples time display from time progression.
-
-## Items
-
-Items are objects that actors can possess. Each game defines item types in `config.items` as a hash keyed by item id:
-
-```js
-items: {
-  cider: { id: "cider", name: { en: "Cider", es: "Sidra", pt: "Sidra" } },
-}
-```
-
-Items carry per-language names, like actors and locations. The engine resolves item names via `t(itemId)`.
-
-Actors' starting items are declared in the mission config as an array of item ids:
-
-```js
-actors: [
-  { id: "alice", location: "alice_house", items: [] },
-  { id: "charles", location: "charles_house", items: ["cider"] },
-]
-```
-
-At mission start, the engine builds `state.inventory` — a hash keyed by actor id, where each value is an array of item ids the actor possesses:
-
-```js
-state.inventory = {
-  alice: [],
-  charles: ["cider"],
-}
-```
-
-The engine validates that all referenced item ids exist in `config.items`. Referencing an unknown item throws an error.
-
-Items do not consume time. Two actors at the same location can exchange items (exchange mechanics not yet implemented).
-
-The renderer can listen to `language:set` to re-render widgets when the language
-changes.
-
-## Widgets
-
-The default renderer (`renderer.js`) feeds the following widgets:
-
-- **languages** — buttons for each available language. Hidden if only one language.
-- **mission** — mission name, start/deadline times, and optional briefing.
-- **inventory** — initially hidden. When an actor is selected (by clicking their
-  name), shows actor details, possessed items (if any), and actions ("Walk to...").
-  In walk-to mode, shows available destinations with distance and walking time.
-- **actors** — list of actors with their key, translated name, current location,
-  and planned destination if any. Clicking an actor's name opens the inventory widget.
-- **locations** — for each location in the mission, a subtitle with the location name
-  and a list of actors currently at that location (sorted by key).
-- **clock** — current in-game time. When plans exist and the game is not playing, shows a Play button. Clicking Play starts time progression: the engine advances 1 minute every 250ms. Time stops when the first plan completes (the actor with the shortest walk time arrives at their destination). Actors in transit show their progress (elapsed/walkTime minutes). During play, the inventory widget is hidden and actors in transit cannot be selected.
+- `modern_ui/` — the default UI (map, panels, briefing, result overlay).
+- `basic_ui/` — an older, minimal widget host kept for reference (stale).

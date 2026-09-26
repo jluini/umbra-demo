@@ -14,9 +14,10 @@ coupled to any specific game.
 
 ## Games
 
-Each game lives in `games/` as a single JS file that exports a `window.Gamename`
-object with a `create()` method. Games are selected via the `?game=` query
-parameter in `index.html` (default: `demo`).
+Each game lives in `games/` as a single JS file that exports a
+`window.Gamename = { id, config }` object. Games are selected via the `?game=`
+query parameter in `index.html` (default: `demo`); `?lang=` selects the language
+and `?play=<n>` starts mission `n` directly.
 
 Current games:
 
@@ -39,9 +40,12 @@ components/             — reusable DOM widgets
   map-view.js           — map widget (draggable viewport + markers)
   map-view.css          — map widget styles
 modern_ui/              — default UI (markup, styles, controller)
+basic_ui/               — older, minimal UI (stale)
 games/
   demo.js               — demo game config
+  demo/                 — demo assets (icons, actors, locations)
   rockers.js            — rockers game config (placeholder)
+dev/                    — bundler/optimizer scripts and smoke tests
 docs/
   index.md              — this file
   umbra.md              — engine spec
