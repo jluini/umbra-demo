@@ -187,7 +187,7 @@ const config = {
         inTransit: "Em trânsito"
       },
       actions: {
-        play: "Jogar"
+        run: "Avançar"
       },
       briefingLabels: {
         goal: "Objetivo",

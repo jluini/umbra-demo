@@ -24,12 +24,12 @@ const formatTime = (date, lang) =>
       let selectedActor = null;
       let walkToMode = false;
       let giveMode = null;
-      let playInterval = null;
-      let playing = false;
+      let advanceTimer = null;
+      let advancing = false;
 
       const renderInventory = () => {
         if (!widgets.inventory) return;
-        if (!selectedActor || playing) {
+        if (!selectedActor || advancing) {
           widgets.inventory.style.display = "none";
           return;
         }
@@ -304,25 +304,25 @@ const formatTime = (date, lang) =>
           clockDiv.textContent = activeI18n.t("clock") + ": " + formatTime(game.getClock(), lang);
 
           const hasPlans = Object.keys(game.getPlans()).length > 0;
-          if (!playing && hasPlans) {
-            const playBtn = document.createElement("button");
-            playBtn.textContent = "▶ Play";
-            playBtn.addEventListener("click", () => {
-              playing = true;
+          if (!advancing && hasPlans) {
+            const runBtn = document.createElement("button");
+            runBtn.textContent = "▶ Run";
+            runBtn.addEventListener("click", () => {
+              advancing = true;
               game.commitPlans();
               renderAll();
-              playInterval = setInterval(() => {
+              advanceTimer = setInterval(() => {
                 const { completed, ended } = game.advance();
                 if (completed.length > 0 || ended) {
-                  playing = false;
-                  clearInterval(playInterval);
-                  playInterval = null;
+                  advancing = false;
+                  clearInterval(advanceTimer);
+                  advanceTimer = null;
                   selectedActor = null;
                   renderAll();
                 }
               }, REAL_MS_PER_GAME_MIN);
             });
-            clockDiv.appendChild(playBtn);
+            clockDiv.appendChild(runBtn);
           }
 
           widgets.clock.textContent = "";

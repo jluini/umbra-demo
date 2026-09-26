@@ -28,7 +28,7 @@ const engineTranslations = {
       inTransit: "In transit"
     },
     actions: {
-      play: "Play"
+      run: "Run"
     },
     messages: {
       defeat: {
@@ -62,7 +62,7 @@ const engineTranslations = {
       inTransit: "En tránsito"
     },
     actions: {
-      play: "Jugar"
+      run: "Avanzar"
     },
     messages: {
       defeat: {
@@ -95,7 +95,7 @@ const engineTranslations = {
       inTransit: "Unterwegs"
     },
     actions: {
-      play: "Spielen"
+      run: "Ausführen"
     },
     messages: {
       defeat: {
@@ -253,7 +253,7 @@ const create = (config = {}) => {
 
   const listeners = {};
   const emit = (name, data) => { (listeners[name] || []).forEach((fn) => fn(data)); };
-  const isPlaying = () => state.status === "running";
+  const isRunning = () => state.status === "running";
 
   const isInProgress = (activity) => activity.duration !== undefined;
   const hasActiveActivities = () =>
@@ -295,7 +295,7 @@ const create = (config = {}) => {
     getPlans() { return state.plans; },
     getPlan(actorId) { return state.plans[actorId] || null; },
     canAdvance() {
-      if (!isPlaying()) return false;
+      if (!isRunning()) return false;
       if (Object.keys(state.plans).length > 0) return true;
       return hasActiveActivities();
     },
@@ -307,7 +307,7 @@ const create = (config = {}) => {
     computeWalkTime,
     // actions
     setPlan(actorId, destination) {
-      if (!isPlaying()) return false;
+      if (!isRunning()) return false;
       const actor = findActor(state.mission, actorId);
       if (!actor || actor.activity.kind !== "idle") return false;
       if (!findLocation(state.mission, destination)) return false;
@@ -316,14 +316,14 @@ const create = (config = {}) => {
       return true;
     },
     cancelPlan(actorId) {
-      if (!isPlaying()) return false;
+      if (!isRunning()) return false;
       if (!state.plans[actorId]) return false;
       delete state.plans[actorId];
       emit("plan:cancel", { actorId });
       return true;
     },
     giveItem(fromActorId, toActorId, item) {
-      if (!isPlaying()) return false;
+      if (!isRunning()) return false;
       const from = findActor(state.mission, fromActorId);
       const to = findActor(state.mission, toActorId);
       if (!from || !to) return false;
@@ -335,7 +335,7 @@ const create = (config = {}) => {
     },
     advance() {
       const result = { completed: [], ended: null };
-      if (!isPlaying()) return result;
+      if (!isRunning()) return result;
 
       // Commit any pending plans so time never advances with unstarted plans.
       api.commitPlans();
@@ -363,7 +363,7 @@ const create = (config = {}) => {
       return result;
     },
     commitPlans() {
-      if (!isPlaying()) return false;
+      if (!isRunning()) return false;
       let started = false;
       for (const [actorId, plan] of Object.entries(state.plans)) {
         const actor = findActor(state.mission, actorId);

@@ -91,7 +91,7 @@ check(game.setPlan("alice", "c") === true, "setPlan accepted again");
 check(game.canAdvance() === true, "canAdvance with a pending plan");
 
 game.commitPlans();
-check(game.getActor("alice").activity.kind === "transit", "play starts transit");
+check(game.getActor("alice").activity.kind === "transit", "commitPlans starts transit");
 check(game.getActor("alice").activity.from === "a" && game.getActor("alice").activity.to === "c", "transit keeps from/to");
 check(game.getPlan("alice") === null, "plans are cleared once started");
 check(Object.keys(game.getPlans()).length === 0, "no pending plans during transit");

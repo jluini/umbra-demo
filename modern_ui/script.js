@@ -28,7 +28,7 @@ const btnCredits = document.getElementById("btn-credits");
 const btnAbout = document.getElementById("btn-about");
 const btnShowMenu = document.getElementById("btn-show-menu");
 const btnToggleBriefing = document.getElementById("btn-toggle-briefing");
-const btnPlayGame = document.getElementById("btn-play-game");
+const btnRun = document.getElementById("btn-run");
 const langSelector = document.getElementById("lang-selector");
 const langSelectorInline = document.getElementById("lang-selector-inline");
 const missionNumber = document.getElementById("mission-number");
@@ -56,8 +56,8 @@ let activeEngine = null;
 let activeClock = null;
 let selectedActorId = null;
 let walkToMode = false;
-let playing = false;
-let playTimer = null;
+let advancing = false;
+let advanceTimer = null;
 let started = false;
 let dragState = null;
 
@@ -165,7 +165,7 @@ function renderLocations() {
     present.forEach((a, i) => {
       if (i > 0) here.appendChild(document.createTextNode(", "));
       const span = document.createElement("span");
-      if (!actor && !playing) {
+      if (!actor && !advancing) {
         span.className = "actor-link";
         span.dataset.actorId = a.id;
       }
@@ -484,43 +484,43 @@ function canAdvance() {
   return activeEngine ? activeEngine.canAdvance() : false;
 }
 
-function updatePlayButton() {
-  btnPlayGame.disabled = playing || !activeEngine || !canAdvance();
+function updateRunButton() {
+  btnRun.disabled = advancing || !activeEngine || !canAdvance();
 }
 
 function onPlansChanged() {
-  updatePlayButton();
+  updateRunButton();
   renderLocations();
   renderTransit();
   if (selectedActorId) renderActorPanel();
 }
 
 function onPlansCompleted() {
-  stopPlay();
+  stopAdvancing();
 }
 
-function startPlay() {
-  if (playing || !activeEngine || !canAdvance()) return;
-  playing = true;
+function startAdvancing() {
+  if (advancing || !activeEngine || !canAdvance()) return;
+  advancing = true;
   closeActorPanel();
   activeEngine.commitPlans();
   renderLocations();
   renderTransit();
-  updatePlayButton();
-  playTimer = setInterval(tick, REAL_MS_PER_GAME_MIN);
+  updateRunButton();
+  advanceTimer = setInterval(tick, REAL_MS_PER_GAME_MIN);
 }
 
 function tick() {
   activeEngine.advance();
 }
 
-function stopPlay() {
-  playing = false;
-  clearInterval(playTimer);
-  playTimer = null;
+function stopAdvancing() {
+  advancing = false;
+  clearInterval(advanceTimer);
+  advanceTimer = null;
   renderLocations();
   renderTransit();
-  updatePlayButton();
+  updateRunButton();
 }
 
 function updateClockText() {
@@ -537,7 +537,7 @@ function onMissionStart({ mission }) {
   });
   renderLocations();
   renderTransit();
-  updatePlayButton();
+  updateRunButton();
   hideOverlay();
 }
 
@@ -574,15 +574,15 @@ function loadGame(gameConfig) {
   renderLanguageSelector(langSelector, gameConfig, "name");
   renderLanguageSelector(langSelectorInline, gameConfig, "code");
 
-  const playable = Array.isArray(gameConfig.missions) && gameConfig.missions.length > 0;
-  activeEngine = playable ? Umbra.create(gameConfig) : null;
+  const hasMissions = Array.isArray(gameConfig.missions) && gameConfig.missions.length > 0;
+  activeEngine = hasMissions ? Umbra.create(gameConfig) : null;
   if (activeEngine) {
     activeEngine.on("mission:start", onMissionStart);
     activeEngine.on("clock:set", onClockSet);
     activeEngine.on("plan:set", onPlansChanged);
     activeEngine.on("plan:cancel", onPlansChanged);
     activeEngine.on("plans:completed", onPlansCompleted);
-    activeEngine.on("mission:end", stopPlay);
+    activeEngine.on("mission:end", stopAdvancing);
   }
 }
 
@@ -623,7 +623,7 @@ actorPanelClose.addEventListener("click", closeActorPanel);
 
 avatarsRow.addEventListener("click", (e) => {
   const box = e.target.closest("[data-actor-id]");
-  if (box && !playing) {
+  if (box && !advancing) {
     setBriefingVisible(false);
     selectActor(box.dataset.actorId);
   }
@@ -638,7 +638,7 @@ function setBriefingVisible(visible) {
 btnToggleBriefing.addEventListener("click", () => setBriefingVisible(missionBar.hidden));
 btnMissionBarClose.addEventListener("click", () => setBriefingVisible(false));
 
-btnPlayGame.addEventListener("click", startPlay);
+btnRun.addEventListener("click", startAdvancing);
 
 btnPlay.addEventListener("click", () => enterGame());
 
@@ -668,9 +668,9 @@ function boot() {
   setLanguage(languages.includes(requested) ? requested : languages[0]);
   btnPlay.focus();
 
-  const play = params.get("play");
-  if (play !== null && /^\d+$/.test(play)) {
-    enterGame(Number(play) - 1);
+  const missionParam = params.get("play");
+  if (missionParam !== null && /^\d+$/.test(missionParam)) {
+    enterGame(Number(missionParam) - 1);
   }
 }
 
