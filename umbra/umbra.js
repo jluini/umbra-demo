@@ -30,6 +30,11 @@ const engineTranslations = {
     actions: {
       play: "Play"
     },
+    messages: {
+      defeat: {
+        deadline: "TODO"
+      }
+    },
     /* TODO: briefingLabels namespace could belong to the game */
     briefingLabels: {
       goal: "Goal",
@@ -59,6 +64,11 @@ const engineTranslations = {
     actions: {
       play: "Jugar"
     },
+    messages: {
+      defeat: {
+        deadline: "Se ha agotado el tiempo"
+      }
+    },
     briefingLabels: {
       goal: "Objetivo",
       hints: "Pistas"
@@ -86,6 +96,11 @@ const engineTranslations = {
     },
     actions: {
       play: "Spielen"
+    },
+    messages: {
+      defeat: {
+        deadline: "TODO"
+      }
     },
     briefingLabels: {
       goal: "Ziel",

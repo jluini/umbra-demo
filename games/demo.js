@@ -51,6 +51,8 @@ const config = {
       missions: {
         test: {
           name: "End of year toast",
+          victory: "TODO",
+          defeat: "TODO",
           briefing: {
             situation: "Alice and Bob finished New Year's dinner at Alice's house. They need to buy cider and bring it back before the new year starts.",
             goal: "You must get Alice and Bob together at the house, with at least one cider and no one else present, before midnight.",
@@ -63,6 +65,7 @@ const config = {
         },
         test2: {
           name: "The Potion Contest",
+          victory: "TODO",
           briefing: {
             situation: "Elena and Fiona are hosting a potion contest in the square. Alice and Bob promised to bring the red potion, but George accidentally left the recipe at Bob's house. Meanwhile, Charles wanders around looking for a way to cheat.",
             goal: "Get Alice and Bob to the square with the red potion before the contest ends, and keep Charles away from the judges.",
@@ -112,6 +115,8 @@ const config = {
       missions: {
         test: {
           name: "Brindis de fin de año",
+          victory: "Alicia y Rober consiguieron la sidra, ahora podrán celebrar la llegada de 2025.",
+          defeat: "Carlos descubrió que Alicia y Rober están juntos. La noche ha terminado mal.",
           briefing: {
             situation: "Alicia y Rober terminaron la cena de fin de año en la casa de Alicia. Deben comprar una sidra y traerla a la casa antes de que comience el nuevo año.",
             goal: "Debes lograr que Alicia y Rober estén juntos en la casa, con al menos una sidra y sin ningún otro acompañante antes de las doce de la noche.",
@@ -124,6 +129,7 @@ const config = {
         },
         test2: {
           name: "El concurso de pociones",
+          victory: "TODO",
           briefing: {
             situation: "Elena y Fiona organizan un concurso de pociones en la plaza. Alicia y Rober prometieron llevar la poción roja, pero Jorge dejó la receta por error en la casa de Rober. Mientras tanto, Carlos deambula buscando la manera de hacer trampa.",
             goal: "Lográ que Alicia y Rober lleguen a la plaza con la poción roja antes de que termine el concurso, y mantené a Carlos lejos de los jueces.",
@@ -190,6 +196,8 @@ const config = {
       missions: {
         test: {
           name: "Brinde de fim de ano",
+          victory: "TODO",
+          defeat: "TODO",
           briefing: {
             situation: "Alice e o Beto terminaram o jantar de Réveillon na casa da Alice. Precisam comprar sidra e trazer de volta antes do ano novo começar.",
             goal: "Você deve conseguir que Alice e o Beto fiquem juntos na casa, com pelo menos uma sidra e sem mais ninguém, antes da meia-noite.",
@@ -202,6 +210,7 @@ const config = {
         },
         test2: {
           name: "O concurso de poções",
+          victory: "TODO",
           briefing: {
             situation: "Helena e Fiona organizam um concurso de poções na praça. Alice e Beto prometeram levar a poção vermelha, mas Jorge deixou a receita por engano na casa do Beto. Enquanto isso, Carlos vagueia procurando uma maneira de trapacear.",
             goal: "Faça Alice e Beto chegarem à praça com a poção vermelha antes que o concurso termine, e mantenha Carlos longe dos juízes.",
@@ -262,6 +271,23 @@ const config = {
         { id: "charles", location: "charlesHouse", items: ["cider"] },
       ],
       locations: ["aliceHouse", "charlesHouse", "market"],
+      rules: [
+        {
+          effect: "victory",                                                              // win condition
+          conditions: [
+            { kind: "itemAt", item: "cider", at: "aliceHouse" },                          // cider at aliceHouse
+            { kind: "actorsAt", actors: ["alice", "bob"], at: "aliceHouse", exact: true } // alice and bob (and only them) at aliceHouse
+          ],
+          message: "missions.test.victory"
+        },
+        {
+          effect: "defeat",                                                 // loss condition
+          conditions: [
+            { kind: "actorsTogether", actors: ["alice", "bob", "charles"] } // alice, bob, charles together at the same location
+          ],
+          message: "missions.test.defeat"
+        }
+      ],
       briefing: [
         { text: ".situation" },
         { label: "briefingLabels.goal", text: ".goal" },
