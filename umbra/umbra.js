@@ -387,6 +387,27 @@ const create = (config = {}) => {
     return result;
   };
 
+  const commitPlans = () => {
+    if (!isRunning()) return false;
+    let started = false;
+    for (const [actorId, plan] of Object.entries(state.plans)) {
+      const actor = findActor(state.mission, actorId);
+      if (!actor) continue;
+      actor.activity = {
+        kind: "transit",
+        vehicle: "walk",
+        from: actor.activity.at,
+        to: plan.destination,
+        startedAt: state.internalTime,
+        duration: plan.duration,
+      };
+      delete state.plans[actorId];
+      started = true;
+    }
+    if (started) emit("plans:started", { startTime: state.internalTime });
+    return started;
+  };
+
   const api = {
     // getters
     getStatus() { return state.status; },
@@ -433,6 +454,7 @@ const create = (config = {}) => {
       const from = findActor(state.mission, fromActorId);
       const to = findActor(state.mission, toActorId);
       if (!from || !to) return false;
+      // TODO: sólo actores idle pueden dar/recibir items; en el futuro un actor "at" podría recibir items incluso no estando idle?
       if (from.activity.kind !== "idle" || to.activity.kind !== "idle") return false;
       if (from.activity.at !== to.activity.at) return false;
       if (!moveItem(from, to, item)) return false;
@@ -448,7 +470,7 @@ const create = (config = {}) => {
       if (!isRunning()) return result;
 
       // Commit any pending plans so time never advances with unstarted plans.
-      api.commitPlans();
+      commitPlans();
 
       if (!hasActiveActivities()) return result;
 
@@ -462,6 +484,7 @@ const create = (config = {}) => {
       }
 
       if (state.internalTime >= state.deadlineTime) {
+        // TODO: clave i18n hardcodeada
         return endMission({ effect: "defeat", message: "messages.defeat.deadline", reason: "deadline" }, result);
       }
 
@@ -472,26 +495,7 @@ const create = (config = {}) => {
 
       return result;
     },
-    commitPlans() {
-      if (!isRunning()) return false;
-      let started = false;
-      for (const [actorId, plan] of Object.entries(state.plans)) {
-        const actor = findActor(state.mission, actorId);
-        if (!actor) continue;
-        actor.activity = {
-          kind: "transit",
-          vehicle: "walk",
-          from: actor.activity.at,
-          to: plan.destination,
-          startedAt: state.internalTime,
-          duration: plan.duration,
-        };
-        delete state.plans[actorId];
-        started = true;
-      }
-      if (started) emit("plans:started", { startTime: state.internalTime });
-      return started;
-    },
+    // commitPlans, // re-expose if a host needs to start the turn without advancing
     // events
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
     emit,

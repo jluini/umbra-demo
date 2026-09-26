@@ -524,15 +524,10 @@ function onPlansChanged() {
   if (selectedActorId) renderActorPanel();
 }
 
-function onPlansCompleted() {
-  stopAdvancing();
-}
-
 function startAdvancing() {
   if (advancing || !activeEngine || !canAdvance()) return;
   advancing = true;
   closeActorPanel();
-  activeEngine.commitPlans();
   renderLocations();
   renderTransit();
   updateRunButton();
@@ -540,7 +535,8 @@ function startAdvancing() {
 }
 
 function tick() {
-  activeEngine.advance();
+  const { completed, ended } = activeEngine.advance();
+  if (completed.length > 0 || ended) stopAdvancing();
 }
 
 function stopAdvancing() {
@@ -553,7 +549,6 @@ function stopAdvancing() {
 }
 
 function onMissionEnd(ending) {
-  stopAdvancing();
   Presentation.setI18nText(resultTitle, "ui." + ending.effect, activeI18n);
   if (ending.message) {
     Presentation.setI18nText(resultMessage, ending.message, activeI18n);
@@ -650,7 +645,6 @@ function loadGame(gameConfig) {
     activeEngine.on("clock:set", onClockSet);
     activeEngine.on("plan:set", onPlansChanged);
     activeEngine.on("plan:cancel", onPlansChanged);
-    activeEngine.on("plans:completed", onPlansCompleted);
     activeEngine.on("mission:end", onMissionEnd);
     activeEngine.on("mission:reset", resetGameUI);
   }

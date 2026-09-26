@@ -309,7 +309,6 @@ const formatTime = (date, lang) =>
             runBtn.textContent = "▶ Run";
             runBtn.addEventListener("click", () => {
               advancing = true;
-              game.commitPlans();
               renderAll();
               advanceTimer = setInterval(() => {
                 const { completed, ended } = game.advance();
