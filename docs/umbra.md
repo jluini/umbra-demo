@@ -85,19 +85,30 @@ The instance tracks the current language and exposes:
 - `setPlan(actorId, destination)` — registers a plan for an actor to walk to a
   destination location. Emits `plan:set`.
 - `cancelPlan(actorId)` — cancels an actor's plan. Emits `plan:cancel`.
-- `advanceTime(minutes)` — advances the internal clock by N minutes. Emits `clock:set`.
-- `play()` — starts time progression. Assigns `startTime` to all plans that don't have one yet.
+- `advance()` — advances the clock by exactly one minute and processes that
+  step: emits `clock:set`, commits any pending plans first, moves actors whose
+  plan completed to their destination and emits `plans:completed`, and checks the
+  mission deadline. It is a no-op unless the mission is running and there is an
+  activity in progress (or pending plans to commit). Returns `{ completed, ended }`.
+- `commitPlans()` — starts the turn: turns every pending plan into a transit
+  activity. Returns `false` if there are no pending plans. Emits `plans:started`.
+- `canAdvance()` — `true` if the mission is running and there are pending plans
+  or activities in progress. The host uses it to enable its run control.
 - `pause()` — pauses time progression.
-- `checkPlans()` — checks if any plan has completed (elapsed time >= walk time). Returns `{ actorId, plan }` for the first completed plan, or `null`.
-- `completePlan(actorId)` — moves the actor to the plan's destination, removes the plan, emits `plan:done`.
+
+The engine emits `mission:start`, `clock:set`, `plan:set`, `plan:cancel`,
+`plans:started`, `plans:completed`, `mission:end` (with `{ effect, message,
+reason }`) and `mission:reset`. The mission status is `ready`, `running` or
+`ended`; `getEnding()` returns the ending object when `ended`.
 
 Plans are stored in `state.plans` as a hash keyed by actor id:
-`{ actorId: { destination, from, startTime, walkTime } }`.
+`{ actorId: { destination, duration } }`.
 
 - `destination` — the target location id.
-- `from` — the location id where the actor was when the plan was created.
-- `startTime` — `null` if the plan hasn't started yet, or the internal time (in minutes) when play began.
-- `walkTime` — computed walking time in minutes from `from` to `destination`.
+- `duration` — computed walking time in minutes from the actor's location to `destination`.
+
+Once committed, the actor's activity becomes a transit holding `from`, `to`,
+`startedAt` and `duration`.
 
 Time tracking uses an internal counter (`state.internalTime`) that starts at 0 when the mission begins. The displayed clock is `mission.start + internalTime`. This decouples time display from time progression.
 

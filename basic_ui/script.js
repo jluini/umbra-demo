@@ -309,15 +309,11 @@ const formatTime = (date, lang) =>
             playBtn.textContent = "▶ Play";
             playBtn.addEventListener("click", () => {
               playing = true;
-              game.play();
+              game.commitPlans();
               renderAll();
               playInterval = setInterval(() => {
-                game.advanceTime(1);
-                const completed = game.checkPlans();
-                if (completed.length > 0) {
-                  for (const { actorId } of completed) {
-                    game.completePlan(actorId);
-                  }
+                const { completed, ended } = game.advance();
+                if (completed.length > 0 || ended) {
                   playing = false;
                   clearInterval(playInterval);
                   playInterval = null;
@@ -430,7 +426,7 @@ const formatTime = (date, lang) =>
       game.on("mission:start", renderAll);
       game.on("clock:set", renderAll);
       game.on("language:set", renderAll);
-      game.on("mission:end", () => {
+      game.on("mission:reset", () => {
         for (const el of Object.values(widgets)) {
           el.replaceChildren();
         }

@@ -242,20 +242,49 @@ const create = (config = {}) => {
 
   const state = {
     config,
-    status: "idle",
+    status: "ready",
     mission: null,
     clock: null,
     internalTime: 0,
+    deadlineTime: 0,
+    ending: null,
     plans: {},
   };
 
   const listeners = {};
   const emit = (name, data) => { (listeners[name] || []).forEach((fn) => fn(data)); };
-  const isPlaying = () => state.status === "playing";
+  const isPlaying = () => state.status === "running";
+
+  const isInProgress = (activity) => activity.duration !== undefined;
+  const hasActiveActivities = () =>
+    state.mission ? state.mission.actors.some((a) => isInProgress(a.activity)) : false;
+
+  const completeFinishedPlans = () => {
+    const completed = [];
+    for (const actor of state.mission.actors) {
+      if (!isInProgress(actor.activity)) continue;
+      const elapsed = state.internalTime - actor.activity.startedAt;
+      if (elapsed >= actor.activity.duration) {
+        const locationId = actor.activity.to;
+        actor.activity = { kind: "idle", at: locationId };
+        completed.push({ actorId: actor.id, locationId });
+      }
+    }
+    return completed;
+  };
+
+  const endMission = (ending, result) => {
+    state.status = "ended";
+    state.ending = ending;
+    result.ended = ending;
+    emit("mission:end", ending);
+    return result;
+  };
 
   const api = {
     // getters
     getStatus() { return state.status; },
+    getEnding() { return state.ending; },
     getConfig() { return config; },
     getMission() { return state.mission; },
     getClock() { return state.clock; },
@@ -265,6 +294,11 @@ const create = (config = {}) => {
     getLocation(id) { return findLocation(state.mission, id); },
     getPlans() { return state.plans; },
     getPlan(actorId) { return state.plans[actorId] || null; },
+    canAdvance() {
+      if (!isPlaying()) return false;
+      if (Object.keys(state.plans).length > 0) return true;
+      return hasActiveActivities();
+    },
     getInventory(actorId) {
       const actor = findActor(state.mission, actorId);
       return actor ? actor.items : [];
@@ -299,14 +333,37 @@ const create = (config = {}) => {
       emit("item:give", { from: fromActorId, to: toActorId, item });
       return true;
     },
-    advanceTime(minutes) {
-      if (!isPlaying()) return;
-      state.internalTime += minutes;
+    advance() {
+      const result = { completed: [], ended: null };
+      if (!isPlaying()) return result;
+
+      // Commit any pending plans so time never advances with unstarted plans.
+      api.commitPlans();
+
+      if (!hasActiveActivities()) return result;
+
+      state.internalTime += 1;
       state.clock = new Date(state.mission.start.getTime() + state.internalTime * MS_PER_MINUTE);
       emit("clock:set", { time: state.clock });
+
+      result.completed = completeFinishedPlans();
+      if (result.completed.length > 0) {
+        emit("plans:completed", { completed: result.completed });
+      }
+
+      if (state.internalTime >= state.deadlineTime) {
+        return endMission({ effect: "defeat", message: null, reason: "deadline" }, result);
+      }
+
+      if (result.completed.length > 0) {
+        // TODO: evaluate rules here (defeat first, then victory, then others);
+        // if a rule fires, call endMission(...) with its effect and message.
+      }
+
+      return result;
     },
-    play() {
-      if (!isPlaying()) return;
+    commitPlans() {
+      if (!isPlaying()) return false;
       let started = false;
       for (const [actorId, plan] of Object.entries(state.plans)) {
         const actor = findActor(state.mission, actorId);
@@ -323,41 +380,25 @@ const create = (config = {}) => {
         started = true;
       }
       if (started) emit("plans:started", { startTime: state.internalTime });
-    },
-    checkPlans() {
-      const completed = [];
-      for (const actor of state.mission.actors) {
-        if (actor.activity.kind !== "transit") continue;
-        const elapsed = state.internalTime - actor.activity.startedAt;
-        if (elapsed >= actor.activity.duration) {
-          completed.push({ actorId: actor.id });
-        }
-      }
-      return completed;
-    },
-    completePlan(actorId) {
-      if (!isPlaying()) return false;
-      const actor = findActor(state.mission, actorId);
-      if (!actor || actor.activity.kind !== "transit") return false;
-      actor.activity = { kind: "idle", at: actor.activity.to };
-      emit("plan:done", { actorId, locationId: actor.activity.at });
-      return true;
+      return started;
     },
     // events
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
     emit,
     // lifecycle
     start(missionIndex) {
-      if (state.status !== "idle") {
+      if (state.status !== "ready") {
         throw new Error("umbra: game already started");
       }
       const { mission } = buildMission(config, missionIndex);
       distMatrix = buildDistanceMatrix(config);
 
-      state.status = "playing";
+      state.status = "running";
       state.mission = mission;
       state.internalTime = 0;
       state.clock = mission.start;
+      state.deadlineTime = (mission.deadline.getTime() - mission.start.getTime()) / MS_PER_MINUTE;
+      state.ending = null;
       state.plans = {};
 
       emit("mission:start", { mission });
@@ -365,13 +406,15 @@ const create = (config = {}) => {
       return api;
     },
     stop() {
-      if (state.status !== "playing") return api;
-      state.status = "idle";
+      if (state.status === "ready") return api;
+      state.status = "ready";
       state.mission = null;
       state.clock = null;
       state.internalTime = 0;
+      state.deadlineTime = 0;
+      state.ending = null;
       state.plans = {};
-      emit("mission:end");
+      emit("mission:reset");
       return api;
     },
   };

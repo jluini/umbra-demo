@@ -480,13 +480,12 @@ function renderTransit() {
   }
 }
 
-function hasWork() {
-  if (Object.keys(activeEngine.getPlans()).length > 0) return true;
-  return activeEngine.getActors().some((a) => a.activity.kind === "transit");
+function canAdvance() {
+  return activeEngine ? activeEngine.canAdvance() : false;
 }
 
 function updatePlayButton() {
-  btnPlayGame.disabled = playing || !activeEngine || !hasWork();
+  btnPlayGame.disabled = playing || !activeEngine || !canAdvance();
 }
 
 function onPlansChanged() {
@@ -496,11 +495,15 @@ function onPlansChanged() {
   if (selectedActorId) renderActorPanel();
 }
 
+function onPlansCompleted() {
+  stopPlay();
+}
+
 function startPlay() {
-  if (playing || !activeEngine || !hasWork()) return;
+  if (playing || !activeEngine || !canAdvance()) return;
   playing = true;
   closeActorPanel();
-  activeEngine.play();
+  activeEngine.commitPlans();
   renderLocations();
   renderTransit();
   updatePlayButton();
@@ -508,11 +511,7 @@ function startPlay() {
 }
 
 function tick() {
-  activeEngine.advanceTime(1);
-  const completed = activeEngine.checkPlans();
-  if (completed.length === 0) return;
-  for (const { actorId } of completed) activeEngine.completePlan(actorId);
-  stopPlay();
+  activeEngine.advance();
 }
 
 function stopPlay() {
@@ -582,7 +581,8 @@ function loadGame(gameConfig) {
     activeEngine.on("clock:set", onClockSet);
     activeEngine.on("plan:set", onPlansChanged);
     activeEngine.on("plan:cancel", onPlansChanged);
-    activeEngine.on("plan:done", onPlansChanged);
+    activeEngine.on("plans:completed", onPlansCompleted);
+    activeEngine.on("mission:end", stopPlay);
   }
 }
 
