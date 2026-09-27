@@ -18,7 +18,9 @@ const uiTranslations = {
       restart: "Restart",
       backToMenu: "Back to menu",
       confirmAbortTitle: "Abort mission?",
-      confirmAbortMessage: "You will lose your progress and return to the menu."
+      confirmAbortMessage: "You will lose your progress and return to the menu.",
+      confirmRestartTitle: "Restart mission?",
+      confirmRestartMessage: "Your current progress will be lost and the mission will start over."
     }
   },
   es: {
@@ -29,7 +31,9 @@ const uiTranslations = {
       restart: "Reiniciar",
       backToMenu: "Volver al menú",
       confirmAbortTitle: "¿Abortar la misión?",
-      confirmAbortMessage: "Vas a perder el progreso y volver al menú."
+      confirmAbortMessage: "Vas a perder el progreso y volver al menú.",
+      confirmRestartTitle: "¿Reiniciar la misión?",
+      confirmRestartMessage: "Vas a perder el progreso actual y la misión comenzará de nuevo."
     }
   },
   pt: {
@@ -40,7 +44,9 @@ const uiTranslations = {
       restart: "Reiniciar",
       backToMenu: "Voltar ao menu",
       confirmAbortTitle: "Abortar a missão?",
-      confirmAbortMessage: "Você vai perder o progresso e voltar ao menu."
+      confirmAbortMessage: "Você vai perder o progresso e voltar ao menu.",
+      confirmRestartTitle: "Reiniciar a missão?",
+      confirmRestartMessage: "Você vai perder o progresso atual e a missão começará de novo."
     }
   },
 };
@@ -76,6 +82,7 @@ const resultMessage = document.getElementById("result-message");
 const btnRestart = document.getElementById("btn-restart");
 const btnBackMenu = document.getElementById("btn-back-menu");
 const btnAbort = document.getElementById("btn-abort");
+const btnRestartMission = document.getElementById("btn-restart-mission");
 const confirmEl = document.getElementById("confirm");
 const confirmTitle = document.getElementById("confirm-title");
 const confirmMessage = document.getElementById("confirm-message");
@@ -143,6 +150,7 @@ function hideOverlay() {
 
 function syncMenuButtons() {
   btnAbort.hidden = !started;
+  btnRestartMission.hidden = !started;
 }
 
 function openConfirm({ titleKey, messageKey, acceptKey, onAccept }) {
@@ -931,6 +939,15 @@ btnAbort.addEventListener("click", () => {
     messageKey: "ui.confirmAbortMessage",
     acceptKey: "menu.abort",
     onAccept: backToMenu,
+  });
+});
+
+btnRestartMission.addEventListener("click", () => {
+  openConfirm({
+    titleKey: "ui.confirmRestartTitle",
+    messageKey: "ui.confirmRestartMessage",
+    acceptKey: "menu.restart",
+    onAccept: restartMission,
   });
 });
 

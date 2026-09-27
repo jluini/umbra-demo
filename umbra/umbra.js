@@ -20,6 +20,7 @@ const engineTranslations = {
       play: "Play",
       continue: "Continue",
       abort: "Abort",
+      restart: "Restart mission",
       credits: "Credits",
       about: "About"
     },
@@ -55,6 +56,7 @@ const engineTranslations = {
       play: "Jugar",
       continue: "Continuar",
       abort: "Abortar",
+      restart: "Reiniciar misión",
       credits: "Créditos",
       about: "Acerca de"
     },
@@ -89,6 +91,7 @@ const engineTranslations = {
       play: "Spielen",
       continue: "Weiter",
       abort: "Aufgeben",
+      restart: "Mission neu starten",
       credits: "Mitwirkende",
       about: "Über uns"
     },

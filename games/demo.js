@@ -149,7 +149,7 @@ const config = {
         mission: "Missão", actors: "Personagens", items: "Objetos", locations: "Lugares",
       },
       menu: {
-        play: "Jogar", continue: "Continuar", abort: "Abortar", credits: "Créditos", about: "Sobre",
+        play: "Jogar", continue: "Continuar", abort: "Abortar", restart: "Reiniciar missão", credits: "Créditos", about: "Sobre",
       },
       actors: {
         alice: { name: "Alice" },
