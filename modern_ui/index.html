@@ -154,7 +154,10 @@
         <div class="tagline" data-i18n="umbra.tagline">a decision-based game engine</div>
       </div>
       <div class="menu-buttons">
-        <button class="btn" id="btn-play" disabled>▶ <span data-i18n="menu.play">Play</span></button>
+        <div class="button-row">
+          <button class="btn" id="btn-play" disabled>▶ <span data-i18n="menu.play">Play</span></button>
+          <button class="btn btn-secondary" id="btn-abort" hidden>✕ <span data-i18n="menu.abort">Abort</span></button>
+        </div>
         <button data-i18n="menu.credits" class="btn btn-secondary" id="btn-credits" disabled>Credits</button>
         <button data-i18n="menu.about" class="btn btn-secondary" id="btn-about" disabled>About</button>
       </div>
@@ -168,6 +171,18 @@
       <div class="menu-buttons">
         <button class="btn" id="btn-restart" data-i18n="ui.restart">Restart</button>
         <button class="btn btn-secondary" id="btn-back-menu" data-i18n="ui.backToMenu">Back to menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm dialog -->
+  <div class="confirm" id="confirm" hidden>
+    <div class="confirm-dialog" role="dialog" aria-modal="true">
+      <div class="confirm-title" id="confirm-title"></div>
+      <div class="confirm-message" id="confirm-message"></div>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" id="confirm-cancel" data-i18n="plan.cancel">Cancel</button>
+        <button class="btn" id="confirm-accept"></button>
       </div>
     </div>
   </div>

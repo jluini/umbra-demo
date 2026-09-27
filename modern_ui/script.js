@@ -16,7 +16,9 @@ const uiTranslations = {
       victory: "Mission accomplished",
       defeat: "Mission failed",
       restart: "Restart",
-      backToMenu: "Back to menu"
+      backToMenu: "Back to menu",
+      confirmAbortTitle: "Abort mission?",
+      confirmAbortMessage: "You will lose your progress and return to the menu."
     }
   },
   es: {
@@ -25,7 +27,9 @@ const uiTranslations = {
       victory: "Misión cumplida",
       defeat: "Misión fallida",
       restart: "Reiniciar",
-      backToMenu: "Volver al menú"
+      backToMenu: "Volver al menú",
+      confirmAbortTitle: "¿Abortar la misión?",
+      confirmAbortMessage: "Vas a perder el progreso y volver al menú."
     }
   },
   pt: {
@@ -34,7 +38,9 @@ const uiTranslations = {
       victory: "Missão cumprida",
       defeat: "Missão falhada",
       restart: "Reiniciar",
-      backToMenu: "Voltar ao menu"
+      backToMenu: "Voltar ao menu",
+      confirmAbortTitle: "Abortar a missão?",
+      confirmAbortMessage: "Você vai perder o progresso e voltar ao menu."
     }
   },
 };
@@ -69,6 +75,12 @@ const resultTitle = document.getElementById("result-title");
 const resultMessage = document.getElementById("result-message");
 const btnRestart = document.getElementById("btn-restart");
 const btnBackMenu = document.getElementById("btn-back-menu");
+const btnAbort = document.getElementById("btn-abort");
+const confirmEl = document.getElementById("confirm");
+const confirmTitle = document.getElementById("confirm-title");
+const confirmMessage = document.getElementById("confirm-message");
+const confirmAccept = document.getElementById("confirm-accept");
+const confirmCancel = document.getElementById("confirm-cancel");
 
 const mapView = Components.createMapView(mapViewport, mapContent);
 
@@ -86,6 +98,7 @@ let expandedStackId = null;
 let badgeItem = null;
 let badgeLingerTimer = null;
 let badgeRemoveTimer = null;
+let confirmAction = null;
 
 const DRAG_THRESHOLD = 8;
 
@@ -126,6 +139,30 @@ function showOverlay() {
 
 function hideOverlay() {
   overlay.classList.remove("active");
+}
+
+function syncMenuButtons() {
+  btnAbort.hidden = !started;
+}
+
+function openConfirm({ titleKey, messageKey, acceptKey, onAccept }) {
+  confirmAction = onAccept;
+  Presentation.setI18nText(confirmTitle, titleKey, activeI18n);
+  Presentation.setI18nText(confirmMessage, messageKey, activeI18n);
+  Presentation.setI18nText(confirmAccept, acceptKey, activeI18n);
+  confirmEl.hidden = false;
+  confirmAccept.focus();
+}
+
+function closeConfirm() {
+  confirmEl.hidden = true;
+  confirmAction = null;
+}
+
+function acceptConfirm() {
+  const action = confirmAction;
+  closeConfirm();
+  if (action) action();
 }
 
 function renderMission(mission) {
@@ -749,6 +786,7 @@ function backToMenu() {
   if (activeEngine) activeEngine.stop();
   started = false;
   setPlayLabel("menu.play");
+  syncMenuButtons();
   showScreen("screen-titles");
 }
 
@@ -826,6 +864,7 @@ function enterGame(missionIndex) {
   if (!started) {
     started = true;
     setPlayLabel("menu.continue");
+    syncMenuButtons();
     startGame(missionIndex);
   } else {
     hideOverlay();
@@ -886,6 +925,27 @@ btnBackMenu.addEventListener("click", backToMenu);
 
 btnPlay.addEventListener("click", () => enterGame());
 
+btnAbort.addEventListener("click", () => {
+  openConfirm({
+    titleKey: "ui.confirmAbortTitle",
+    messageKey: "ui.confirmAbortMessage",
+    acceptKey: "menu.abort",
+    onAccept: backToMenu,
+  });
+});
+
+confirmAccept.addEventListener("click", acceptConfirm);
+
+confirmCancel.addEventListener("click", closeConfirm);
+
+confirmEl.addEventListener("pointerdown", (e) => {
+  if (e.target === confirmEl) closeConfirm();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !confirmEl.hidden) closeConfirm();
+});
+
 btnCredits.addEventListener("click", () => enterGame(1));
 
 btnAbout.addEventListener("click", () => enterGame(2));
@@ -905,6 +965,7 @@ function boot() {
   btnPlay.disabled = false;
   btnCredits.disabled = false;
   btnAbout.disabled = false;
+  syncMenuButtons();
 
   loadGame(games[name].config);
   const requested = params.get("lang") || defaults.lang;
