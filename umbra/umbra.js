@@ -164,6 +164,9 @@ const findActor = (mission, id) =>
 const findLocation = (mission, id) =>
   mission ? (mission.locations.find((l) => l.id === id) || null) : null;
 
+const findTrade = (mission, locationId, tradeId) =>
+  (findLocation(mission, locationId)?.trades || []).find((t) => t.id === tradeId) || null;
+
 const buildPlan = (actor, destination, matrix) => ({
   destination,
   duration: computeWalkTime(distanceFrom(matrix, actor.activity.at, destination)),
@@ -182,6 +185,23 @@ const moveItem = (fromActor, toActor, item, quantity = 1) => {
   }
   for (let i = 0; i < quantity; i++) toActor.items.push(item);
   return true;
+};
+
+const countItem = (actor, itemId) => actor.items.filter((it) => it.id === itemId).length;
+
+const removeItems = (actor, itemId, quantity) => {
+  let removed = 0;
+  for (let i = actor.items.length - 1; i >= 0 && removed < quantity; i--) {
+    if (actor.items[i].id === itemId) {
+      actor.items.splice(i, 1);
+      removed++;
+    }
+  }
+  return removed === quantity;
+};
+
+const addItems = (actor, item, quantity) => {
+  for (let i = 0; i < quantity; i++) actor.items.push(item);
 };
 
 const expandItems = (config, actorId, entries) => {
@@ -238,14 +258,60 @@ const buildActors = (config, mission, missionLocs) => {
   });
 };
 
-const buildLocations = (config, mission) =>
-  (mission.locations || []).map((id) => {
-    const loc = config.locations[id];
-    if (!loc) {
-      throw new Error("umbra: mission references unknown location '" + id + "'");
+const normalizeLocationEntries = (entries) =>
+  (entries || []).map((entry) => (typeof entry === "string" ? { id: entry } : entry));
+
+// A mission selects locations (by id) and may override/augment any field of the
+// game-level location definition (shallow spread: the mission entry wins).
+const buildLocations = (config, missionDef) =>
+  normalizeLocationEntries(missionDef.locations).map((entry) => {
+    const base = config.locations[entry.id];
+    if (!base) {
+      throw new Error("umbra: mission references unknown location '" + entry.id + "'");
     }
-    return loc;
+    return { ...base, ...entry };
   });
+
+// --- Trades ---------------------------------------------------------------
+// A location of a mission may define `trades`: a list of
+// { id, cost: [{ item, quantity }], reward: [{ item, quantity }], label? }.
+
+const validateTradeItems = (itemIds, locationId, tradeId, field, entries) => {
+  if (!Array.isArray(entries)) {
+    throw new Error("umbra: trade '" + tradeId + "' in location '" + locationId + "' has invalid '" + field + "'");
+  }
+  for (const entry of entries) {
+    const itemId = entry && entry.item;
+    if (!itemIds.has(itemId)) {
+      throw new Error("umbra: trade '" + tradeId + "' references unknown item '" + itemId + "'");
+    }
+    if (!Number.isInteger(entry.quantity) || entry.quantity < 1) {
+      throw new Error("umbra: trade '" + tradeId + "' has an invalid quantity for item '" + itemId + "'");
+    }
+  }
+};
+
+const validateTrades = (config, locations) => {
+  const itemIds = new Set(Object.keys(config.items || {}));
+  for (const location of locations) {
+    if (location.trades === undefined) continue;
+    if (!Array.isArray(location.trades)) {
+      throw new Error("umbra: location '" + location.id + "' has invalid 'trades'");
+    }
+    const ids = new Set();
+    for (const trade of location.trades) {
+      if (!trade || typeof trade.id !== "string" || trade.id === "") {
+        throw new Error("umbra: location '" + location.id + "' has a trade without a valid id");
+      }
+      if (ids.has(trade.id)) {
+        throw new Error("umbra: location '" + location.id + "' has duplicate trade id '" + trade.id + "'");
+      }
+      ids.add(trade.id);
+      validateTradeItems(itemIds, location.id, trade.id, "cost", trade.cost);
+      validateTradeItems(itemIds, location.id, trade.id, "reward", trade.reward);
+    }
+  }
+};
 
 // --- Rules / conditions ---------------------------------------------------
 // A rule is { effect, conditions: [...], message? }. Conditions are combined
@@ -365,9 +431,10 @@ const buildMission = (config, requestedIndex = getInitialMissionIndex()) => {
     throw new Error("umbra: initial mission '" + index + "' not found");
   }
 
-  const missionLocs = new Set(missionDef.locations || []);
+  const missionLocs = new Set(normalizeLocationEntries(missionDef.locations).map((l) => l.id));
   const actors = buildActors(config, missionDef, missionLocs);
   const locations = buildLocations(config, missionDef);
+  validateTrades(config, locations);
   const rules = validateRules(config, missionDef, missionLocs);
 
   const mission = {
@@ -427,6 +494,20 @@ const create = (config = {}) => {
     return result;
   };
 
+  const evaluateTrade = (actorId, locationId, tradeId) => {
+    if (!isRunning()) return { ok: false, reason: "notRunning" };
+    const actor = findActor(state.mission, actorId);
+    if (!actor) return { ok: false, reason: "unknownActor" };
+    if (actor.activity.kind !== "idle") return { ok: false, reason: "busy" };
+    if (actor.activity.at !== locationId) return { ok: false, reason: "notHere" };
+    const trade = findTrade(state.mission, locationId, tradeId);
+    if (!trade) return { ok: false, reason: "unknown" };
+    for (const entry of trade.cost) {
+      if (countItem(actor, entry.item) < entry.quantity) return { ok: false, reason: "missingCost" };
+    }
+    return { ok: true };
+  };
+
   const commitPlans = () => {
     if (!isRunning()) return false;
     let started = false;
@@ -473,7 +554,7 @@ const create = (config = {}) => {
     getItemCount(actorId, itemId) {
       const actor = findActor(state.mission, actorId);
       if (!actor) return 0;
-      return actor.items.filter((it) => it.id === itemId).length;
+      return countItem(actor, itemId);
     },
     getItemGroups(actorId) {
       const actor = findActor(state.mission, actorId);
@@ -488,6 +569,10 @@ const create = (config = {}) => {
         groups[index[item.id]].count += 1;
       }
       return groups;
+    },
+    getTrades(locationId) {
+      const location = findLocation(state.mission, locationId);
+      return location && Array.isArray(location.trades) ? location.trades : [];
     },
     distance(from, to) { return distanceFrom(distMatrix, from, to); },
     computeWalkTime,
@@ -522,6 +607,18 @@ const create = (config = {}) => {
       // be able to end the mission, evaluate here:
       // const ending = evaluateRules(state.mission.rules, state.mission);
       // if (ending) endMission({ ...ending, reason: "rule" }, { completed: [], ended: null });
+      return true;
+    },
+    canTrade(actorId, locationId, tradeId) {
+      return evaluateTrade(actorId, locationId, tradeId);
+    },
+    trade(actorId, locationId, tradeId) {
+      if (!evaluateTrade(actorId, locationId, tradeId).ok) return false;
+      const actor = findActor(state.mission, actorId);
+      const trade = findTrade(state.mission, locationId, tradeId);
+      for (const entry of trade.cost) removeItems(actor, entry.item, entry.quantity);
+      for (const entry of trade.reward) addItems(actor, config.items[entry.item], entry.quantity);
+      emit("item:trade", { actorId, locationId, tradeId });
       return true;
     },
     advance() {

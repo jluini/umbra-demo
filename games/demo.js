@@ -275,7 +275,17 @@ const config = {
         { id: "bob", location: "aliceHouse", items: ["coin:3"] },
         { id: "charles", location: "charlesHouse", items: ["coin:6", "cider"] },
       ],
-      locations: ["aliceHouse", "charlesHouse", "market"],
+      locations: [
+        { id: "aliceHouse" },
+        { id: "charlesHouse" },
+        {
+          id: "market",
+          trades: [
+            { id: "cider", cost: [{ item: "coin", quantity: 3 }], reward: [{ item: "cider", quantity: 1 }] },
+            { id: "bike", cost: [{ item: "coin", quantity: 10 }], reward: [{ item: "bike", quantity: 1 }] },
+          ]
+        }
+      ],
       rules: [
         {
           effect: "victory",                                                              // win condition

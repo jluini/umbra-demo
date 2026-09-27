@@ -327,6 +327,53 @@ expectThrowConfig("stackable without a quantity is rejected", qtyConfigWith(["co
 expectThrowConfig("non-stackable with a quantity is rejected", qtyConfigWith(["cider:3"]));
 expectThrowConfig("non-numeric quantity is rejected", qtyConfigWith(["coin:x"]));
 
+// Trades: mission location entries (string or object) and item exchanges.
+const tradesConfig = {
+  items: { coin: { id: "coin", stackable: true }, cider: { id: "cider" } },
+  actors: { alice: { id: "alice", key: 1 } },
+  locations: { shop: { id: "shop", map: { x: 0, y: 0, width: 10, height: 10 } } },
+  routes: [],
+  missions: [{
+    id: "trade",
+    start: "2024-12-31T22:00:00",
+    deadline: "2025-01-01T00:00:00",
+    actors: [{ id: "alice", location: "shop", items: ["coin:5"] }],
+    locations: [{
+      id: "shop",
+      trades: [
+        { id: "cider", cost: [{ item: "coin", quantity: 3 }], reward: [{ item: "cider", quantity: 1 }] },
+      ],
+    }],
+  }],
+};
+
+const tg = window.Umbra.create(tradesConfig);
+tg.start();
+check(tg.getMission().locations[0].map !== undefined && tg.getTrades("shop").length === 1, "mission location override merges base fields");
+let tradeEvent = null;
+tg.on("item:trade", (e) => { tradeEvent = e; });
+check(tg.canTrade("alice", "shop", "cider").ok === true, "canTrade ok");
+check(tg.trade("alice", "shop", "cider") === true, "trade succeeds");
+check(tg.getItemCount("alice", "coin") === 2, "trade consumes the cost");
+check(tg.getItemCount("alice", "cider") === 1, "trade grants the reward");
+check(tradeEvent && tradeEvent.tradeId === "cider", "item:trade is emitted");
+check(tg.trade("alice", "shop", "cider") === false, "trade rejects insufficient cost");
+check(tg.canTrade("alice", "shop", "cider").reason === "missingCost", "insufficient cost is reported");
+check(tg.canTrade("alice", "shop", "nope").reason === "unknown", "unknown trade is reported");
+check(tg.canTrade("alice", "elsewhere", "cider").reason === "notHere", "wrong location is reported");
+tg.stop();
+
+const tradesConfigWith = (trades) => ({
+  ...tradesConfig,
+  missions: [{
+    ...tradesConfig.missions[0],
+    locations: [{ id: "shop", trades }],
+  }],
+});
+expectThrowConfig("trade with unknown item is rejected", tradesConfigWith([{ id: "x", cost: [{ item: "nope", quantity: 1 }], reward: [] }]));
+expectThrowConfig("trade with invalid quantity is rejected", tradesConfigWith([{ id: "x", cost: [{ item: "coin", quantity: 0 }], reward: [] }]));
+expectThrowConfig("duplicate trade id is rejected", tradesConfigWith([{ id: "x", cost: [], reward: [] }, { id: "x", cost: [], reward: [] }]));
+
 if (failures > 0) {
   console.error(failures + " failure(s)");
   process.exit(1);
