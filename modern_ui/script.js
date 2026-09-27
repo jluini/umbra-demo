@@ -83,10 +83,16 @@ let started = false;
 let currentMissionIndex = 0;
 let dragState = null;
 let expandedStackId = null;
+let badgeItem = null;
+let badgeLingerTimer = null;
+let badgeRemoveTimer = null;
 
 const DRAG_THRESHOLD = 8;
 
 const REAL_MS_PER_GAME_MIN = 250;
+
+const BADGE_LINGER_MS = 1200;
+const BADGE_FADE_MS = 600;
 
 function markActiveLanguage(code) {
   document.querySelectorAll(".lang-btn").forEach((btn) => {
@@ -128,6 +134,7 @@ function renderMission(mission) {
 }
 
 function buildAvatars() {
+  clearStackBadges();
   const mission = activeEngine.getMission();
   const actors = mission.actors.slice().sort((a, b) => a.preset.key - b.preset.key);
   avatarsRow.hidden = actors.length === 0;
@@ -370,6 +377,7 @@ function makeItemPalette(item, total) {
 function closePalette() {
   if (!expandedStackId) return;
   expandedStackId = null;
+  clearStackBadges();
   if (selectedActorId) renderActorPanel();
 }
 
@@ -437,6 +445,7 @@ function selectActor(actorId) {
   selectedActorId = actorId;
   walkToMode = false;
   expandedStackId = null;
+  clearStackBadges();
   renderActorPanel();
   renderLocations();
   updateActiveAvatar();
@@ -470,6 +479,7 @@ function closeActorPanel() {
   selectedActorId = null;
   walkToMode = false;
   expandedStackId = null;
+  clearStackBadges();
   actorPanel.hidden = true;
   renderLocations();
   updateActiveAvatar();
@@ -487,8 +497,11 @@ function clearValidTargets() {
   });
 }
 
-function showStackBadges(item) {
-  clearStackBadges();
+function updateStackBadges(item) {
+  clearTimeout(badgeLingerTimer);
+  clearTimeout(badgeRemoveTimer);
+  badgeItem = item;
+  avatarsRow.querySelectorAll(".avatar-count").forEach((badge) => badge.remove());
   avatarsRow.querySelectorAll(".avatar-box").forEach((box) => {
     const actorId = box.dataset.actorId;
     const available = actorId === selectedActorId || isValidDropTarget(actorId);
@@ -499,8 +512,28 @@ function showStackBadges(item) {
   });
 }
 
+function fadeStackBadges(delay) {
+  if (!badgeItem) return;
+  clearTimeout(badgeLingerTimer);
+  badgeLingerTimer = setTimeout(() => {
+    avatarsRow.querySelectorAll(".avatar-count").forEach((badge) => badge.classList.add("fade"));
+    badgeRemoveTimer = setTimeout(() => {
+      avatarsRow.querySelectorAll(".avatar-count").forEach((badge) => badge.remove());
+      badgeItem = null;
+    }, BADGE_FADE_MS);
+  }, delay);
+}
+
+function settleStackBadges(item) {
+  updateStackBadges(item);
+  if (expandedStackId !== item.id) fadeStackBadges(BADGE_LINGER_MS);
+}
+
 function clearStackBadges() {
+  clearTimeout(badgeLingerTimer);
+  clearTimeout(badgeRemoveTimer);
   avatarsRow.querySelectorAll(".avatar-count").forEach((badge) => badge.remove());
+  badgeItem = null;
 }
 
 function isValidDropTarget(actorId) {
@@ -569,7 +602,7 @@ function onItemPointerMove(e) {
     dragState.ghost = createDragGhost(dragState.box);
     document.body.appendChild(dragState.ghost);
     markValidTargets();
-    if (dragState.item.stackable) showStackBadges(dragState.item);
+    if (dragState.item.stackable) updateStackBadges(dragState.item);
   }
   e.preventDefault();
   updateGhostPosition(dragState.ghost, dragState.pointerType, e.clientX, e.clientY);
@@ -585,22 +618,27 @@ function onItemPointerUp(e) {
   cleanupItemDrag(box, e.pointerId);
   if (!active) {
     if (toggle) {
-      expandedStackId = expandedStackId === item.id ? null : item.id;
+      const opening = expandedStackId !== item.id;
+      expandedStackId = opening ? item.id : null;
+      if (opening) updateStackBadges(item);
+      else clearStackBadges();
       renderActorPanel();
     } else if (expandedStackId) {
       closePalette();
     }
     return;
   }
-  if (!target) return;
-  if (activeEngine.giveItem(selectedActorId, target.dataset.actorId, item, quantity)) {
+  if (target && activeEngine.giveItem(selectedActorId, target.dataset.actorId, item, quantity)) {
     renderActorPanel();
   }
+  if (item.stackable) settleStackBadges(item);
 }
 
 function onItemPointerCancel(e) {
   if (!dragState || e.pointerId !== dragState.pointerId) return;
-  cleanupItemDrag(dragState.box, e.pointerId);
+  const { box, item } = dragState;
+  cleanupItemDrag(box, e.pointerId);
+  if (item.stackable) settleStackBadges(item);
 }
 
 function cleanupItemDrag(box, pointerId) {
@@ -612,7 +650,6 @@ function cleanupItemDrag(box, pointerId) {
   }
   clearDropTargets();
   clearValidTargets();
-  clearStackBadges();
 }
 
 function renderTransit() {
@@ -691,6 +728,7 @@ function resetGameUI() {
   selectedActorId = null;
   walkToMode = false;
   expandedStackId = null;
+  clearStackBadges();
   dragState = null;
   advancing = false;
   clearInterval(advanceTimer);
