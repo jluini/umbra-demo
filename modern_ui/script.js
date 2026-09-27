@@ -745,6 +745,7 @@ function startAdvancing() {
 }
 
 function tick() {
+  if (overlay.classList.contains("active")) return;
   const { completed, ended } = activeEngine.advance();
   if (completed.length > 0 || ended) stopAdvancing();
 }
