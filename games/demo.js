@@ -271,8 +271,8 @@ const config = {
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: [
-        { id: "alice", location: "aliceHouse", items: ["coin:10", "bike", "chocolates"] },
-        { id: "bob", location: "aliceHouse", items: ["coin:3"] },
+        { id: "alice", location: "aliceHouse", items: ["coin:56", "bike", "chocolates"] },
+        { id: "bob", location: "aliceHouse", items: ["coin:104"] },
         { id: "charles", location: "charlesHouse", items: ["coin:6", "cider"] },
       ],
       locations: [
