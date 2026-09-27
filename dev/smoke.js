@@ -271,6 +271,62 @@ expectStartThrow("unknown location is rejected", [{ effect: "victory", condition
 expectStartThrow("unknown item is rejected", [{ effect: "victory", conditions: [{ kind: "itemAt", item: "nope", at: "b" }] }]);
 expectStartThrow("empty conditions are rejected", [{ effect: "victory", conditions: [] }]);
 
+// Stackable items: quantities in starting items and partial transfers.
+const qtyConfig = {
+  items: { coin: { id: "coin", stackable: true }, cider: { id: "cider" } },
+  actors: {
+    alice: { id: "alice", key: 1 },
+    bob: { id: "bob", key: 2 },
+  },
+  locations: { a: { id: "a" } },
+  routes: [],
+  missions: [{
+    id: "qty",
+    start: "2024-12-31T22:00:00",
+    deadline: "2025-01-01T00:00:00",
+    actors: [
+      { id: "alice", location: "a", items: ["coin:5", "cider"] },
+      { id: "bob", location: "a", items: [] },
+    ],
+    locations: ["a"],
+  }],
+};
+
+const qg = window.Umbra.create(qtyConfig);
+qg.start();
+check(qg.getItemCount("alice", "coin") === 5, "starting quantity expands to N items");
+check(qg.getInventory("alice").length === 6, "inventory holds N coins plus one cider");
+const qgGroups = qg.getItemGroups("alice");
+check(qgGroups.length === 2 && qgGroups[0].count === 5, "getItemGroups groups a stack");
+check(qg.giveItem("alice", "bob", qtyConfig.items.coin, 2) === true, "giveItem with quantity");
+check(qg.getItemCount("alice", "coin") === 3, "sender keeps the remainder");
+check(qg.getItemCount("bob", "coin") === 2, "receiver gets the quantity");
+check(qg.giveItem("alice", "bob", qtyConfig.items.coin, 10) === false, "giveItem rejects insufficient quantity");
+check(qg.giveItem("alice", "bob", qtyConfig.items.cider) === true, "giveItem defaults to quantity 1");
+qg.stop();
+
+const qtyConfigWith = (items) => ({
+  ...qtyConfig,
+  missions: [{
+    ...qtyConfig.missions[0],
+    actors: [
+      { id: "alice", location: "a", items },
+      { id: "bob", location: "a", items: [] },
+    ],
+  }],
+});
+const expectThrowConfig = (label, cfg) => {
+  let threw = false;
+  try { window.Umbra.create(cfg).start(); } catch { threw = true; }
+  check(threw, label);
+};
+expectThrowConfig("zero quantity is rejected", qtyConfigWith(["coin:0"]));
+expectThrowConfig("fractional quantity is rejected", qtyConfigWith(["coin:1.5"]));
+expectThrowConfig("unknown item in starting items is rejected", qtyConfigWith(["nope:1"]));
+expectThrowConfig("stackable without a quantity is rejected", qtyConfigWith(["coin"]));
+expectThrowConfig("non-stackable with a quantity is rejected", qtyConfigWith(["cider:3"]));
+expectThrowConfig("non-numeric quantity is rejected", qtyConfigWith(["coin:x"]));
+
 if (failures > 0) {
   console.error(failures + " failure(s)");
   process.exit(1);

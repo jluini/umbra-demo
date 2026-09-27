@@ -240,7 +240,7 @@ const config = {
     yellowPotion: { id: "yellowPotion", avatar: potionIcon("#c9a93a") },
     greenPotion: { id: "greenPotion", avatar: potionIcon("#558f3c") },
     starCoin: { id: "starCoin", avatar: starCoinIcon },
-    coin: { id: "coin", avatar: coinIcon, /* avatarSize: "2.2rem" */ },
+    coin: { id: "coin", stackable: true, avatar: coinIcon, /* avatarSize: "2.2rem" */ },
   },
   actors: {
     alice:   { id: "alice",   key: 1, color: "#e94560", avatarUrl: "../games/demo/assets/actors/girl2.svg",  avatar: avatarSilhouette("#e94560", /* { style: "long", color: "#7a4a24" } */) },
@@ -271,9 +271,9 @@ const config = {
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: [
-        { id: "alice", location: "aliceHouse", items: ["coin", "bike", "chocolates"] },
-        { id: "bob", location: "aliceHouse", items: [] },
-        { id: "charles", location: "charlesHouse", items: ["cider"] },
+        { id: "alice", location: "aliceHouse", items: ["coin:10", "bike", "chocolates"] },
+        { id: "bob", location: "aliceHouse", items: ["coin:3"] },
+        { id: "charles", location: "charlesHouse", items: ["coin:6", "cider"] },
       ],
       locations: ["aliceHouse", "charlesHouse", "market"],
       rules: [
@@ -304,7 +304,7 @@ const config = {
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: [
-        { id: "alice", location: "aliceHouse", items: ["coin", "bike", "chocolates"] },
+        { id: "alice", location: "aliceHouse", items: ["coin:120", "bike", "chocolates"] },
         { id: "bob", location: "aliceHouse", items: ["redPotion", "bluePotion", "yellowPotion"] },
         { id: "charles", location: "charlesHouse", items: ["diamond", "greenPotion", "cider", "starCoin", "key"] },
         { id: "dave", location: "charlesHouse" },

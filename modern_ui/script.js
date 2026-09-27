@@ -82,6 +82,7 @@ let advanceTimer = null;
 let started = false;
 let currentMissionIndex = 0;
 let dragState = null;
+let expandedStackId = null;
 
 const DRAG_THRESHOLD = 8;
 
@@ -248,33 +249,128 @@ function renderActorPanel() {
   renderActions(actor);
 }
 
+function fillItemIcon(el, item) {
+  if (item.avatar) {
+    el.innerHTML = item.avatar;
+  } else if (item.avatarString) {
+    el.textContent = item.avatarString;
+  } else {
+    el.textContent = item.id.charAt(0).toUpperCase();
+  }
+}
+
+// Decimal denominations below total, descending, at most maxBoxes of them
+// (1 is always offered so any amount can be composed with repeated drags).
+function partitionValues(total, maxBoxes = 6) {
+  const denoms = [];
+  for (let base = 1; base < total; base *= 10) {
+    for (const mult of [1, 2, 5]) {
+      const value = base * mult;
+      if (value < total && !denoms.includes(value)) denoms.push(value);
+    }
+  }
+  denoms.sort((a, b) => b - a);
+  if (denoms.length > maxBoxes) {
+    const trimmed = denoms.slice(0, maxBoxes - 1);
+    if (!trimmed.includes(1)) trimmed.push(1);
+    return trimmed.sort((a, b) => b - a);
+  }
+  return denoms;
+}
+
 function renderItems(actor) {
   actorPanelItems.replaceChildren();
   if (actor.activity.kind !== "idle") return;
-  const items = activeEngine.getInventory(actor.id);
-  for (const item of items) {
-    const box = document.createElement("div");
-    const itemName = Utils.buildKey("items", item.id, "name");
+  const groups = activeEngine.getItemGroups(actor.id);
 
-    box.className = "item-box";
-    box.dataset.itemId = item.id;
-    Presentation.setI18nAttr(box, "title", itemName, activeI18n);
-    Presentation.setI18nAttr(box, "aria-label", itemName, activeI18n);
+  if (expandedStackId) {
+    const stack = groups.find((g) => g.item.id === expandedStackId);
+    if (!stack || !stack.item.stackable || stack.count < 2) expandedStackId = null;
+  }
 
-    // if (item.avatarSize) box.style.setProperty("--item-avatar-size", item.avatarSize);
-    if (item.avatar) {
-      box.innerHTML = item.avatar;
-    } else if (item.avatarString) {
-      box.textContent = item.avatarString;
-    } else {
-      box.textContent = item.id.charAt(0).toUpperCase();
+  const ordered = groups.filter((g) => g.item.stackable).concat(groups.filter((g) => !g.item.stackable));
+  for (const { item, count } of ordered) {
+    // Non-stackable items render one tile each; stackables collapse into one.
+    const tiles = item.stackable ? 1 : count;
+    for (let n = 0; n < tiles; n++) {
+      const tile = document.createElement("div");
+      tile.className = "item-tile";
+
+      const box = document.createElement("div");
+      const itemName = Utils.buildKey("items", item.id, "name");
+      const isStack = item.stackable;
+      const canExpand = isStack && count > 1;
+      const expanded = canExpand && expandedStackId === item.id;
+      const dragQuantity = isStack ? count : 1;
+
+      box.className = "item-box" + (expanded ? " stack" : "");
+      box.dataset.itemId = item.id;
+      Presentation.setI18nAttr(box, "title", itemName, activeI18n);
+      Presentation.setI18nAttr(box, "aria-label", itemName, activeI18n);
+      fillItemIcon(box, item);
+      if (isStack) {
+        const badge = document.createElement("span");
+        badge.className = "item-count";
+        badge.textContent = count;
+        box.appendChild(badge);
+      }
+      box.addEventListener("pointerdown", (e) => startItemDrag(e, box, item, dragQuantity, canExpand));
+      box.addEventListener("pointermove", onItemPointerMove);
+      box.addEventListener("pointerup", onItemPointerUp);
+      box.addEventListener("pointercancel", onItemPointerCancel);
+      tile.appendChild(box);
+
+      if (expanded) {
+        tile.appendChild(makeItemPalette(item, count));
+      }
+      actorPanelItems.appendChild(tile);
     }
-    box.addEventListener("pointerdown", (e) => startItemDrag(e, box, item));
+  }
+
+  const palette = actorPanelItems.querySelector(".item-palette");
+  if (palette && palette.getBoundingClientRect().right > window.innerWidth - 4) {
+    palette.classList.add("left");
+  }
+}
+
+function makeItemPalette(item, total) {
+  const palette = document.createElement("div");
+  palette.className = "item-palette";
+
+  for (const value of partitionValues(total)) {
+    const box = document.createElement("div");
+    box.className = "item-box partition";
+    box.dataset.itemId = item.id;
+    fillItemIcon(box, item);
+    const badge = document.createElement("span");
+    badge.className = "item-count";
+    badge.textContent = value;
+    box.appendChild(badge);
+    box.addEventListener("pointerdown", (e) => startItemDrag(e, box, item, value, false));
     box.addEventListener("pointermove", onItemPointerMove);
     box.addEventListener("pointerup", onItemPointerUp);
     box.addEventListener("pointercancel", onItemPointerCancel);
-    actorPanelItems.appendChild(box);
+    palette.appendChild(box);
   }
+
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "item-palette-close";
+  close.textContent = "✕";
+  Presentation.setI18nAttr(close, "aria-label", "plan.cancel", activeI18n);
+  close.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closePalette();
+  });
+  palette.appendChild(close);
+
+  return palette;
+}
+
+function closePalette() {
+  if (!expandedStackId) return;
+  expandedStackId = null;
+  if (selectedActorId) renderActorPanel();
 }
 
 function renderActions(actor) {
@@ -340,6 +436,7 @@ function makeActivityLine(actor, plan) {
 function selectActor(actorId) {
   selectedActorId = actorId;
   walkToMode = false;
+  expandedStackId = null;
   renderActorPanel();
   renderLocations();
   updateActiveAvatar();
@@ -372,6 +469,7 @@ function cancelPlan(actorId) {
 function closeActorPanel() {
   selectedActorId = null;
   walkToMode = false;
+  expandedStackId = null;
   actorPanel.hidden = true;
   renderLocations();
   updateActiveAvatar();
@@ -404,13 +502,16 @@ function markValidTargets() {
   });
 }
 
-function startItemDrag(e, box, item) {
+function startItemDrag(e, box, item, quantity, toggle) {
   if (!selectedActorId) return;
   if (e.pointerType === "mouse" && e.button !== 0) return;
+  if (!Number.isInteger(quantity) || quantity < 1) return;
   e.preventDefault();
   box.setPointerCapture(e.pointerId);
   dragState = {
     item,
+    quantity,
+    toggle,
     pointerId: e.pointerId,
     pointerType: e.pointerType,
     startX: e.clientX,
@@ -463,10 +564,19 @@ function onItemPointerMove(e) {
 
 function onItemPointerUp(e) {
   if (!dragState || e.pointerId !== dragState.pointerId) return;
-  const { box, item, active, target } = dragState;
+  const { box, item, quantity, toggle, active, target } = dragState;
   cleanupItemDrag(box, e.pointerId);
-  if (!active || !target) return;
-  if (activeEngine.giveItem(selectedActorId, target.dataset.actorId, item)) {
+  if (!active) {
+    if (toggle) {
+      expandedStackId = expandedStackId === item.id ? null : item.id;
+      renderActorPanel();
+    } else if (expandedStackId) {
+      closePalette();
+    }
+    return;
+  }
+  if (!target) return;
+  if (activeEngine.giveItem(selectedActorId, target.dataset.actorId, item, quantity)) {
     renderActorPanel();
   }
 }
@@ -562,6 +672,7 @@ function onMissionEnd(ending) {
 function resetGameUI() {
   selectedActorId = null;
   walkToMode = false;
+  expandedStackId = null;
   dragState = null;
   advancing = false;
   clearInterval(advanceTimer);
@@ -692,6 +803,15 @@ avatarsRow.addEventListener("click", (e) => {
     selectActor(box.dataset.actorId);
   }
 });
+
+// A press outside the open partition palette dismisses it. Presses on item boxes
+// are left to the item logic (which toggles or drags) to avoid re-rendering mid-press.
+document.addEventListener("pointerdown", (e) => {
+  if (!expandedStackId) return;
+  const target = e.target;
+  if (target.closest(".item-palette") || target.closest(".item-box")) return;
+  closePalette();
+}, true);
 
 function setBriefingVisible(visible) {
   missionBar.hidden = !visible;

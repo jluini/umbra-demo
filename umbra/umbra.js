@@ -169,16 +169,61 @@ const buildPlan = (actor, destination, matrix) => ({
   duration: computeWalkTime(distanceFrom(matrix, actor.activity.at, destination)),
 });
 
-const moveItem = (fromActor, toActor, item) => {
-  const idx = fromActor.items.indexOf(item);
-  if (idx === -1) return false;
-  fromActor.items.splice(idx, 1);
-  toActor.items.push(item);
+const moveItem = (fromActor, toActor, item, quantity = 1) => {
+  if (!Number.isInteger(quantity) || quantity < 1) return false;
+  const available = fromActor.items.filter((it) => it.id === item.id).length;
+  if (available < quantity) return false;
+  let removed = 0;
+  for (let i = fromActor.items.length - 1; i >= 0 && removed < quantity; i--) {
+    if (fromActor.items[i].id === item.id) {
+      fromActor.items.splice(i, 1);
+      removed++;
+    }
+  }
+  for (let i = 0; i < quantity; i++) toActor.items.push(item);
   return true;
 };
 
+const expandItems = (config, actorId, entries) => {
+  const items = [];
+  for (const entry of entries || []) {
+    let id;
+    let quantity;
+    const preset = typeof entry === "string" ? config.items[entry] : undefined;
+    if (preset) {
+      if (preset.stackable) {
+        throw new Error("umbra: actor '" + actorId + "' must give a quantity for stackable item '" + entry + "' (e.g. '" + entry + ":10')");
+      }
+      id = entry;
+      quantity = 1;
+    } else {
+      const sep = typeof entry === "string" ? entry.lastIndexOf(":") : -1;
+      if (sep === -1) {
+        throw new Error("umbra: actor '" + actorId + "' has unknown item '" + entry + "'");
+      }
+      id = entry.slice(0, sep);
+      const quantityText = entry.slice(sep + 1);
+      if (!/^[0-9]+$/.test(quantityText)) {
+        throw new Error("umbra: actor '" + actorId + "' has an invalid quantity in '" + entry + "'");
+      }
+      const item = config.items[id];
+      if (!item) {
+        throw new Error("umbra: actor '" + actorId + "' has unknown item '" + id + "'");
+      }
+      if (!item.stackable) {
+        throw new Error("umbra: actor '" + actorId + "' cannot give a quantity for non-stackable item '" + id + "'");
+      }
+      quantity = Number(quantityText);
+      if (quantity < 1) {
+        throw new Error("umbra: actor '" + actorId + "' has an invalid quantity in '" + entry + "'");
+      }
+    }
+    for (let i = 0; i < quantity; i++) items.push(config.items[id]);
+  }
+  return items;
+};
+
 const buildActors = (config, mission, missionLocs) => {
-  const validItems = new Set(Object.keys(config.items || {}));
   return (mission.actors || []).map((a) => {
     const preset = config.actors && config.actors[a.id];
     if (!preset) {
@@ -188,12 +233,7 @@ const buildActors = (config, mission, missionLocs) => {
     if (!loc || !missionLocs.has(a.location)) {
       throw new Error("umbra: actor '" + a.id + "' starts at '" + a.location + "' which is not in mission locations");
     }
-    const items = (a.items || []).map((id) => {
-      if (!validItems.has(id)) {
-        throw new Error("umbra: actor '" + a.id + "' has unknown item '" + id + "'");
-      }
-      return config.items[id];
-    });
+    const items = expandItems(config, a.id, a.items);
     return { id: a.id, preset, activity: { kind: "idle", at: a.location }, items };
   });
 };
@@ -430,6 +470,25 @@ const create = (config = {}) => {
       const actor = findActor(state.mission, actorId);
       return actor ? actor.items : [];
     },
+    getItemCount(actorId, itemId) {
+      const actor = findActor(state.mission, actorId);
+      if (!actor) return 0;
+      return actor.items.filter((it) => it.id === itemId).length;
+    },
+    getItemGroups(actorId) {
+      const actor = findActor(state.mission, actorId);
+      if (!actor) return [];
+      const groups = [];
+      const index = {};
+      for (const item of actor.items) {
+        if (index[item.id] === undefined) {
+          index[item.id] = groups.length;
+          groups.push({ item, count: 0 });
+        }
+        groups[index[item.id]].count += 1;
+      }
+      return groups;
+    },
     distance(from, to) { return distanceFrom(distMatrix, from, to); },
     computeWalkTime,
     // actions
@@ -449,7 +508,7 @@ const create = (config = {}) => {
       emit("plan:cancel", { actorId });
       return true;
     },
-    giveItem(fromActorId, toActorId, item) {
+    giveItem(fromActorId, toActorId, item, quantity = 1) {
       if (!isRunning()) return false;
       const from = findActor(state.mission, fromActorId);
       const to = findActor(state.mission, toActorId);
@@ -457,8 +516,8 @@ const create = (config = {}) => {
       // TODO: sólo actores idle pueden dar/recibir items; en el futuro un actor "at" podría recibir items incluso no estando idle?
       if (from.activity.kind !== "idle" || to.activity.kind !== "idle") return false;
       if (from.activity.at !== to.activity.at) return false;
-      if (!moveItem(from, to, item)) return false;
-      emit("item:give", { from: fromActorId, to: toActorId, item });
+      if (!moveItem(from, to, item, quantity)) return false;
+      emit("item:give", { from: fromActorId, to: toActorId, item, quantity });
       // Rules are only evaluated when a plan completes. If item transfers should
       // be able to end the mission, evaluate here:
       // const ending = evaluateRules(state.mission.rules, state.mission);
