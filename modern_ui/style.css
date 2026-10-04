@@ -58,6 +58,28 @@ body {
   color: #e0e0e0;
 }
 
+.top-bar .mission {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.top-bar .mission:hover {
+  background: #0f3460;
+}
+
+.top-bar .mission.active .mission-title {
+  color: #e94560;
+}
+
 .top-bar .nav-btn {
   background: transparent;
   color: #888;
@@ -93,9 +115,6 @@ body {
 .lang-selector-inline {
   display: flex;
   gap: 4px;
-  margin-right: 32px;
-  padding-right: 32px;
-  border-right: 1px solid #555;
 }
 
 .lang-selector-inline .lang-btn {

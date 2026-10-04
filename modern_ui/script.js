@@ -56,7 +56,7 @@ const btnPlay = document.getElementById("btn-play");
 const btnCredits = document.getElementById("btn-credits");
 const btnAbout = document.getElementById("btn-about");
 const btnShowMenu = document.getElementById("btn-show-menu");
-const btnToggleBriefing = document.getElementById("btn-toggle-briefing");
+const missionToggle = document.getElementById("mission-toggle");
 const btnRun = document.getElementById("btn-run");
 const langSelector = document.getElementById("lang-selector");
 const langSelectorInline = document.getElementById("lang-selector-inline");
@@ -919,11 +919,11 @@ document.addEventListener("pointerdown", (e) => {
 
 function setBriefingVisible(visible) {
   missionBar.hidden = !visible;
-  btnToggleBriefing.classList.toggle("active", visible);
-  btnToggleBriefing.setAttribute("aria-expanded", String(visible));
+  missionToggle.classList.toggle("active", visible);
+  missionToggle.setAttribute("aria-expanded", String(visible));
 }
 
-btnToggleBriefing.addEventListener("click", () => setBriefingVisible(missionBar.hidden));
+missionToggle.addEventListener("click", () => setBriefingVisible(missionBar.hidden));
 btnMissionBarClose.addEventListener("click", () => setBriefingVisible(false));
 
 btnRun.addEventListener("click", startAdvancing);

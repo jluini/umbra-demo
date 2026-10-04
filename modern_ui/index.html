@@ -13,15 +13,16 @@
   <!-- Game screen (always rendered) -->
   <div class="game-container">
     <div class="panel top-bar">
-      <span class="mission-label">
-        <span id="mission-prefix" data-i18n="umbra.mission">Mission</span>
-        <span id="mission-number">3</span>
-      </span>
-      <span class="mission-title" id="mission-title">Midnight Run</span>
+      <button class="nav-btn" id="btn-show-menu">☰</button>
+      <button class="mission" id="mission-toggle" aria-expanded="true">
+        <span class="mission-label">
+          <span id="mission-prefix" data-i18n="umbra.mission">Mission</span>
+          <span id="mission-number">3</span>
+        </span>
+        <span class="mission-title" id="mission-title">Midnight Run</span>
+      </button>
       <div class="top-bar-right">
         <div class="lang-selector-inline" id="lang-selector-inline"></div>
-        <button class="nav-btn active" id="btn-toggle-briefing" aria-expanded="true">?</button>
-        <button class="nav-btn" id="btn-show-menu">☰</button>
       </div>
     </div>
 
