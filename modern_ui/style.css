@@ -4,21 +4,32 @@
   box-sizing: border-box;
 }
 
+html, body { height: 100%; }
+
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: #1a1a2e;
   color: #e0e0e0;
-  min-height: 100vh;
+  overflow: hidden;
 }
 
+/* App shell: fixed viewport, no global scroll. */
 .game-container {
+  height: 100vh;
+  height: 100dvh;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Map area (the sheet/briefing overlay it). */
+.content {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .panel {
@@ -34,6 +45,21 @@ body {
   margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+/* Top bar and bottom dock are full-bleed bars, not boxed panels. */
+.top-bar {
+  border-radius: 0;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.status-bar {
+  border-radius: 0;
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
 }
 
 /* Top bar */
@@ -126,14 +152,13 @@ body {
   padding: 3px 7px;
 }
 
-/* Status bar */
+/* Status bar (bottom dock) */
 .status-bar {
+  flex: 0 0 auto;
   display: flex;
-  grid-column: 1 / -1;
   align-items: center;
   gap: 8px;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding: 8px 12px;
 }
 
 .clock {
@@ -229,8 +254,13 @@ body {
 
 /* Mission bar */
 .mission-bar {
-  grid-column: 1 / -1;
-  position: relative;
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  z-index: 20;
+  max-height: 70%;
+  overflow-y: auto;
   padding-top: 12px;
   padding-bottom: 12px;
 }
@@ -282,19 +312,22 @@ body {
   flex: 1;
 }
 
-/* Map panel */
+/* Map panel: fills the content area; the bottom sheet overlays it. */
 .map-panel {
-  aspect-ratio: 16 / 9;
-  min-height: 350px;
-  max-height: 620px;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
-/* Locations panel */
+/* Locations panel: hidden for now (kept in the DOM for the host wiring). */
 .locations-panel {
-  flex: 1;
+  display: none;
 }
 
 .location-card {
@@ -361,12 +394,20 @@ body {
 }
 
 /* Actor panel */
+/* Actor panel = bottom sheet (overlays the map, above the dock). */
 .actor-panel {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 15;
+  max-height: 72%;
+  overflow-y: auto;
   background: #16213e;
-  border: 1px solid #0f3460;
-  border-radius: 8px;
+  border-top: 1px solid #0f3460;
+  border-radius: 12px 12px 0 0;
   padding: 16px;
+  box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.45);
 }
 
 .actor-panel-name {
@@ -895,16 +936,6 @@ body {
 
   .lang-selector-inline {
     display: none;
-  }
-
-  .game-container {
-    padding: 12px;
-    gap: 12px;
-    min-height: auto;
-  }
-
-  .locations-panel {
-    padding: 12px;
   }
 
   .btn {

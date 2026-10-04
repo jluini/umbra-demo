@@ -29,83 +29,61 @@
       </div>
     </div>
 
-    <div class="panel status-bar">
-      <div class="avatars" id="avatars" hidden></div>
-    </div>
-
-    <!-- Mission bar (briefing) -->
-    <div class="panel mission-bar" id="mission-bar">
-      <button class="mission-bar-close" id="mission-bar-close">✕</button>
-      <div id="mission-briefing">
-        <div class="briefing-section">
-          <span class="briefing-text">A valuable artifact has been spotted at the museum. The team needs to retrieve it before the night guard shift changes at dawn.</span>
-        </div>
-        <div class="briefing-section">
-          <span class="briefing-label">Goal</span>
-          <span class="briefing-text">Get the artifact to the safehouse before 6 AM. At least two team members must be present at the handoff.</span>
-        </div>
-        <div class="briefing-section">
-          <span class="briefing-label">Hints</span>
-          <ul class="briefing-list">
-            <li>The museum back entrance is only accessible from the park. Security cameras cover the main hall but not the east wing.</li>
-            <li>⚠ Guards patrol the east wing every 15 minutes. If spotted, the mission fails immediately.</li>
-            <li>There may be a second artifact in the vault — but the vault door mechanism is unknown and could trigger an alarm.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- Actor panel -->
-    <div class="actor-panel" id="actor-panel" hidden>
-      <button class="actor-panel-close" id="actor-panel-close">✕</button>
-      <h2 class="actor-panel-name" id="actor-panel-name"></h2>
-      <div class="items-label" data-i18n="umbra.items">Items</div>
-      <div class="item-list" id="actor-panel-items"></div>
-      <div class="actor-panel-actions" id="actor-panel-actions"></div>
-    </div>
-
-    <!-- Main area: Locations -->
-    <div class="main-area">
+    <div class="content">
+      <!-- Map -->
       <div class="panel map-panel">
-        <h2 data-i18n="ui.map">Map</h2>
         <div class="map-viewport" id="map-viewport">
           <div class="map-content" id="map-content"></div>
         </div>
       </div>
-      <div class="panel locations-panel" id="locations-panel">
-        <h2 data-i18n="umbra.locations">Locations</h2>
-        <div id="locations-list">
-          <div class="location-card">
-            <div class="loc-info">
-              <div class="loc-name">Alice's House</div>
-              <div class="actors-here">Alice, Bob</div>
-            </div>
+
+      <!-- Bottom sheet: actor panel -->
+      <div class="actor-panel" id="actor-panel" hidden>
+        <button class="actor-panel-close" id="actor-panel-close">✕</button>
+        <h2 class="actor-panel-name" id="actor-panel-name"></h2>
+        <div class="items-label" data-i18n="umbra.items">Items</div>
+        <div class="item-list" id="actor-panel-items"></div>
+        <div class="actor-panel-actions" id="actor-panel-actions"></div>
+      </div>
+
+      <!-- Mission bar (briefing) -->
+      <div class="panel mission-bar" id="mission-bar">
+        <button class="mission-bar-close" id="mission-bar-close">✕</button>
+        <div id="mission-briefing">
+          <div class="briefing-section">
+            <span class="briefing-text">A valuable artifact has been spotted at the museum. The team needs to retrieve it before the night guard shift changes at dawn.</span>
           </div>
-          <div class="location-card">
-            <div class="loc-info">
-              <div class="loc-name">Bob's House</div>
-              <div class="actors-here"></div>
-            </div>
+          <div class="briefing-section">
+            <span class="briefing-label">Goal</span>
+            <span class="briefing-text">Get the artifact to the safehouse before 6 AM. At least two team members must be present at the handoff.</span>
           </div>
-          <div class="location-card">
-            <div class="loc-info">
-              <div class="loc-name">Charles's House</div>
-              <div class="actors-here">Charles</div>
-            </div>
-          </div>
-          <div class="location-card">
-            <div class="loc-info">
-              <div class="loc-name">Market</div>
-              <div class="actors-here"></div>
-            </div>
+          <div class="briefing-section">
+            <span class="briefing-label">Hints</span>
+            <ul class="briefing-list">
+              <li>The museum back entrance is only accessible from the park. Security cameras cover the main hall but not the east wing.</li>
+              <li>⚠ Guards patrol the east wing every 15 minutes. If spotted, the mission fails immediately.</li>
+              <li>There may be a second artifact in the vault — but the vault door mechanism is unknown and could trigger an alarm.</li>
+            </ul>
           </div>
         </div>
+      </div>
+
+      <!-- Locations panel (hidden for now; kept so the host wiring keeps working) -->
+      <div class="panel locations-panel" id="locations-panel" hidden>
+        <h2 data-i18n="umbra.locations">Locations</h2>
+        <div id="locations-list"></div>
         <div class="transit" id="transit" hidden>
           <div class="transit-label" data-i18n="plan.inTransit">In transit</div>
           <div id="transit-list"></div>
         </div>
       </div>
     </div>
+
+    <!-- Bottom dock: actor roster -->
+    <div class="panel status-bar">
+      <div class="avatars" id="avatars" hidden></div>
+    </div>
+  </div>
 
     <!-- Sidebar (hidden for now)
     <div class="sidebar">
