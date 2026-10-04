@@ -72,7 +72,7 @@ html = inlineHtmlAssets(html);
 html = html.replace(
   /[ \t]*<link rel="stylesheet" href="([^"]+)"\s*\/>\n?/g,
   (match, href) => {
-    const file = path.resolve(uiDir, href);
+    const file = path.resolve(uiDir, href.split("?")[0]);
     const css = escapeForStyle(fs.readFileSync(file, "utf8"));
     return `<style>\n${css}\n  </style>\n`;
   }
@@ -80,8 +80,9 @@ html = html.replace(
 
 // 4. Inline every referenced script (except the skipped ones).
 html = html.replace(/[ \t]*<script src="([^"]+)"><\/script>\n?/g, (match, src) => {
-  if (SKIP_SCRIPTS.has(src)) return "";
-  const file = path.resolve(uiDir, src);
+  const clean = src.split("?")[0];
+  if (SKIP_SCRIPTS.has(clean)) return "";
+  const file = path.resolve(uiDir, clean);
   const js = escapeForScript(inlineAssets(fs.readFileSync(file, "utf8")));
   return `<script>\n${js}\n</script>\n`;
 });
