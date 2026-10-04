@@ -401,21 +401,62 @@ body {
   right: 0;
   bottom: 0;
   z-index: 15;
-  max-height: 72%;
-  overflow-y: auto;
+  height: var(--actor-panel-h, auto);
+  max-height: 82%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: #16213e;
   border-top: 1px solid #0f3460;
   border-radius: 12px 12px 0 0;
-  padding: 16px;
   box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.45);
+  transition: height 0.22s ease;
+}
+
+.actor-panel-head {
+  flex: 0 0 auto;
+  height: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  position: relative;
+  cursor: grab;
+  touch-action: none;
+}
+.actor-panel-head:active { cursor: grabbing; }
+.actor-panel-head .bar { width: 46px; height: 4px; border-radius: 999px; background: #333; }
+.actor-panel-head .chev { font-size: 0.7rem; color: #888; line-height: 1; transition: transform 0.2s; }
+.actor-panel-head.collapsed .chev { transform: rotate(180deg); }
+
+.actor-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 16px 16px;
+}
+
+.actor-panel-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .actor-panel-name {
-  font-size: 1rem;
-  color: #e94560;
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  font-size: 1.05rem;
+  color: #e0e0e0;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.actor-panel-loc {
+  color: #888;
+  font-size: 0.85rem;
 }
 
 .actor-panel .items-label {
@@ -430,6 +471,7 @@ body {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: auto;
 }
 
 .item-box {
@@ -595,6 +637,23 @@ body {
   align-items: flex-start;
   gap: 8px;
 }
+
+/* "Walk to..." styled like the mock's primary action (behavior unchanged). */
+.actor-panel .btn.primary {
+  align-self: stretch;
+  width: 100%;
+  background: #e94560;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 13px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  transition: background 0.15s, transform 0.1s;
+}
+.actor-panel .btn.primary:hover { background: #d43b54; }
+.actor-panel .btn.primary:active { transform: scale(0.985); }
 
 .activity-row {
   display: flex;

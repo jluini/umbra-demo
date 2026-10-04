@@ -1,91 +1,127 @@
-// Map widget: a clipped, draggable viewport that renders location markers.
+// Map widget: reusable, engine-agnostic renderer for a "map scene"
+// (locations, routes, actor tokens) drawn in screen space, with pan and
+// clickable location targets.
 // Dependencies:
-//   common/geometry.js       (Geometry.computeBounds, Geometry.toLocalPoint)
+//   common/geometry.js       (Geometry.computeBounds)
 //   common/utils.js          (Utils.buildKey)
 //   presentation/i18n-dom.js (Presentation.setI18nText)
+//   components/avatar.js     (Components.createAvatar)
 //   components/map-view.css  (map classes, loaded by the host UI)
 (() => {
 "use strict";
 
-const MIN_SCALE = 0.6;
+const DEFAULT_PAD = 30;
+const MAX_SCALE = 2;
+const TAP_THRESHOLD = 6;
+const SVG_NS = "http://www.w3.org/2000/svg";
 
-const createMapView = (viewport, content) => {
-  let posX = 0;
-  let posY = 0;
-  let scale = 1;
-  let pan = null;
-  let bounds = null;
+// scene = {
+//   locations: [{ id, map:{x,y,width,height}, pictureUrl?, label?, badge?, state? }],
+//   routes:    [{ from, to, active? }],
+//   tokens:    [{ id, at, color?, avatarUrl?, initial?, title? }],
+// }
+// state: "current" | "reachable" | "dim" | "selected"
+const createMapView = (viewport, content, options) => {
+  const opts = options || {};
+  const onLocationClick = opts.onLocationClick || null;
+  const pad = opts.pad != null ? opts.pad : DEFAULT_PAD;
 
-  function clamp(v, min, max) {
-    return Math.max(min, Math.min(max, v));
-  }
+  let scene = null;
+  let i18n = null;
+  let layout = null;
+  const pan = { x: 0, y: 0 };
+  let panDrag = null;
+  let suppressClick = false;
 
-  function apply() {
-    content.style.transform =
-      "translate(" + posX + "px, " + posY + "px) scale(" + scale + ")";
-  }
+  const computeLayout = () => {
+    if (!scene) return null;
+    const placements = (scene.locations || []).map((l) => l.map).filter(Boolean);
+    const bounds = Geometry.computeBounds(placements);
+    if (!bounds.width || !bounds.height) return null;
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+    const scale = Math.min((vw - pad * 2) / bounds.width, (vh - pad * 2) / bounds.height, MAX_SCALE);
+    return {
+      vw, vh, bounds, scale,
+      baseX: (vw - bounds.width * scale) / 2,
+      baseY: (vh - bounds.height * scale) / 2,
+    };
+  };
 
-  function setPos(x, y) {
-    const minX = Math.min(0, viewport.clientWidth - content.offsetWidth * scale);
-    const minY = Math.min(0, viewport.clientHeight - content.offsetHeight * scale);
-    posX = clamp(x, minX, 0);
-    posY = clamp(y, minY, 0);
-    apply();
-  }
+  const screenPoint = (map) => ({
+    x: (map.x - layout.bounds.offsetX) * layout.scale + layout.baseX,
+    y: (map.y - layout.bounds.offsetY) * layout.scale + layout.baseY,
+  });
 
-  // Zooms out so the content fits the viewport width, but never below MIN_SCALE.
-  function updateScale() {
-    if (!content.offsetWidth) return;
-    scale = clamp(viewport.clientWidth / content.offsetWidth, MIN_SCALE, 1);
-    setPos(posX, posY);
-  }
+  const clampPan = () => {
+    if (!layout) return;
+    const extentX = layout.bounds.width * layout.scale;
+    const extentY = layout.bounds.height * layout.scale;
+    const lx = Math.abs(layout.vw - extentX) / 2;
+    const ly = Math.abs(layout.vh - extentY) / 2;
+    pan.x = Math.max(-lx, Math.min(lx, pan.x));
+    pan.y = Math.max(-ly, Math.min(ly, pan.y));
+  };
 
-  const resizeObserver = new ResizeObserver(updateScale);
-  resizeObserver.observe(viewport);
+  const applyPan = () => {
+    content.style.transform = "translate(" + pan.x + "px, " + pan.y + "px)";
+  };
 
-  function onDown(e) {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    viewport.setPointerCapture(e.pointerId);
-    pan = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, baseX: posX, baseY: posY };
-    viewport.classList.add("panning");
-    e.preventDefault();
-  }
+  const makeLabel = (loc) => {
+    const el = document.createElement("span");
+    el.className = "map-marker-label";
+    if (loc.label != null) el.textContent = loc.label;
+    else if (i18n) Presentation.setI18nText(el, Utils.buildKey("locations", loc.id, "name"), i18n);
+    else el.textContent = loc.id;
+    return el;
+  };
 
-  function onMove(e) {
-    if (!pan || e.pointerId !== pan.pointerId) return;
-    e.preventDefault();
-    setPos(pan.baseX + (e.clientX - pan.startX), pan.baseY + (e.clientY - pan.startY));
-  }
-
-  function onUp(e) {
-    if (!pan || e.pointerId !== pan.pointerId) return;
-    if (viewport.hasPointerCapture(e.pointerId)) viewport.releasePointerCapture(e.pointerId);
-    pan = null;
-    viewport.classList.remove("panning");
-  }
-
-  viewport.addEventListener("pointerdown", onDown);
-  viewport.addEventListener("pointermove", onMove);
-  viewport.addEventListener("pointerup", onUp);
-  viewport.addEventListener("pointercancel", onUp);
-
-  function renderMarkers(locations, i18n) {
+  const render = (nextScene, nextI18n) => {
+    scene = nextScene || { locations: [], routes: [], tokens: [] };
+    if (nextI18n) i18n = nextI18n;
+    layout = computeLayout();
     content.replaceChildren();
-    for (const loc of locations) {
-      if (!loc.map) continue;
-      const point = Geometry.toLocalPoint(loc.map, bounds);
+    if (!layout) return;
 
-      const marker = document.createElement("div");
-      marker.className = "map-marker";
-      marker.style.left = point.x + "px";
-      marker.style.top = point.y + "px";
-      marker.dataset.locationId = loc.id;
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("class", "map-routes");
+    content.appendChild(svg);
 
-      const rect = document.createElement("div");
-      rect.className = "map-marker-rect";
-      rect.style.width = loc.map.width + "px";
-      rect.style.height = loc.map.height + "px";
-      marker.appendChild(rect);
+    const markers = document.createElement("div");
+    markers.className = "map-markers";
+    content.appendChild(markers);
+
+    const pos = {};
+    for (const loc of scene.locations) {
+      if (loc.map) pos[loc.id] = screenPoint(loc.map);
+    }
+
+    for (const r of scene.routes || []) {
+      const a = pos[r.from];
+      const b = pos[r.to];
+      if (!a || !b) continue;
+      const line = document.createElementNS(SVG_NS, "line");
+      line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
+      line.setAttribute("x2", b.x); line.setAttribute("y2", b.y);
+      line.setAttribute("class", "map-route" + (r.active ? " is-active" : ""));
+      svg.appendChild(line);
+    }
+
+    const occupants = {};
+    for (const loc of scene.locations) {
+      if (!loc.map || !pos[loc.id]) continue;
+      const p = pos[loc.id];
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "map-marker"
+        + (loc.pictureUrl ? " has-img" : "")
+        + (loc.state ? " is-" + loc.state : "")
+        + (loc.state === "reachable" ? " is-selectable" : "");
+      el.style.left = p.x + "px";
+      el.style.top = p.y + "px";
+      el.style.width = loc.map.width * layout.scale + "px";
+      el.style.height = loc.map.height * layout.scale + "px";
+      el.dataset.locationId = loc.id;
 
       if (loc.pictureUrl) {
         const img = document.createElement("img");
@@ -93,31 +129,84 @@ const createMapView = (viewport, content) => {
         img.src = loc.pictureUrl;
         img.alt = "";
         img.draggable = false;
-        img.style.width = loc.map.width + "px";
-        img.style.height = loc.map.height + "px";
-        marker.appendChild(img);
+        el.appendChild(img);
+      }
+      el.appendChild(makeLabel(loc));
+
+      if (loc.badge != null) {
+        const badge = document.createElement("span");
+        badge.className = "map-marker-badge";
+        badge.textContent = loc.badge;
+        el.appendChild(badge);
       }
 
-      const label = document.createElement("div");
-      label.className = "map-marker-label";
-      Presentation.setI18nText(label, Utils.buildKey("locations", loc.id, "name"), i18n);
-      marker.appendChild(label);
+      const occ = document.createElement("span");
+      occ.className = "map-occupants";
+      el.appendChild(occ);
+      occupants[loc.id] = occ;
 
-      content.appendChild(marker);
+      if (onLocationClick) {
+        el.addEventListener("click", (ev) => onLocationClick(loc.id, ev));
+      }
+      markers.appendChild(el);
     }
-  }
 
-  function setLocations(locations, i18n) {
-    const placements = locations.map((loc) => loc.map).filter(Boolean);
-    bounds = Geometry.computeBounds(placements);
-    content.style.width = bounds.width + "px";
-    content.style.height = bounds.height + "px";
-    renderMarkers(locations, i18n);
-    updateScale();
-    setPos(0, 0);
-  }
+    for (const t of scene.tokens || []) {
+      const host = occupants[t.at];
+      if (!host) continue;
+      host.appendChild(Components.createAvatar({
+        color: t.color,
+        avatarUrl: t.avatarUrl,
+        initial: t.initial,
+        role: "map",
+        title: t.title,
+      }));
+    }
 
-  return { setLocations };
+    clampPan();
+    applyPan();
+  };
+
+  // Pan + tap handling (no pointer capture, so marker clicks still work).
+  viewport.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    panDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, baseX: pan.x, baseY: pan.y, moved: false };
+    viewport.classList.add("panning");
+  });
+  viewport.addEventListener("pointermove", (e) => {
+    if (!panDrag || e.pointerId !== panDrag.id) return;
+    const dx = e.clientX - panDrag.x;
+    const dy = e.clientY - panDrag.y;
+    if (Math.abs(dx) > TAP_THRESHOLD || Math.abs(dy) > TAP_THRESHOLD) panDrag.moved = true;
+    if (!panDrag.moved) return;
+    pan.x = panDrag.baseX + dx;
+    pan.y = panDrag.baseY + dy;
+    clampPan();
+    applyPan();
+    e.preventDefault();
+  });
+  const endPan = (e) => {
+    if (!panDrag || (e && e.pointerId !== panDrag.id)) return;
+    suppressClick = panDrag.moved;
+    panDrag = null;
+    viewport.classList.remove("panning");
+  };
+  viewport.addEventListener("pointerup", endPan);
+  viewport.addEventListener("pointercancel", endPan);
+  viewport.addEventListener("click", (e) => {
+    if (suppressClick) {
+      suppressClick = false;
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }, true);
+
+  const resizeObserver = new ResizeObserver(() => {
+    if (scene) render(scene, i18n);
+  });
+  resizeObserver.observe(viewport);
+
+  return { render };
 };
 
 window.Components = window.Components || {};

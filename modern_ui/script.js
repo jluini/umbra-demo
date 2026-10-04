@@ -71,9 +71,12 @@ const transit = document.getElementById("transit");
 const transitList = document.getElementById("transit-list");
 const actorPanel = document.getElementById("actor-panel");
 const actorPanelName = document.getElementById("actor-panel-name");
+const actorPanelLoc = document.getElementById("actor-panel-loc");
 const actorPanelItems = document.getElementById("actor-panel-items");
 const actorPanelClose = document.getElementById("actor-panel-close");
 const actorPanelActions = document.getElementById("actor-panel-actions");
+const actorPanelHead = document.getElementById("actor-panel-head");
+const actorPanelBody = document.getElementById("actor-panel-body");
 const mapViewport = document.getElementById("map-viewport");
 const mapContent = document.getElementById("map-content");
 const clockEl = document.getElementById("clock");
@@ -89,7 +92,9 @@ const confirmMessage = document.getElementById("confirm-message");
 const confirmAccept = document.getElementById("confirm-accept");
 const confirmCancel = document.getElementById("confirm-cancel");
 
-const mapView = Components.createMapView(mapViewport, mapContent);
+const mapView = Components.createMapView(mapViewport, mapContent, {
+  onLocationClick: handleMapLocationClick,
+});
 
 let activeI18n = null;
 let activeEngine = null;
@@ -276,9 +281,9 @@ function renderLocations() {
   }
 }
 
-function makeActionButton(key, onClick) {
+function makeActionButton(key, onClick, extraClass) {
   const button = document.createElement("button");
-  button.className = "btn";
+  button.className = "btn" + (extraClass ? " " + extraClass : "");
   Presentation.setI18nText(button, key, activeI18n);
   button.addEventListener("click", onClick);
   return button;
@@ -297,8 +302,22 @@ function renderActorPanel() {
 
   actorPanel.hidden = false;
   Presentation.setI18nText(actorPanelName, Utils.buildKey("actors", selectedActorId, "name"), activeI18n);
+  renderActorLocation(actor);
   renderItems(actor);
   renderActions(actor);
+  applyPanelHeight();
+}
+
+function renderActorLocation(actor) {
+  actorPanelLoc.replaceChildren();
+  actorPanelLoc.appendChild(document.createTextNode("· "));
+  if (actor.activity.kind === "transit") {
+    actorPanelLoc.appendChild(makeLocationName(actor.activity.from));
+    actorPanelLoc.appendChild(document.createTextNode(" → "));
+    actorPanelLoc.appendChild(makeLocationName(actor.activity.to));
+  } else {
+    actorPanelLoc.appendChild(makeLocationName(actor.activity.at));
+  }
 }
 
 function fillItemIcon(el, item) {
@@ -440,7 +459,7 @@ function renderActions(actor) {
 
   if (plan) return;
 
-  actorPanelActions.appendChild(makeActionButton("plan.walkTo", enterWalkTo));
+  actorPanelActions.appendChild(makeActionButton("plan.walkTo", enterWalkTo, "primary"));
 }
 
 function makeLocationName(locationId) {
@@ -490,6 +509,7 @@ function selectActor(actorId) {
   selectedActorId = actorId;
   walkToMode = false;
   expandedStackId = null;
+  panelSnap = "auto";
   clearStackBadges();
   renderActorPanel();
   renderLocations();
@@ -529,6 +549,59 @@ function closeActorPanel() {
   renderLocations();
   updateActiveAvatar();
 }
+
+/* ---- Actor panel as a sheet (peek / auto, tap & drag) ---- */
+
+const PANEL_PEEK = 54;
+let panelSnap = "auto";
+let panelAutoH = 300;
+let panelDrag = null;
+
+function applyPanelHeight() {
+  if (actorPanel.hidden) return;
+  let h;
+  if (panelSnap === "peek") {
+    h = PANEL_PEEK;
+  } else {
+    panelAutoH = actorPanelHead.offsetHeight + actorPanelBody.scrollHeight;
+    h = Math.max(PANEL_PEEK, Math.min(panelAutoH, window.innerHeight * 0.82));
+  }
+  actorPanel.style.setProperty("--actor-panel-h", h + "px");
+  actorPanelHead.classList.toggle("collapsed", h <= PANEL_PEEK + 1);
+  actorPanelBody.style.visibility = h <= PANEL_PEEK + 1 ? "hidden" : "";
+}
+
+actorPanelHead.addEventListener("pointerdown", (e) => {
+  panelDrag = { id: e.pointerId, y: e.clientY, start: actorPanel.getBoundingClientRect().height, moved: false };
+  if (actorPanelHead.setPointerCapture) actorPanelHead.setPointerCapture(e.pointerId);
+  actorPanel.style.transition = "none";
+  e.preventDefault();
+});
+actorPanelHead.addEventListener("pointermove", (e) => {
+  if (!panelDrag || e.pointerId !== panelDrag.id) return;
+  const dy = e.clientY - panelDrag.y;
+  if (Math.abs(dy) > 6) panelDrag.moved = true;
+  const h = Math.max(PANEL_PEEK, Math.min(window.innerHeight * 0.9, panelDrag.start - dy));
+  actorPanel.style.setProperty("--actor-panel-h", h + "px");
+});
+function endPanelDrag(e) {
+  if (!panelDrag || (e && e.pointerId !== panelDrag.id)) return;
+  const moved = panelDrag.moved;
+  panelDrag = null;
+  actorPanel.style.transition = "";
+  if (!moved) {
+    panelSnap = panelSnap === "peek" ? "auto" : "peek";
+  } else {
+    const h = actorPanel.getBoundingClientRect().height;
+    const auto = Math.min(panelAutoH, window.innerHeight * 0.82);
+    panelSnap = Math.abs(h - PANEL_PEEK) < Math.abs(h - auto) ? "peek" : "auto";
+  }
+  applyPanelHeight();
+}
+actorPanelHead.addEventListener("pointerup", endPanelDrag);
+actorPanelHead.addEventListener("pointercancel", endPanelDrag);
+
+window.addEventListener("resize", applyPanelHeight);
 
 function clearDropTargets() {
   avatarsRow.querySelectorAll(".avatar-box.drop-target").forEach((box) => {
@@ -697,6 +770,39 @@ function cleanupItemDrag(box, pointerId) {
   clearValidTargets();
 }
 
+function buildMapScene() {
+  const mission = activeEngine.getMission();
+  const config = activeEngine.getConfig();
+  const actors = activeEngine.getActors();
+  const inMission = new Set(mission.locations.map((l) => l.id));
+  return {
+    locations: mission.locations.map((loc) => ({
+      id: loc.id,
+      map: loc.map,
+      pictureUrl: loc.pictureUrl,
+    })),
+    routes: (config.routes || []).filter((r) => inMission.has(r.from) && inMission.has(r.to)),
+    tokens: actors
+      .filter((a) => a.activity.kind === "idle")
+      .map((a) => ({
+        id: a.id,
+        at: a.activity.at,
+        color: a.preset.color,
+        avatarUrl: a.preset.avatarUrl,
+        initial: a.id.charAt(0).toUpperCase(),
+      })),
+  };
+}
+
+function renderMap() {
+  if (activeEngine) mapView.render(buildMapScene(), activeI18n);
+}
+
+// Prepared for a future iteration: select a destination by tapping a marker.
+function handleMapLocationClick(locationId) {
+  void locationId;
+}
+
 function renderTransit() {
   const now = activeEngine.getInternalTime();
   const inTransit = activeEngine.getActors().filter((a) => a.activity.kind === "transit");
@@ -730,6 +836,7 @@ function updateRunButton() {
 function onPlansChanged() {
   updateRunButton();
   renderLocations();
+  renderMap();
   renderTransit();
   if (selectedActorId) renderActorPanel();
 }
@@ -806,8 +913,8 @@ function updateClockText() {
 function onMissionStart({ mission }) {
   currentMissionIndex = mission.index;
   renderMission(mission);
-  mapView.setLocations(mission.locations, activeI18n);
   buildAvatars();
+  renderMap();
   Presentation.renderRichText(missionBriefing, mission.briefing, activeI18n, {
     prefix: "briefing",
     base: Utils.buildKey("missions", mission.id, "briefing"),
@@ -821,6 +928,7 @@ function onMissionStart({ mission }) {
 
 function onClockSet({ time }) {
   renderClock(time);
+  renderMap();
   renderTransit();
 }
 

@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Umbra</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="style.css?v=1" />
-  <link rel="stylesheet" href="../components/map-view.css?v=1" />
+  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="../components/map-view.css?v=3" />
+  <link rel="stylesheet" href="../components/avatar.css?v=3" />
 </head>
 <body>
 
@@ -39,11 +40,20 @@
 
       <!-- Bottom sheet: actor panel -->
       <div class="actor-panel" id="actor-panel" hidden>
+        <div class="actor-panel-head" id="actor-panel-head" role="button" aria-label="Expandir o contraer">
+          <span class="bar"></span>
+          <span class="chev">▲</span>
+        </div>
         <button class="actor-panel-close" id="actor-panel-close">✕</button>
-        <h2 class="actor-panel-name" id="actor-panel-name"></h2>
-        <div class="items-label" data-i18n="umbra.items">Items</div>
-        <div class="item-list" id="actor-panel-items"></div>
-        <div class="actor-panel-actions" id="actor-panel-actions"></div>
+        <div class="actor-panel-body" id="actor-panel-body">
+          <div class="actor-panel-header">
+            <h2 class="actor-panel-name" id="actor-panel-name"></h2>
+            <span class="actor-panel-loc" id="actor-panel-loc"></span>
+          </div>
+          <div class="items-label" data-i18n="umbra.items">Items</div>
+          <div class="actor-panel-actions" id="actor-panel-actions"></div>
+          <div class="item-list" id="actor-panel-items"></div>
+        </div>
       </div>
 
       <!-- Mission bar (briefing) -->
@@ -168,16 +178,17 @@
     </div>
   </div>
 
-  <script src="../common/utils.js?v=1"></script>
-  <script src="../common/geometry.js?v=1"></script>
-  <script src="../umbra/umbra.js?v=1"></script>
-  <script src="../presentation/i18n.js?v=1"></script>
-  <script src="../presentation/i18n-dom.js?v=1"></script>
-  <script src="../presentation/format.js?v=1"></script>
-  <script src="../presentation/richtext.js?v=1"></script>
-  <script src="../components/map-view.js?v=1"></script>
-  <script src="../games/demo/icons.js?v=1"></script>
-  <script src="../games/demo.js?v=1"></script>
+  <script src="../common/utils.js?v=3"></script>
+  <script src="../common/geometry.js?v=3"></script>
+  <script src="../umbra/umbra.js?v=3"></script>
+  <script src="../presentation/i18n.js?v=3"></script>
+  <script src="../presentation/i18n-dom.js?v=3"></script>
+  <script src="../presentation/format.js?v=3"></script>
+  <script src="../presentation/richtext.js?v=3"></script>
+  <script src="../components/avatar.js?v=3"></script>
+  <script src="../components/map-view.js?v=3"></script>
+  <script src="../games/demo/icons.js?v=3"></script>
+  <script src="../games/demo.js?v=3"></script>
 
   <script>
     window.games = {
@@ -195,6 +206,6 @@
 
     window.umbraDefaults = { game: "demo", lang: "es" };
   </script>
-  <script src="script.js?v=1"></script>
+  <script src="script.js?v=3"></script>
 </body>
 </html>
