@@ -56,12 +56,17 @@ body {
   font-size: 1rem;
   font-weight: 600;
   color: #e0e0e0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .top-bar .mission {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   background: transparent;
   border: none;
   color: inherit;
@@ -134,13 +139,16 @@ body {
 .clock {
   font-family: 'Courier New', monospace;
   font-size: 1rem;
+  white-space: nowrap;
   background: #0f3460;
   padding: 4px 12px;
   border-radius: 4px;
 }
 
-.status-bar .clock {
-  margin-left: auto;
+.top-bar .run-btn {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 /* Avatars row */
@@ -887,25 +895,6 @@ body {
 
   .lang-selector-inline {
     display: none;
-  }
-
-  .status-bar {
-    flex-wrap: wrap;
-  }
-
-  .status-bar .clock {
-    order: 1;
-    margin-left: 0;
-  }
-
-  .status-bar .btn {
-    order: 2;
-    margin-left: auto;
-  }
-
-  .status-bar .avatars {
-    order: 3;
-    flex-basis: 100%;
   }
 
   .game-container {

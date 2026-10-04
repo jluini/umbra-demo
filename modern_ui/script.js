@@ -4,7 +4,7 @@
 //   umbra/umbra.js           (Umbra)
 //   presentation/i18n.js     (Presentation.createI18n)
 //   presentation/i18n-dom.js (Presentation.setI18nText, Presentation.applyI18n)
-//   presentation/format.js   (Presentation.formatDateTime/Distance/Duration)
+//   presentation/format.js   (Presentation.formatDateTime/formats/Distance/Duration)
 //   presentation/richtext.js (Presentation.renderRichText)
 (() => {
 "use strict";
@@ -800,7 +800,7 @@ function backToMenu() {
 }
 
 function updateClockText() {
-  if (activeClock) clockEl.textContent = Presentation.formatDateTime(activeClock, activeI18n.language());
+  if (activeClock) clockEl.textContent = Presentation.formatDateTime(activeClock, activeI18n.language(), "time");
 }
 
 function onMissionStart({ mission }) {
