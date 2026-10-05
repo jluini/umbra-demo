@@ -145,7 +145,7 @@ const createMapView = (viewport, content, options) => {
       el.appendChild(occ);
       occupants[loc.id] = occ;
 
-      if (onLocationClick) {
+      if (onLocationClick && loc.state === "reachable") {
         el.addEventListener("click", (ev) => onLocationClick(loc.id, ev));
       }
       markers.appendChild(el);

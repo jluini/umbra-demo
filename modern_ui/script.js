@@ -513,6 +513,7 @@ function selectActor(actorId) {
   clearStackBadges();
   renderActorPanel();
   renderLocations();
+  renderMap();
   updateActiveAvatar();
 }
 
@@ -520,12 +521,14 @@ function enterWalkTo() {
   walkToMode = true;
   renderActorPanel();
   renderLocations();
+  renderMap();
 }
 
 function exitWalkTo() {
   walkToMode = false;
   renderActorPanel();
   renderLocations();
+  renderMap();
 }
 
 function chooseDestination(locationId) {
@@ -533,6 +536,7 @@ function chooseDestination(locationId) {
   activeEngine.setPlan(selectedActorId, locationId);
   renderActorPanel();
   renderLocations();
+  renderMap();
 }
 
 function cancelPlan(actorId) {
@@ -775,12 +779,28 @@ function buildMapScene() {
   const config = activeEngine.getConfig();
   const actors = activeEngine.getActors();
   const inMission = new Set(mission.locations.map((l) => l.id));
+
+  const actor = selectedActorId ? activeEngine.getActor(selectedActorId) : null;
+  const selecting = walkToMode && actor && actor.activity.kind === "idle";
+
   return {
-    locations: mission.locations.map((loc) => ({
-      id: loc.id,
-      map: loc.map,
-      pictureUrl: loc.pictureUrl,
-    })),
+    locations: mission.locations.map((loc) => {
+      const entry = { id: loc.id, map: loc.map, pictureUrl: loc.pictureUrl };
+      if (selecting) {
+        if (loc.id === actor.activity.at) {
+          entry.state = "current";
+        } else {
+          const d = activeEngine.distance(actor.activity.at, loc.id);
+          if (d !== Infinity) {
+            entry.state = "reachable";
+            entry.badge = Presentation.formatDistance(d);
+          } else {
+            entry.state = "dim";
+          }
+        }
+      }
+      return entry;
+    }),
     routes: (config.routes || []).filter((r) => inMission.has(r.from) && inMission.has(r.to)),
     tokens: actors
       .filter((a) => a.activity.kind === "idle")
@@ -798,9 +818,9 @@ function renderMap() {
   if (activeEngine) mapView.render(buildMapScene(), activeI18n);
 }
 
-// Prepared for a future iteration: select a destination by tapping a marker.
+// Tap a reachable location on the map to choose it as the destination.
 function handleMapLocationClick(locationId) {
-  void locationId;
+  if (walkToMode) chooseDestination(locationId);
 }
 
 function renderTransit() {
