@@ -126,6 +126,7 @@
     width: 54px;
     border-radius: 12px;
     padding: 2px 0 1px;
+    touch-action: manipulation;
     transition: background 0.15s;
   }
   .avatar-btn .aname {
@@ -153,7 +154,7 @@
   .av img { width: 92%; height: 92%; object-fit: contain; display: block; -webkit-user-drag: none; }
   .av-row { width: 54px; height: 54px; }
   .av-head { width: 36px; height: 36px; border-radius: 9px; }
-  .av-map { width: 22px; height: 22px; border-width: 1.5px; border-radius: 6px; }
+  .av-map { width: 28px; height: 28px; border-width: 1.5px; border-radius: 7px; font-size: 12px; }
   .av-transit { width: 32px; height: 32px; border-radius: 8px; }
   .avatar-btn .av { box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
   .avatar-btn.sel .av { box-shadow: 0 0 0 2px var(--c); }
@@ -183,6 +184,9 @@
   .run:active { transform: scale(0.96); }
   .run:disabled { opacity: 0.4; cursor: not-allowed; }
   .run.running { background: var(--accent-2); }
+
+  /* Avoid the mobile "first tap swallowed" delay/swallow on tappable controls. */
+  .icon-btn, .mission, .clock, .run, .primary, .avatar-btn { touch-action: manipulation; }
 
   /* ---------- Content: map + sheet ---------- */
   .content {
@@ -251,16 +255,19 @@
     -webkit-user-drag: none;
   }
   .marker .marker-label {
-    position: relative;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     z-index: 1;
     font-size: clamp(8px, 2.4vw, 11px);
     font-weight: 600;
     line-height: 1.05;
     text-align: center;
     text-shadow: 0 1px 3px #000, 0 0 4px #000;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    max-width: 100%;
+    /* Fixed box independent of the marker's scale, and always centered on the
+       location even when the text is wider than the marker. */
+    white-space: nowrap;
     pointer-events: none;
   }
   .marker.current { border-style: dashed; border-color: var(--accent-2); }
@@ -297,12 +304,16 @@
 
   .occupants {
     position: absolute;
-    bottom: -13px;
+    bottom: -30px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     gap: 3px;
     pointer-events: none;
+  }
+  .occupants .occupant {
+    pointer-events: auto;
+    cursor: pointer;
   }
 
   .transit-token {
@@ -344,6 +355,7 @@
     right: 0;
     bottom: 0;
     height: var(--sheet-h);
+    max-height: 82%;
     background: var(--panel);
     border-top: 1px solid var(--line);
     border-radius: var(--radius) var(--radius) 0 0;
@@ -887,6 +899,8 @@
   const mapPan = { x: 0, y: 0 };
   let mapDrag = null;
   let suppressMapClick = false;
+  let panAnim = null;
+  const stopPanAnim = () => { if (panAnim) { cancelAnimationFrame(panAnim); panAnim = null; } };
   const WORLD_MARGIN = 300;
 
   const isDesktop = () => window.matchMedia("(min-width: 768px)").matches;
@@ -1072,10 +1086,14 @@
     const scale = ((vh - pad * 2) / ch) * state.zoom;
     const W = cw * scale;
     const H = ch * scale;
+    // Center within the area not covered by the sheet, so the map defaults to
+    // the visible region (and the pan clamp is relative to it).
+    const sheetH = (isDesktop() || sheetEl.hidden) ? 0 : sheetEl.getBoundingClientRect().height;
+    const vhEff = Math.max(0, vh - sheetH);
     return {
-      vw, vh, scale, W, H,
+      vw, vh, vhEff, scale, W, H,
       offsetX: (vw - W) / 2 - minX * scale,
-      offsetY: (vh - H) / 2 - minY * scale,
+      offsetY: (vhEff - H) / 2 - minY * scale,
     };
   }
   const toScreen = (l, layout) => ({ x: l.x * layout.scale + layout.offsetX, y: l.y * layout.scale + layout.offsetY });
@@ -1093,16 +1111,46 @@
   };
 
   /* ---- Pan (and future zoom) ---- */
+  function clampPanValue(x, y) {
+    if (!layout) return { x, y };
+    // Pan only when the content exceeds the visible area; otherwise keep it
+    // centered (no runaway margins when zoomed out).
+    const lx = Math.max(0, (layout.W - layout.vw) / 2);
+    const ly = Math.max(0, (layout.H - layout.vhEff) / 2);
+    return { x: Math.max(-lx, Math.min(lx, x)), y: Math.max(-ly, Math.min(ly, y)) };
+  }
   function clampPan() {
-    if (!layout) return;
-    const lx = Math.abs(layout.vw - layout.W) / 2;
-    const ly = Math.abs(layout.vh - layout.H) / 2;
-    mapPan.x = Math.max(-lx, Math.min(lx, mapPan.x));
-    mapPan.y = Math.max(-ly, Math.min(ly, mapPan.y));
+    const c = clampPanValue(mapPan.x, mapPan.y);
+    mapPan.x = c.x;
+    mapPan.y = c.y;
   }
   function applyPan() {
     mapEl.style.setProperty("--pan-x", mapPan.x + "px");
     mapEl.style.setProperty("--pan-y", mapPan.y + "px");
+  }
+  // Smoothly move the view to center a location (as much as the pan limits
+  // allow), without changing the zoom.
+  function centerOnLocation(locationId) {
+    if (!layout || !locationId) return;
+    const loc = getLoc(locationId);
+    if (!loc) return;
+    const targetX = layout.vw / 2 - (loc.x * layout.scale + layout.offsetX);
+    const targetY = layout.vhEff / 2 - (loc.y * layout.scale + layout.offsetY);
+    const target = clampPanValue(targetX, targetY);
+    const from = { x: mapPan.x, y: mapPan.y };
+    if (Math.abs(target.x - from.x) < 0.5 && Math.abs(target.y - from.y) < 0.5) return;
+    stopPanAnim();
+    const start = performance.now();
+    const dur = 320;
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      mapPan.x = from.x + (target.x - from.x) * e;
+      mapPan.y = from.y + (target.y - from.y) * e;
+      applyPan();
+      panAnim = t < 1 ? requestAnimationFrame(step) : null;
+    };
+    panAnim = requestAnimationFrame(step);
   }
   function setZoom(z, anchor) {
     z = Math.max(0.4, Math.min(4, z));
@@ -1195,7 +1243,26 @@
 
       const occ = document.createElement("div");
       occ.className = "occupants";
-      actorsAt(loc.id).forEach((a) => occ.appendChild(avatarCircle(a, "map")));
+      actorsAt(loc.id).forEach((a) => {
+        const av = avatarCircle(a, "map");
+        av.classList.add("occupant");
+        av.title = a.name;
+        av.setAttribute("aria-label", a.name);
+        // Same robust tap handling as the top avatars (pointerup, movement guard).
+        let odown = null;
+        av.addEventListener("pointerdown", (e) => {
+          if (e.pointerType === "mouse" && e.button !== 0) return;
+          odown = { x: e.clientX, y: e.clientY };
+        });
+        av.addEventListener("pointerup", (e) => {
+          const d = odown;
+          odown = null;
+          if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 12) selectActor(a.id);
+        });
+        av.addEventListener("pointercancel", () => { odown = null; });
+        av.addEventListener("click", (e) => { e.stopPropagation(); if (e.detail === 0) selectActor(a.id); });
+        occ.appendChild(av);
+      });
       el.appendChild(occ);
 
       if (phaseA && reachable.has(loc.id)) {
@@ -1251,6 +1318,7 @@
 
   mapEl.addEventListener("pointerdown", (e) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    stopPanAnim();
     activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (activePointers.size === 1) {
       suppressMapClick = false;
@@ -1323,7 +1391,20 @@
       name.className = "aname";
       name.textContent = a.name;
       btn.appendChild(name);
-      btn.addEventListener("click", () => selectActor(a.id));
+      // Select on pointerup: on touch, the first `click` after a gesture is
+      // often swallowed. `click` remains for keyboard activation (detail === 0).
+      let down = null;
+      btn.addEventListener("pointerdown", (e) => {
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+        down = { x: e.clientX, y: e.clientY };
+      });
+      btn.addEventListener("pointerup", (e) => {
+        const d = down;
+        down = null;
+        if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 12) selectActor(a.id);
+      });
+      btn.addEventListener("pointercancel", () => { down = null; });
+      btn.addEventListener("click", (e) => { if (e.detail === 0) selectActor(a.id); });
       avatarsEl.appendChild(btn);
     }
   }
@@ -1490,6 +1571,8 @@
     state.selectedItem = null;
     state.giveMode = false;
     render();
+    const a = getActor(id);
+    if (a) centerOnLocation(a.loc);
   }
 
   function enterDestination() {
@@ -1601,32 +1684,44 @@
 
   /* ============================ Sheet sizing (mode-driven + tap) ============================ */
 
+  function setSheetVar(value) {
+    document.documentElement.style.setProperty("--sheet-h", value);
+  }
+
+  // Natural (content) height of the sheet, capped by its max-height.
+  function naturalSheetH() {
+    const prev = document.documentElement.style.getPropertyValue("--sheet-h");
+    setSheetVar("auto");
+    const h = sheetEl.getBoundingClientRect().height;
+    setSheetVar(prev);
+    return h;
+  }
+
   function applySnap() {
     if (sheetEl.hidden) {
-      document.documentElement.style.setProperty("--sheet-h", "0px");
+      setSheetVar("0px");
+      clampPan();
+      applyPan();
       return;
     }
     if (isDesktop()) {
-      document.documentElement.style.setProperty("--sheet-h", "auto");
+      setSheetVar("auto");
       return;
     }
-    const vh = window.innerHeight;
     peekH = 54;
-    let h;
-    if (state.sheetSnap === "peek") {
-      h = peekH;
-    } else {
-      autoH = sheetHead.offsetHeight + sheetBody.scrollHeight;
-      h = Math.max(peekH, Math.min(autoH, vh * 0.82));
-    }
-    document.documentElement.style.setProperty("--sheet-h", h + "px");
+    // "auto" lets the sheet size to its content (never larger), which makes it
+    // shrink immediately when the content changes.
+    setSheetVar(state.sheetSnap === "peek" ? peekH + "px" : "auto");
     sheetEl.dataset.snap = state.sheetSnap;
-    sheetHead.classList.toggle("collapsed", h <= peekH + 1);
+    sheetHead.classList.toggle("collapsed", state.sheetSnap === "peek");
+    clampPan();
+    applyPan();
   }
 
   let drag = null;
   sheetHead.addEventListener("pointerdown", (e) => {
     if (isDesktop()) return;
+    autoH = naturalSheetH();
     drag = { y: e.clientY, start: sheetEl.getBoundingClientRect().height, moved: false, t: Date.now() };
     if (sheetHead.setPointerCapture) sheetHead.setPointerCapture(e.pointerId);
     sheetEl.style.transition = "none";
@@ -1636,19 +1731,26 @@
     if (!drag) return;
     const dy = e.clientY - drag.y;
     if (Math.abs(dy) > 6) drag.moved = true;
-    const h = Math.max(peekH, Math.min(window.innerHeight * 0.9, drag.start - dy));
-    document.documentElement.style.setProperty("--sheet-h", h + "px");
+    const maxH = Math.min(autoH, window.innerHeight * 0.82);
+    const h = Math.max(peekH, Math.min(maxH, drag.start - dy));
+    setSheetVar(h + "px");
+    clampPan();
+    applyPan();
   });
   function endDrag(e) {
     if (!drag) return;
     const moved = drag.moved;
     drag = null;
+    if (e && sheetHead.hasPointerCapture && sheetHead.hasPointerCapture(e.pointerId)) {
+      sheetHead.releasePointerCapture(e.pointerId);
+    }
     sheetEl.style.transition = "";
     if (!moved) {
       state.sheetSnap = state.sheetSnap === "peek" ? "auto" : "peek";
     } else {
       const h = sheetEl.getBoundingClientRect().height;
-      state.sheetSnap = Math.abs(h - peekH) < Math.abs(h - Math.min(autoH, window.innerHeight * 0.82)) ? "peek" : "auto";
+      const maxH = Math.min(autoH, window.innerHeight * 0.82);
+      state.sheetSnap = Math.abs(h - peekH) < Math.abs(h - maxH) ? "peek" : "auto";
     }
     applySnap();
   }
