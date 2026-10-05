@@ -109,7 +109,7 @@
 
   .avatars {
     display: flex;
-    gap: 3px;
+    gap: 5px;
     overflow-x: auto;
     padding: 2px 2px 0;
     margin-top: 6px;
@@ -117,25 +117,30 @@
   }
   .avatars::-webkit-scrollbar { display: none; }
 
-  /* Inventory bar: floats right below the avatars row. */
+  /* Inventory bar: floats right below the avatars row, fully transparent. */
   .inventory-bar {
     position: absolute;
-    top: 100%;
+    top: calc(100% - 6px);
     left: 0;
     right: 0;
     z-index: 30;
-    background: var(--panel);
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-    padding: 10px 12px;
+    background: transparent;
+    padding: 2px 12px 8px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 60vh;
-    overflow-y: auto;
+    pointer-events: none;
   }
   .inventory-bar[hidden] { display: none; }
+  .inventory-bar .item-tile { pointer-events: auto; }
+
+  @keyframes bubbleIn {
+    from { opacity: 0; transform: translateY(-22px) scale(0.5); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .inventory-bar .item-tile.bubble-in {
+    animation: bubbleIn 0.34s cubic-bezier(0.2, 0.8, 0.25, 1.2) both;
+  }
 
   .inv-toggle {
     flex: 0 0 auto;
@@ -156,14 +161,14 @@
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    width: 54px;
+    width: 58px;
     border-radius: 12px;
     padding: 2px 0 1px;
     touch-action: manipulation;
-    transition: background 0.15s;
+    transition: background 0.15s, opacity 0.2s;
   }
   .avatar-btn .aname {
-    font-size: 0.62rem;
+    font-size: 0.64rem;
     line-height: 1;
     color: var(--muted);
     max-width: 100%;
@@ -173,6 +178,8 @@
   }
   .avatar-btn.sel { background: color-mix(in srgb, var(--c) 16%, transparent); }
   .avatar-btn.sel .aname { color: var(--text); }
+  /* Actors not in the same location as the selected one are dimmed. */
+  .avatar-btn.far { opacity: 0.35; }
 
   /* Avatar tile: rounded square (game-like), soft tint of the actor color + ring */
   .av {
@@ -185,7 +192,7 @@
     flex: 0 0 auto;
   }
   .av img { width: 92%; height: 92%; object-fit: contain; display: block; -webkit-user-drag: none; }
-  .av-row { width: 54px; height: 54px; }
+  .av-row { width: 58px; height: 58px; }
   .av-head { width: 36px; height: 36px; border-radius: 9px; }
   .av-map { width: 28px; height: 28px; border-width: 1.5px; border-radius: 7px; font-size: 12px; }
   .av-transit { width: 32px; height: 32px; border-radius: 8px; }
@@ -744,8 +751,8 @@
   /* ---------- Desktop ---------- */
   @media (min-width: 768px) {
     .topbar { padding: 14px 20px 8px; }
-    .avatar-btn { width: 68px; }
-    .av-row { width: 64px; height: 64px; border-radius: 14px; }
+    .avatar-btn { width: 72px; }
+    .av-row { width: 68px; height: 68px; border-radius: 14px; }
     .content { display: grid; grid-template-columns: 1fr 400px; }
     .map {
       position: relative;
@@ -1417,10 +1424,13 @@
   /* ============================ Avatars row ============================ */
 
   function renderAvatars() {
+    const sel = state.selectedActor ? getActor(state.selectedActor) : null;
     avatarsEl.replaceChildren();
     for (const a of actors) {
       const btn = document.createElement("button");
-      btn.className = "avatar-btn" + (a.id === state.selectedActor ? " sel" : "") + (state.activities[a.id] ? " busy" : "");
+      const far = sel && a.id !== sel.id && a.loc !== sel.loc;
+      btn.className = "avatar-btn" + (a.id === state.selectedActor ? " sel" : "") +
+        (state.activities[a.id] ? " busy" : "") + (far ? " far" : "");
       btn.style.setProperty("--c", a.color);
       btn.title = a.name;
       btn.appendChild(avatarCircle(a, "row"));
@@ -1449,9 +1459,20 @@
   /* ============================ Sheet ============================ */
 
   function renderSheet() {
-    if (state.mode === "destination") renderDestinationSheet();
-    else if (state.mode === "means") renderMeansSheet();
-    else renderIdleSheet();
+    const a = state.selectedActor ? getActor(state.selectedActor) : null;
+    if (!a) {
+      sheetBody.innerHTML = '<div class="empty-state">Seleccioná un actor para planificar.<br>El mapa muestra todo el pueblo.</div>';
+      updateSheetCtx();
+      return;
+    }
+    // The actor header (name, location, inventory toggle) is persistent across
+    // modes, so the inventory button never disappears.
+    let html = actorHeaderHTML(a);
+    if (state.mode === "destination") html += destinationSheetHTML(a);
+    else if (state.mode === "means") html += meansSheetHTML(a);
+    else if (state.selectedItem) html += itemSheetHTML(a);
+    else html += idleSheetHTML(a);
+    sheetBody.innerHTML = html;
     updateSheetCtx();
   }
 
@@ -1459,6 +1480,7 @@
     const a = state.selectedActor ? getActor(state.selectedActor) : null;
     if (state.mode === "destination") sheetCtx.textContent = a ? "Destino para " + a.name : "Elegir destino";
     else if (state.mode === "means") sheetCtx.textContent = a ? "Cómo va " + a.name : "Elegir medio";
+    else if (state.selectedItem) sheetCtx.textContent = (ITEMS[state.selectedItem] || {}).name || state.selectedItem;
     else sheetCtx.textContent = a ? a.name : "Planificación";
   }
 
@@ -1507,53 +1529,56 @@
     return html;
   }
 
-  function itemsSectionHTML(a) {
+  function itemsGridHTML(a) {
     const groups = itemGroups(a);
     if (!groups.length) return '<div class="chips"><span class="chip empty">Sin objetos</span></div>';
-    let html = '<div class="items-grid">' + groups.map(itemTileHTML).join("") + "</div>";
-    if (state.selectedItem && groups.some((g) => g.id === state.selectedItem)) {
-      html += state.giveMode ? givePanelHTML(a) : itemDetailHTML(state.selectedItem);
-    }
-    return html;
+    return '<div class="items-grid">' + groups.map(itemTileHTML).join("") + "</div>";
   }
 
   // Inventory bar (floats below the avatars row), toggled from the sheet header.
+  // Shows only the item tiles; the selected item is detailed in the sheet.
   function renderInventory() {
     const a = state.selectedActor ? getActor(state.selectedActor) : null;
     const show = !!a && state.inventoryOpen && !state.activities[a.id];
+    const opening = inventoryBar.hidden && show;
     inventoryBar.hidden = !show;
     if (!show) { inventoryBar.replaceChildren(); return; }
-    inventoryBar.innerHTML = itemsSectionHTML(a);
+    inventoryBar.innerHTML = itemsGridHTML(a);
+    const tiles = inventoryBar.querySelectorAll(".item-tile");
+    if (opening) {
+      tiles.forEach((t, i) => {
+        t.classList.add("bubble-in");
+        t.style.animationDelay = (i * 45) + "ms";
+      });
+    }
   }
 
-  function renderIdleSheet() {
-    const a = state.selectedActor ? getActor(state.selectedActor) : null;
-    if (!a) {
-      sheetBody.innerHTML = '<div class="empty-state">Seleccioná un actor para planificar.<br>El mapa muestra todo el pueblo.</div>';
-      return;
-    }
-    let html = actorHeaderHTML(a);
+  function idleSheetHTML(a) {
     const act = state.activities[a.id];
     const plan = state.plans[a.id];
 
     if (act) {
       const pct = Math.min(100, ((state.minutes - act.start) / act.duration) * 100);
       const m = MEANS[act.meansId] || { icon: "🚶", name: "A pie" };
-      html += '<div class="activity"><span>' + m.icon + '</span><div class="grow">En camino a <b>' +
+      return '<div class="activity"><span>' + m.icon + '</span><div class="grow">En camino a <b>' +
         esc(getLoc(act.to).name) + "</b><small>" + m.name + " · " + (state.minutes - act.start) + "/" + act.duration +
         " min</small></div></div>" + '<div class="progress"><i style="width:' + pct + '%"></i></div>';
-    } else if (plan) {
+    }
+    if (plan) {
       const m = MEANS[plan.meansId] || { icon: "🚶", name: "A pie" };
-      html += '<div class="activity"><span>' + m.icon + '</span><div class="grow">→ <b>' +
+      return '<div class="activity"><span>' + m.icon + '</span><div class="grow">→ <b>' +
         esc(getLoc(plan.dest).name) + "</b><small>" + m.name + " · " + fmtDur(plan.duration) +
         " · llega " + fmtTime(new Date(clockDate().getTime() + plan.duration * 60000)) + "</small></div>" +
         '<button class="x" data-action="cancel-plan">✕</button></div>';
-    } else {
-      const canMove = a.abilities.some((id) => MEANS[id]);
-      if (canMove) html += '<button class="primary" data-action="move">Moverse a…</button>';
-      else html += '<div class="note">' + esc(a.name) + " no tiene forma de trasladarse por su cuenta.</div>";
     }
-    sheetBody.innerHTML = html;
+    const canMove = a.abilities.some((id) => MEANS[id]);
+    if (canMove) return '<button class="primary" data-action="move">Moverse a…</button>';
+    return '<div class="note">' + esc(a.name) + " no tiene forma de trasladarse por su cuenta.</div>";
+  }
+
+  // Sheet mode: an actor is selected and one of its items is selected.
+  function itemSheetHTML(a) {
+    return state.giveMode ? givePanelHTML(a) : itemDetailHTML(state.selectedItem);
   }
 
   function reachableList() {
@@ -1564,11 +1589,10 @@
       .sort((x, y) => x.d - y.d);
   }
 
-  function renderDestinationSheet() {
-    const a = getActor(state.selectedActor);
+  function destinationSheetHTML(a) {
     let html = '<div class="phase-bar">' +
       '<button class="icon-btn" data-action="cancel-destination">←</button>' +
-      '<span class="phase-title">Elegir destino para <b>' + esc(a.name) + "</b></span>" +
+      '<span class="phase-title">Elegir destino</span>' +
       '<span class="seg">' +
       '<button class="' + (state.listView ? "" : "on") + '" data-action="view-map">Mapa</button>' +
       '<button class="' + (state.listView ? "on" : "") + '" data-action="view-list">Lista</button>' +
@@ -1581,11 +1605,10 @@
     } else {
       html += '<div class="phase-sub">Tocá un lugar alcanzable en el mapa. Los atenuados no tienen ruta.</div>';
     }
-    sheetBody.innerHTML = html;
+    return html;
   }
 
-  function renderMeansSheet() {
-    const a = getActor(state.selectedActor);
+  function meansSheetHTML(a) {
     const dest = getLoc(state.selectedDest);
     const means = meansAvailable(a, dest.id);
     let html = '<div class="phase-bar">' +
@@ -1604,7 +1627,7 @@
         "</button>";
     }
     html += "</div>";
-    sheetBody.innerHTML = html;
+    return html;
   }
 
   /* ============================ Transitions ============================ */
