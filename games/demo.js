@@ -48,6 +48,13 @@ const config = {
         square: { name: "Square" },
         forest: { name: "Forest" },
       },
+      means: {
+        walk:     { name: "TODO" },
+        bike:     { name: "TODO" },
+        skate:    { name: "TODO" },
+        taxi:     { name: "TODO" },
+        metro:    { name: "TODO" },
+      },
       missions: {
         test: {
           name: "End of year toast",
@@ -111,6 +118,13 @@ const config = {
         market: { name: "Supermercado" },
         square: { name: "Plaza" },
         forest: { name: "Bosque" },
+      },
+      means: {
+        walk:     { name: "A pie" },
+        bike:     { name: "Bicicleta" },
+        skate:    { name: "Patineta" },
+        taxi:     { name: "Taxi" },
+        metro:    { name: "Metro" },
       },
       missions: {
         test: {
@@ -181,6 +195,13 @@ const config = {
         square: { name: "Praça" },
         forest: { name: "Floresta" },
       },
+      means: {
+        walk:     { name: "TODO" },
+        bike:     { name: "TODO" },
+        skate:    { name: "TODO" },
+        taxi:     { name: "TODO" },
+        metro:    { name: "TODO" },
+      },
       plan: {
         walkTo: "Caminhar até...",
         cancel: "Cancelar",
@@ -229,6 +250,15 @@ const config = {
       },
     },
   },
+  actors: {
+    alice:   { id: "alice",   key: 1, color: "#e94560", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/girl2.svg",  avatar: avatarSilhouette("#e94560", /* { style: "long", color: "#7a4a24" } */) },
+    bob:     { id: "bob",     key: 2, color: "#4ea1d3", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/boy.svg",    avatar: avatarSilhouette("#4ea1d3") },
+    charles: { id: "charles", key: 3, color: "#e0a458", skills: ["walk", "bike", "skate", "long"], avatarUrl: "../games/demo/assets/actors/male2.svg",  avatar: avatarSilhouette("#e0a458", /*{ style: "short", color: "#c9a24a" } */) },
+    dave:    { id: "dave",    key: 4, color: "#6ab04c", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/boy2.svg",   avatar: avatarSilhouette("#6ab04c") },
+    elena:   { id: "elena",   key: 5, color: "#000000", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/girl.svg" },
+    fiona:   { id: "fiona",   key: 6, color: "#000000", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/female_hippie.svg" },
+    george:  { id: "george",  key: 7, color: "#000000", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/male_professional.svg" },
+  },
   items: {
     cider: { id: "cider", avatarString: "🍾" },
     bike: { id: "bike", avatar: bikeIcon(), avatarString: "🚲", /* avatarSize: "2.2rem" */ },
@@ -241,15 +271,14 @@ const config = {
     greenPotion: { id: "greenPotion", avatar: potionIcon("#558f3c") },
     starCoin: { id: "starCoin", avatar: starCoinIcon },
     coin: { id: "coin", stackable: true, avatar: coinIcon, /* avatarSize: "2.2rem" */ },
-  },
-  actors: {
-    alice:   { id: "alice",   key: 1, color: "#e94560", avatarUrl: "../games/demo/assets/actors/girl2.svg",  avatar: avatarSilhouette("#e94560", /* { style: "long", color: "#7a4a24" } */) },
-    bob:     { id: "bob",     key: 2, color: "#4ea1d3", avatarUrl: "../games/demo/assets/actors/boy.svg",    avatar: avatarSilhouette("#4ea1d3") },
-    charles: { id: "charles", key: 3, color: "#e0a458", avatarUrl: "../games/demo/assets/actors/male2.svg",  avatar: avatarSilhouette("#e0a458", /*{ style: "short", color: "#c9a24a" } */) },
-    dave:    { id: "dave",    key: 4, color: "#6ab04c", avatarUrl: "../games/demo/assets/actors/boy2.svg",   avatar: avatarSilhouette("#6ab04c") },
-    elena:   { id: "elena",   key: 5, color: "black",     avatarUrl: "../games/demo/assets/actors/girl.svg" },
-    fiona:   { id: "fiona",   key: 6, color: "black",     avatarUrl: "../games/demo/assets/actors/female_hippie.svg" },
-    george:  { id: "george",  key: 7, color: "black",     avatarUrl: "../games/demo/assets/actors/male_professional.svg" },
+
+    // vehicles
+    skate: { id: "skate", avatarString: "🛹" },
+    long:  { id: "long",  avatarString: "🏄‍♂️", detachable: true },
+    bike:  { id: "bike",  avatarString: "🚲", detachable: true /*avatar: bikeIcon(),*/ /* avatarSize: "2.2rem" */ },
+    car_1: { id: "car_1", avatarString: "🚗", portable: false }, // no se pueden "llevar"
+    car_2: { id: "car_2", avatarString: "🚙", portable: false },
+    van:   { id: "van",   avatarString: "🚐", portable: false },
   },
   locations: {
     aliceHouse:   { id: "aliceHouse",   pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x: 0, y: -300, width: 200, height: 200 } },
@@ -259,11 +288,34 @@ const config = {
     square:       { id: "square",       map: { x:    0, y:    0, width: 260, height: 260 } },
     forest:       { id: "forest",       map: { x:  350, y:  350, width: 240, height: 240 } },
   },
+  means: {
+    walk:  { icon: "🚶", pace: 10, capacity: ["1:bike"] },
+    bike:  { icon: "🚲", pace: 4, items: ["bike"], capacity: ["0:bike|long"] },
+    skate: { icon: "🛹", pace: 6, items: ["skate"], capacity: ["0:bike|long"] },
+    long:  { icon: "🏄‍♂️", pace: 6, items: ["long"],  capacity: ["0:bike|long"] },
+    taxi:  { icon: "🚕", pace: 2.5, capacity: ["0:bike"], skills: [] },
+    metro: { icon: "🚇", pace: 3, capacity: ["1:bike"], skills: ["walk"], cost: {  } },
+    car_1: { icon: "🚗", pace: 3, items: ["car_1"], capacity: ["3:people", "0:bike"] },
+    car_2: { icon: "🚙", pace: 3, items: ["car2"], capacity: ["3:people", "0:bike"] },
+    van: { icon: "🚐", pace: 3, items: ["van"], capacity: ["3:people|bike"] },
+  },
   routes: [
-    { from: "aliceHouse", to: "square", distance: 1 },
-    { from: "bobHouse", to: "square", distance: 1.2 },
-    { from: "charlesHouse", to: "square", distance: 1.4 },
-    { from: "square", to: "market", distance: 0.5 },
+    {
+      from: "aliceHouse", to: "square", distance: 1,
+      means: ["walk", "bike", "skate"]
+    },
+    {
+      from: "bobHouse", to: "square", distance: 1.2,
+      means: ["walk", "bike", "skate"]
+    },
+    {
+      from: "charlesHouse", to: "square", distance: 1.4,
+      means: ["walk", "bike", "skate"]
+    },
+    {
+      from: "square", to: "market", distance: 0.5,
+      means: ["walk", "bike", "skate"]
+    },
   ],
   missions: [
     {
