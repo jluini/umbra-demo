@@ -117,6 +117,39 @@
   }
   .avatars::-webkit-scrollbar { display: none; }
 
+  /* Inventory bar: floats right below the avatars row. */
+  .inventory-bar {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .inventory-bar[hidden] { display: none; }
+
+  .inv-toggle {
+    flex: 0 0 auto;
+    margin-left: auto;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 3px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--muted);
+  }
+  .inv-toggle.active { color: var(--text); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, var(--panel-2)); }
+
   .avatar-btn {
     flex: 0 0 auto;
     display: flex;
@@ -753,6 +786,7 @@
       <button class="run" id="runBtn" disabled>▶ Avanzar</button>
     </div>
     <div class="avatars" id="avatars"></div>
+    <div class="inventory-bar" id="inventoryBar" hidden></div>
     <div class="date-pop" id="datePop" hidden></div>
   </header>
   <div class="day-toast" id="dayToast" hidden></div>
@@ -889,6 +923,7 @@
     selectedItem: null,
     giveMode: false,
     zoom: 1,
+    inventoryOpen: false,
   };
 
   let actors = [];
@@ -912,6 +947,7 @@
   const sheetHead = document.getElementById("sheetHead");
   const sheetCtx = document.getElementById("sheetCtx");
   const sheetBody = document.getElementById("sheetBody");
+  const inventoryBar = document.getElementById("inventoryBar");
   const clockEl = document.getElementById("clockBtn");
   const runBtn = document.getElementById("runBtn");
   const briefingEl = document.getElementById("briefing");
@@ -941,6 +977,7 @@
     state.selectedItem = null;
     state.giveMode = false;
     state.zoom = 1;
+    state.inventoryOpen = false;
     mapPan.x = 0;
     mapPan.y = 0;
     if (timer) { clearInterval(timer); timer = null; }
@@ -1428,7 +1465,9 @@
   function actorHeaderHTML(a) {
     return '<div class="sheet-title"><span class="av av-head" style="--c:' + a.color + '">' +
       '<img src="' + a.avatar + '" alt=""></span><h2>' + esc(a.name) + '</h2>' +
-      '<span class="at">· ' + esc((getLoc(a.loc) || {}).name || "") + "</span></div>";
+      '<span class="at">· ' + esc((getLoc(a.loc) || {}).name || "") + "</span>" +
+      '<button class="inv-toggle' + (state.inventoryOpen ? " active" : "") +
+      '" data-action="toggle-inventory" aria-label="Inventario" title="Inventario">🎒</button></div>';
   }
 
   function itemTileHTML(group) {
@@ -1476,6 +1515,15 @@
       html += state.giveMode ? givePanelHTML(a) : itemDetailHTML(state.selectedItem);
     }
     return html;
+  }
+
+  // Inventory bar (floats below the avatars row), toggled from the sheet header.
+  function renderInventory() {
+    const a = state.selectedActor ? getActor(state.selectedActor) : null;
+    const show = !!a && state.inventoryOpen && !state.activities[a.id];
+    inventoryBar.hidden = !show;
+    if (!show) { inventoryBar.replaceChildren(); return; }
+    inventoryBar.innerHTML = itemsSectionHTML(a);
   }
 
   function renderIdleSheet() {
@@ -1570,6 +1618,7 @@
     state.sheetSnap = "auto";
     state.selectedItem = null;
     state.giveMode = false;
+    state.inventoryOpen = true;
     render();
     const a = getActor(id);
     if (a) centerOnLocation(a.loc);
@@ -1806,7 +1855,7 @@
 
   runBtn.addEventListener("click", run);
 
-  sheetBody.addEventListener("click", (e) => {
+  function onActionClick(e) {
     const btn = e.target.closest("[data-action]");
     if (!btn) return;
     const action = btn.dataset.action;
@@ -1823,7 +1872,15 @@
     else if (action === "give") { state.giveMode = true; render(); }
     else if (action === "cancel-give") { state.giveMode = false; render(); }
     else if (action === "give-to") giveTo(btn.dataset.actor);
-  });
+    else if (action === "toggle-inventory") {
+      state.inventoryOpen = !state.inventoryOpen;
+      state.selectedItem = null;
+      state.giveMode = false;
+      render();
+    }
+  }
+  sheetBody.addEventListener("click", onActionClick);
+  inventoryBar.addEventListener("click", onActionClick);
 
   window.addEventListener("resize", () => { applySnap(); renderMap(); });
 
@@ -1840,6 +1897,7 @@
     renderAvatars();
     sheetEl.hidden = !state.selectedActor;
     renderSheet();
+    renderInventory();
     applySnap();
     renderMap();
   }
