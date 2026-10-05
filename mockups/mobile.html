@@ -142,18 +142,8 @@
     animation: bubbleIn 0.34s cubic-bezier(0.2, 0.8, 0.25, 1.2) both;
   }
 
-  .inv-toggle {
-    flex: 0 0 auto;
-    margin-left: auto;
-    font-size: 1rem;
-    line-height: 1;
-    padding: 3px 8px;
-    border-radius: 8px;
-    border: 1px solid var(--line);
-    background: var(--panel-2);
-    color: var(--muted);
-  }
-  .inv-toggle.active { color: var(--text); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, var(--panel-2)); }
+  /* Item mode header (sheet): item icon + name, in place of the actor. */
+  .sheet-title .it-icon { font-size: 1.7rem; line-height: 1; }
 
   .avatar-btn {
     flex: 0 0 auto;
@@ -942,6 +932,7 @@
   let mapDrag = null;
   let suppressMapClick = false;
   let panAnim = null;
+  let lastInvActor = null;
   const stopPanAnim = () => { if (panAnim) { cancelAnimationFrame(panAnim); panAnim = null; } };
   const WORLD_MARGIN = 300;
 
@@ -1362,6 +1353,7 @@
 
   mapEl.addEventListener("pointerdown", (e) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    closeInventory();
     stopPanAnim();
     activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (activePointers.size === 1) {
@@ -1417,6 +1409,7 @@
 
   mapEl.addEventListener("wheel", (e) => {
     e.preventDefault();
+    closeInventory();
     const r = mapEl.getBoundingClientRect();
     setZoom(state.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1), { x: e.clientX - r.left, y: e.clientY - r.top });
   }, { passive: false });
@@ -1465,13 +1458,17 @@
       updateSheetCtx();
       return;
     }
-    // The actor header (name, location, inventory toggle) is persistent across
-    // modes, so the inventory button never disappears.
-    let html = actorHeaderHTML(a);
-    if (state.mode === "destination") html += destinationSheetHTML(a);
-    else if (state.mode === "means") html += meansSheetHTML(a);
-    else if (state.selectedItem) html += itemSheetHTML(a);
-    else html += idleSheetHTML(a);
+    let html;
+    if (state.selectedItem && state.mode === "idle") {
+      // Item mode: the sheet shows only the item (icon + name) and its action;
+      // not the actor header.
+      html = itemHeaderHTML(state.selectedItem) + itemActionsHTML(a);
+    } else {
+      html = actorHeaderHTML(a);
+      if (state.mode === "destination") html += destinationSheetHTML(a);
+      else if (state.mode === "means") html += meansSheetHTML(a);
+      else html += idleSheetHTML(a);
+    }
     sheetBody.innerHTML = html;
     updateSheetCtx();
   }
@@ -1487,9 +1484,19 @@
   function actorHeaderHTML(a) {
     return '<div class="sheet-title"><span class="av av-head" style="--c:' + a.color + '">' +
       '<img src="' + a.avatar + '" alt=""></span><h2>' + esc(a.name) + '</h2>' +
-      '<span class="at">· ' + esc((getLoc(a.loc) || {}).name || "") + "</span>" +
-      '<button class="inv-toggle' + (state.inventoryOpen ? " active" : "") +
-      '" data-action="toggle-inventory" aria-label="Inventario" title="Inventario">🎒</button></div>';
+      '<span class="at">· ' + esc((getLoc(a.loc) || {}).name || "") + "</span></div>";
+  }
+
+  // Item mode header: shows only the item (icon + name), in place of the actor.
+  function itemHeaderHTML(itemId) {
+    const it = ITEMS[itemId] || { name: itemId, icon: "❔" };
+    return '<div class="sheet-title item-title"><span class="it-icon">' + it.icon +
+      "</span><h2>" + esc(it.name) + "</h2></div>";
+  }
+
+  function itemActionsHTML(a) {
+    if (state.giveMode) return givePanelHTML(a);
+    return '<button class="primary" data-action="give">Dar a…</button>';
   }
 
   function itemTileHTML(group) {
@@ -1500,16 +1507,6 @@
       '<span class="ii">' + it.icon + "</span>" +
       (group.count > 1 ? '<span class="item-count">' + group.count + "</span>" : "") +
       "</button>";
-  }
-
-  function itemDetailHTML(itemId) {
-    const it = ITEMS[itemId] || { name: itemId, icon: "❔" };
-    return '<div class="item-detail">' +
-      '<span class="di">' + it.icon + "</span>" +
-      '<div class="dn"><b>' + esc(it.name) + "</b>" + (it.desc ? "<small>" + esc(it.desc) + "</small>" : "") + "</div>" +
-      '<button class="mini-btn" data-action="give">Dar a…</button>' +
-      '<button class="mini-x" data-action="clear-item" aria-label="Cerrar">✕</button>' +
-      "</div>";
   }
 
   function givePanelHTML(a) {
@@ -1540,17 +1537,28 @@
   function renderInventory() {
     const a = state.selectedActor ? getActor(state.selectedActor) : null;
     const show = !!a && state.inventoryOpen && !state.activities[a.id];
-    const opening = inventoryBar.hidden && show;
-    inventoryBar.hidden = !show;
-    if (!show) { inventoryBar.replaceChildren(); return; }
-    inventoryBar.innerHTML = itemsGridHTML(a);
-    const tiles = inventoryBar.querySelectorAll(".item-tile");
-    if (opening) {
-      tiles.forEach((t, i) => {
-        t.classList.add("bubble-in");
-        t.style.animationDelay = (i * 45) + "ms";
-      });
+    if (!show) {
+      inventoryBar.hidden = true;
+      inventoryBar.replaceChildren();
+      lastInvActor = null;
+      return;
     }
+    // Animate when opening, and also when the inventory switches to another actor.
+    const animate = inventoryBar.hidden || a.id !== lastInvActor;
+    inventoryBar.hidden = false;
+    inventoryBar.innerHTML = itemsGridHTML(a);
+    lastInvActor = a.id;
+    if (animate) {
+      inventoryBar.querySelectorAll(".item-tile").forEach((t) => t.classList.add("bubble-in"));
+    }
+  }
+
+  function closeInventory() {
+    if (!state.inventoryOpen && !state.selectedItem && !state.giveMode) return;
+    state.inventoryOpen = false;
+    state.selectedItem = null;
+    state.giveMode = false;
+    render();
   }
 
   function idleSheetHTML(a) {
@@ -1574,11 +1582,6 @@
     const canMove = a.abilities.some((id) => MEANS[id]);
     if (canMove) return '<button class="primary" data-action="move">Moverse a…</button>';
     return '<div class="note">' + esc(a.name) + " no tiene forma de trasladarse por su cuenta.</div>";
-  }
-
-  // Sheet mode: an actor is selected and one of its items is selected.
-  function itemSheetHTML(a) {
-    return state.giveMode ? givePanelHTML(a) : itemDetailHTML(state.selectedItem);
   }
 
   function reachableList() {
@@ -1650,6 +1653,9 @@
   function enterDestination() {
     const a = getActor(state.selectedActor);
     if (!a || state.activities[a.id] || state.plans[a.id]) return;
+    state.inventoryOpen = false;
+    state.selectedItem = null;
+    state.giveMode = false;
     state.mode = "destination";
     state.selectedDest = null;
     state.listView = false;
@@ -1895,12 +1901,6 @@
     else if (action === "give") { state.giveMode = true; render(); }
     else if (action === "cancel-give") { state.giveMode = false; render(); }
     else if (action === "give-to") giveTo(btn.dataset.actor);
-    else if (action === "toggle-inventory") {
-      state.inventoryOpen = !state.inventoryOpen;
-      state.selectedItem = null;
-      state.giveMode = false;
-      render();
-    }
   }
   sheetBody.addEventListener("click", onActionClick);
   inventoryBar.addEventListener("click", onActionClick);
