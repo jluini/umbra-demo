@@ -887,7 +887,7 @@
   const mapPan = { x: 0, y: 0 };
   let mapDrag = null;
   let suppressMapClick = false;
-  const BASE_SCALE = 0.5;
+  const WORLD_MARGIN = 300;
 
   const isDesktop = () => window.matchMedia("(min-width: 768px)").matches;
   const mapEl = document.getElementById("map");
@@ -1061,11 +1061,15 @@
       minY = Math.min(minY, l.y - l.h / 2);
       maxY = Math.max(maxY, l.y + l.h / 2);
     }
+    // The world extends a bit beyond the outermost locations.
+    minX -= WORLD_MARGIN; maxX += WORLD_MARGIN;
+    minY -= WORLD_MARGIN; maxY += WORLD_MARGIN;
     const cw = maxX - minX;
     const ch = maxY - minY;
-    // Fixed scale (independent of the sheet); `zoom` is meant to be driven by
-    // gestures/events in the future.
-    const scale = BASE_SCALE * state.zoom;
+    // Base scale: the whole world fits vertically; `zoom` (gestures/events)
+    // multiplies it.
+    const pad = 24;
+    const scale = ((vh - pad * 2) / ch) * state.zoom;
     const W = cw * scale;
     const H = ch * scale;
     return {
@@ -1100,8 +1104,19 @@
     mapEl.style.setProperty("--pan-x", mapPan.x + "px");
     mapEl.style.setProperty("--pan-y", mapPan.y + "px");
   }
-  function setZoom(z) {
-    state.zoom = Math.max(0.4, Math.min(3, z));
+  function setZoom(z, anchor) {
+    z = Math.max(0.4, Math.min(4, z));
+    if (anchor && layout) {
+      // Keep the world point under `anchor` (viewport-local px) fixed.
+      const wx = (anchor.x - mapPan.x - layout.offsetX) / layout.scale;
+      const wy = (anchor.y - mapPan.y - layout.offsetY) / layout.scale;
+      state.zoom = z;
+      layout = computeLayout();
+      mapPan.x = anchor.x - (wx * layout.scale + layout.offsetX);
+      mapPan.y = anchor.y - (wy * layout.scale + layout.offsetY);
+    } else {
+      state.zoom = z;
+    }
     renderMap();
   }
   window.setMapZoom = setZoom;
@@ -1216,39 +1231,82 @@
     applyPan();
   }
 
-  /* ============================ Map pan (and wheel zoom) ============================ */
+  /* ============================ Map pan + pinch/wheel zoom ============================ */
+
+  const activePointers = new Map();
+  let pinch = null;
+
+  const pointerLocal = (p) => {
+    const r = mapEl.getBoundingClientRect();
+    return { x: p.x - r.left, y: p.y - r.top };
+  };
+  const fingerDistance = () => {
+    const pts = [...activePointers.values()];
+    return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+  };
+  const fingerMid = () => {
+    const pts = [...activePointers.values()];
+    return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+  };
 
   mapEl.addEventListener("pointerdown", (e) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
-    suppressMapClick = false;
-    mapDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, baseX: mapPan.x, baseY: mapPan.y, moved: false };
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (activePointers.size === 1) {
+      suppressMapClick = false;
+      mapDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, baseX: mapPan.x, baseY: mapPan.y, moved: false };
+    } else if (activePointers.size === 2) {
+      mapDrag = null;
+      suppressMapClick = true;
+      pinch = { dist0: fingerDistance(), zoom0: state.zoom };
+    }
   });
+
   mapEl.addEventListener("pointermove", (e) => {
-    if (!mapDrag || e.pointerId !== mapDrag.id) return;
-    const dx = e.clientX - mapDrag.x;
-    const dy = e.clientY - mapDrag.y;
-    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) mapDrag.moved = true;
-    if (!mapDrag.moved) return;
-    mapPan.x = mapDrag.baseX + dx;
-    mapPan.y = mapDrag.baseY + dy;
-    clampPan();
-    applyPan();
-    e.preventDefault();
+    if (!activePointers.has(e.pointerId)) return;
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (activePointers.size >= 2 && pinch) {
+      setZoom(pinch.zoom0 * (fingerDistance() / pinch.dist0), pointerLocal(fingerMid()));
+      e.preventDefault();
+      return;
+    }
+    if (mapDrag && e.pointerId === mapDrag.id) {
+      const dx = e.clientX - mapDrag.x;
+      const dy = e.clientY - mapDrag.y;
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) mapDrag.moved = true;
+      if (!mapDrag.moved) return;
+      mapPan.x = mapDrag.baseX + dx;
+      mapPan.y = mapDrag.baseY + dy;
+      clampPan();
+      applyPan();
+      e.preventDefault();
+    }
   });
-  function endMapDrag(e) {
-    if (!mapDrag || (e && e.pointerId !== mapDrag.id)) return;
-    suppressMapClick = mapDrag.moved;
-    mapDrag = null;
+
+  function onPointerEnd(e) {
+    activePointers.delete(e.pointerId);
+    if (activePointers.size < 2) pinch = null;
+    if (mapDrag && e.pointerId === mapDrag.id) {
+      suppressMapClick = mapDrag.moved || suppressMapClick;
+      mapDrag = null;
+    }
+    // If one finger remains after a pinch, let it continue as a pan.
+    if (activePointers.size === 1 && !mapDrag) {
+      const [id, p] = [...activePointers.entries()][0];
+      mapDrag = { id, x: p.x, y: p.y, baseX: mapPan.x, baseY: mapPan.y, moved: true };
+    }
   }
-  mapEl.addEventListener("pointerup", endMapDrag);
-  mapEl.addEventListener("pointercancel", endMapDrag);
+  mapEl.addEventListener("pointerup", onPointerEnd);
+  mapEl.addEventListener("pointercancel", onPointerEnd);
   mapEl.addEventListener("click", (e) => {
     if (suppressMapClick) { suppressMapClick = false; e.stopPropagation(); e.preventDefault(); }
   }, true);
 
   mapEl.addEventListener("wheel", (e) => {
     e.preventDefault();
-    setZoom(state.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
+    const r = mapEl.getBoundingClientRect();
+    setZoom(state.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1), { x: e.clientX - r.left, y: e.clientY - r.top });
   }, { passive: false });
 
   /* ============================ Avatars row ============================ */
