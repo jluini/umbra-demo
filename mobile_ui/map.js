@@ -133,10 +133,13 @@ const createMobileMap = (viewport, options) => {
     if (Math.abs(target.x - from.x) < 0.5 && Math.abs(target.y - from.y) < 0.5) return;
     stopAnim();
     const start = performance.now();
-    const dur = 320;
+    const dur = 1100;
     const step = (now) => {
       const t = Math.min(1, (now - start) / dur);
-      const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const e = 1 - Math.pow(1 - t, 3);              // easeOutCubic
+      // const e = 1 - (1 - t) * (1 - t);            // easeOutQuad
+      // const e = Math.sin(t * Math.PI / 2);        // easeOutSine
+      // const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // easeInOutQuad
       pan.x = from.x + (target.x - from.x) * e;
       pan.y = from.y + (target.y - from.y) * e;
       applyPan();
