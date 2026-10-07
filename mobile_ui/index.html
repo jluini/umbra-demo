@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Umbra · Mobile</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Game screen (always rendered) -->
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-row">
+        <button class="icon-btn" id="menuBtn" aria-label="Menú">☰</button>
+        <button class="mission" id="missionBtn" aria-label="Ver briefing">
+          <span class="mission-label"><span data-i18n="umbra.mission">Misión</span> <span id="mission-number"></span></span>
+          <span class="mission-title" id="mission-title"></span>
+        </button>
+        <button class="clock" id="clockBtn" aria-label="Ver fecha"></button>
+        <button class="run" id="runBtn" disabled>▶ <span data-i18n="actions.run">Avanzar</span></button>
+      </div>
+      <div class="avatars" id="avatars"></div>
+      <div class="inventory-bar" id="inventoryBar" hidden></div>
+      <div class="date-pop" id="datePop" hidden></div>
+    </header>
+    <div class="day-toast" id="dayToast" hidden></div>
+
+    <div class="content">
+      <div class="map" id="map"></div>
+      <section class="sheet" id="sheet" hidden>
+        <div class="sheet-head" id="sheetHead" role="button" aria-label="Expandir o contraer panel">
+          <span class="ctx" id="sheetCtx"></span>
+          <span class="bar"></span>
+          <span class="chev">▲</span>
+        </div>
+        <div class="sheet-body" id="sheetBody"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Titles screen -->
+  <div class="overlay" id="titles">
+    <div class="titles-screen">
+      <div class="logo"><span>U</span>Mb<span>R</span>A</div>
+      <div class="tagline" data-i18n="umbra.tagline">a decision-based game engine</div>
+      <button class="primary" id="playBtn"><span data-i18n="menu.play">Play</span></button>
+      <div class="lang-row" id="lang-selector"></div>
+      <div class="disabled-row">
+        <button disabled data-i18n="menu.credits">Créditos</button>
+        <button disabled data-i18n="menu.about">Acerca de</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Briefing overlay -->
+  <div class="overlay" id="briefing" hidden>
+    <div class="scrim" data-close-briefing></div>
+    <div class="briefing-card">
+      <button class="close" data-close-briefing aria-label="Cerrar">✕</button>
+      <div class="eyebrow" id="briefing-eyebrow"></div>
+      <h2 id="briefing-title"></h2>
+      <div id="mission-briefing"></div>
+      <button class="primary" data-close-briefing data-i18n="ui.start">Comenzar</button>
+    </div>
+  </div>
+
+  <!-- Menu overlay -->
+  <div class="overlay" id="menu" hidden>
+    <div class="scrim" data-close-menu></div>
+    <div class="menu-panel">
+      <button data-menu="briefing">ⓘ <span data-i18n="ui.viewBriefing">Ver briefing</span></button>
+      <button data-menu="back">← <span data-i18n="ui.backToMenu">Volver al menú</span></button>
+      <button data-menu="reset">↺ <span data-i18n="ui.restart">Reiniciar</span></button>
+    </div>
+  </div>
+
+  <!-- Result overlay -->
+  <div class="overlay" id="result" hidden>
+    <div class="briefing-card">
+      <div class="result-title" id="result-title"></div>
+      <div class="result-message" id="result-message"></div>
+      <div class="modal-actions">
+        <button class="primary" id="btn-restart" data-i18n="ui.restart">Reiniciar</button>
+        <button class="primary" id="btn-back-menu" data-i18n="ui.backToMenu">Volver al menú</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm overlay -->
+  <div class="overlay" id="confirm" hidden>
+    <div class="scrim" id="confirm-scrim"></div>
+    <div class="briefing-card">
+      <div class="result-title" id="confirm-title"></div>
+      <div class="result-message" id="confirm-message"></div>
+      <div class="modal-actions">
+        <button class="primary" id="confirm-cancel" data-i18n="plan.cancel">Cancelar</button>
+        <button class="primary" id="confirm-accept"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../common/utils.js"></script>
+  <script src="../common/geometry.js"></script>
+  <script src="../umbra/umbra.js"></script>
+  <script src="../presentation/i18n.js"></script>
+  <script src="../presentation/i18n-dom.js"></script>
+  <script src="../presentation/format.js"></script>
+  <script src="../presentation/richtext.js"></script>
+  <script src="../games/demo/icons.js"></script>
+  <script src="../games/demo.js"></script>
+
+  <script>
+    window.games = {
+      demo: Demo,
+      none: {
+        config: {
+          languages: [
+            { code: "en", name: "English" },
+            { code: "es", name: "Español" },
+          ],
+        },
+      },
+    };
+
+    window.umbraDefaults = { game: "demo", lang: "es" };
+  </script>
+  <script src="map.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
