@@ -33,6 +33,10 @@ const config = {
     { from: "a", to: "b", distance: 1.5 },
     { from: "b", to: "c", distance: 2 },
   ],
+  means: {
+    walk: { icon: "🚶", pace: 10 },
+    bike: { icon: "🚲", pace: 4, items: ["bread"] },
+  },
   missions: [{
     id: "test",
     start: "2024-12-31T22:00:00",
@@ -75,7 +79,10 @@ check(game.getInventory("alice")[0] === config.items.cider, "starting inventory"
 
 check(game.distance("a", "c") === 3.5, "shortest path a->c is 3.5");
 check(game.distance("c", "a") === 3.5, "routes are bidirectional");
-check(game.computeWalkTime(1.5) === 15, "walk time is 15 min for 1.5 km");
+check(game.computeTravelTime(1.5, "walk") === 15, "walk time is 15 min for 1.5 km");
+check(game.getAvailableMeans("alice").map((m) => m.id).join(",") === "walk,bike", "alice can use walk and bike");
+check(game.getAvailableMeans("bob").map((m) => m.id).join(",") === "walk", "bob can only walk");
+check(game.computeTravelTime(1.5, "bike") === 6, "bike time is 6 min for 1.5 km");
 
 check(game.giveItem("alice", "bob", config.items.cider) === true, "giveItem within same location");
 check(game.getInventory("bob").includes(config.items.cider), "bob received the cider");
@@ -84,6 +91,10 @@ check(game.setPlan("alice", "d") === false, "setPlan rejected for a location out
 check(game.setPlan("alice", "c") === true, "setPlan accepted");
 check(game.getPlan("alice").destination === "c", "pending plan holds destination");
 check(game.getPlan("alice").duration === 35, "pending plan holds duration");
+check(game.getPlan("alice").mean === "walk", "pending plan defaults to walk");
+check(game.setPlan("alice", "c", "bike") === true, "setPlan accepts bike (has its item)");
+check(game.getPlan("alice").mean === "bike" && game.getPlan("alice").duration === 14, "bike plan holds mean + duration (3.5*4)");
+check(game.setPlan("bob", "c", "bike") === false, "setPlan rejects bike without the item");
 check(game.setPlan("alice", "b") === true, "setPlan replaces a pending plan");
 check(game.cancelPlan("alice") === true, "cancelPlan clears a pending plan");
 check(game.getPlan("alice") === null, "plan cleared after cancel");
@@ -93,6 +104,7 @@ check(game.canAdvance() === true, "canAdvance with a pending plan");
 game.advance();
 check(game.getActor("alice").activity.kind === "transit", "advance starts transit (auto-commit)");
 check(game.getActor("alice").activity.from === "a" && game.getActor("alice").activity.to === "c", "transit keeps from/to");
+check(game.getActor("alice").activity.mean === "walk", "transit keeps mean");
 check(game.getPlan("alice") === null, "plans are cleared once started");
 check(Object.keys(game.getPlans()).length === 0, "no pending plans during transit");
 check(game.setPlan("alice", "a") === false, "setPlan rejected while in transit");

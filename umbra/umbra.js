@@ -117,8 +117,6 @@ const engineTranslations = {
 
 const getInitialMissionIndex = () => 0;
 
-const computeWalkTime = (distance) => Math.round(distance * WALKING_PACE);
-
 const distanceFrom = (matrix, from, to) => {
   if (!matrix[from]) return Infinity;
   const d = matrix[from][to];
@@ -173,9 +171,10 @@ const findLocation = (mission, id) =>
 const findTrade = (mission, locationId, tradeId) =>
   (findLocation(mission, locationId)?.trades || []).find((t) => t.id === tradeId) || null;
 
-const buildPlan = (actor, destination, matrix) => ({
+const buildPlan = (actor, destination, matrix, mean, travelTime) => ({
   destination,
-  duration: computeWalkTime(distanceFrom(matrix, actor.activity.at, destination)),
+  mean,
+  duration: travelTime(distanceFrom(matrix, actor.activity.at, destination), mean),
 });
 
 const moveItem = (fromActor, toActor, item, quantity = 1) => {
@@ -472,6 +471,27 @@ const create = (config = {}) => {
 
   const listeners = {};
   const emit = (name, data) => { (listeners[name] || []).forEach((fn) => fn(data)); };
+
+  // Means (transport modes): available when the actor holds every required item.
+  const meansOf = () => config.means || {};
+  const actorHasMean = (actor, id) => {
+    const def = meansOf()[id];
+    if (!def) return false;
+    const required = def.items || [];
+    return required.every((itemId) => countItem(actor, itemId) > 0);
+  };
+  const availableMeans = (actor) => {
+    const list = Object.entries(meansOf())
+      .filter(([id]) => actorHasMean(actor, id))
+      .map(([id, def]) => ({ id, icon: def.icon, pace: def.pace }));
+    if (!list.length) list.push({ id: "walk", icon: "🚶", pace: WALKING_PACE });
+    return list;
+  };
+  const computeTravelTime = (distance, meanId) => {
+    const def = meansOf()[meanId];
+    const pace = def && typeof def.pace === "number" ? def.pace : WALKING_PACE;
+    return Math.round(distance * pace);
+  };
   const isRunning = () => state.status === "running";
 
   const isInProgress = (activity) => activity.duration !== undefined;
@@ -522,7 +542,7 @@ const create = (config = {}) => {
       if (!actor) continue;
       actor.activity = {
         kind: "transit",
-        vehicle: "walk",
+        mean: plan.mean,
         from: actor.activity.at,
         to: plan.destination,
         startedAt: state.internalTime,
@@ -581,14 +601,22 @@ const create = (config = {}) => {
       return location && Array.isArray(location.trades) ? location.trades : [];
     },
     distance(from, to) { return distanceFrom(distMatrix, from, to); },
-    computeWalkTime,
+    computeTravelTime,
+    getMean(meanId) { return meansOf()[meanId] || null; },
+    getAvailableMeans(actorId) {
+      const actor = findActor(state.mission, actorId);
+      return actor ? availableMeans(actor) : [];
+    },
     // actions
-    setPlan(actorId, destination) {
+    setPlan(actorId, destination, meanId) {
       if (!isRunning()) return false;
       const actor = findActor(state.mission, actorId);
       if (!actor || actor.activity.kind !== "idle") return false;
       if (!findLocation(state.mission, destination)) return false;
-      state.plans[actorId] = buildPlan(actor, destination, distMatrix);
+      const means = availableMeans(actor);
+      const mean = meanId || (means[0] && means[0].id);
+      if (!means.some((m) => m.id === mean)) return false;
+      state.plans[actorId] = buildPlan(actor, destination, distMatrix, mean, computeTravelTime);
       emit("plan:set", { actorId, plan: state.plans[actorId] });
       return true;
     },

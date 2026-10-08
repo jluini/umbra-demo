@@ -375,6 +375,13 @@ function locationName(id) {
 function itemName(id) {
   return activeI18n.t(Utils.buildKey("items", id, "name"));
 }
+function meanName(id) {
+  return activeI18n.t(Utils.buildKey("means", id, "name"));
+}
+function meanIcon(id) {
+  const m = activeEngine.getMean(id);
+  return (m && m.icon) || "🚶";
+}
 // Item icon: raw SVG/HTML in item.avatar, a glyph in item.avatarString, else initial.
 function itemIconHTML(item) {
   if (item && item.avatar) return item.avatar;
@@ -604,15 +611,15 @@ function idleSheetHTML(a) {
   if (a.activity.kind === "transit") {
     const elapsed = activeEngine.getInternalTime() - a.activity.startedAt;
     const pct = Math.min(100, (elapsed / a.activity.duration) * 100);
-    return '<div class="activity"><span>🚶</span><div class="grow">' + esc(t("ui.onTheWayTo")) +
-      " <b>" + esc(locationName(a.activity.to)) + "</b><small>" + elapsed + "/" + a.activity.duration +
+    return '<div class="activity"><span>' + meanIcon(a.activity.mean) + '</span><div class="grow">' + esc(t("ui.onTheWayTo")) +
+      " <b>" + esc(locationName(a.activity.to)) + "</b><small>" + esc(meanName(a.activity.mean)) + " · " + elapsed + "/" + a.activity.duration +
       " min</small></div></div>" + '<div class="progress"><i style="width:' + pct + '%"></i></div>';
   }
   const plan = activeEngine.getPlan(a.id);
   if (plan) {
     const arrival = new Date(activeEngine.getClock().getTime() + plan.duration * 60000);
-    return '<div class="activity"><span>🚶</span><div class="grow">→ <b>' + esc(locationName(plan.destination)) +
-      "</b><small>" + Presentation.formatDuration(plan.duration) + " · " + esc(t("ui.arrives")) + " " +
+    return '<div class="activity"><span>' + meanIcon(plan.mean) + '</span><div class="grow">→ <b>' + esc(locationName(plan.destination)) +
+      "</b><small>" + esc(meanName(plan.mean)) + " · " + Presentation.formatDuration(plan.duration) + " · " + esc(t("ui.arrives")) + " " +
       Presentation.formatDateTime(arrival, lang(), "time") + "</small></div>" +
       '<button class="x" data-action="cancel-plan">✕</button></div>';
   }
@@ -648,19 +655,21 @@ function destinationSheetHTML() {
 
 function meansSheetHTML(a) {
   const d = activeEngine.distance(a.activity.at, selectedDestId);
-  const duration = activeEngine.computeWalkTime(d);
-  const arrival = new Date(activeEngine.getClock().getTime() + duration * 60000);
-  const mean = (activeEngine.getConfig().means || {}).walk || { icon: "🚶" };
+  const means = activeEngine.getAvailableMeans(a.id);
+  const rows = means.map((m) => {
+    const duration = activeEngine.computeTravelTime(d, m.id);
+    const arrival = new Date(activeEngine.getClock().getTime() + duration * 60000);
+    return '<button class="mean-row" data-action="choose-means" data-mean="' + m.id + '">' +
+      '<span class="mi">' + (m.icon || "🚶") + "</span>" +
+      '<span class="mn">' + esc(meanName(m.id)) + "</span>" +
+      '<span class="mm"><b>' + Presentation.formatDuration(duration) + "</b><small>" + esc(t("ui.arrives")) + " " +
+      Presentation.formatDateTime(arrival, lang(), "time") + "</small></span></button>";
+  }).join("");
   return '<div class="phase-bar">' +
     '<button class="icon-btn" data-action="back-destination">←</button>' +
     '<span class="phase-title">' + esc(t("ui.goTo")) + " <b>" + esc(locationName(selectedDestId)) + "</b></span></div>" +
     '<div class="phase-sub">' + Presentation.formatDistance(d) + " " + esc(t("ui.tripInfo")) + "</div>" +
-    '<div class="means-list">' +
-    '<button class="mean-row" data-action="choose-means" data-mean="walk">' +
-    '<span class="mi">' + (mean.icon || "🚶") + "</span>" +
-    '<span class="mn">' + esc(t("means.walk.name")) + "</span>" +
-    '<span class="mm"><b>' + Presentation.formatDuration(duration) + "</b><small>" + esc(t("ui.arrives")) + " " +
-    Presentation.formatDateTime(arrival, lang(), "time") + "</small></span></button></div>";
+    '<div class="means-list">' + rows + "</div>";
 }
 
 function renderSheet() {
@@ -734,11 +743,11 @@ function backToDestination() {
   refresh();
 }
 
-function setPlan(dest) {
+function setPlan(dest, meanId) {
   sheetMode = "idle";
   selectedDestId = null;
   listView = false;
-  activeEngine.setPlan(selectedActorId, dest);
+  activeEngine.setPlan(selectedActorId, dest, meanId);
   refresh();
 }
 
@@ -858,7 +867,7 @@ sheetBody.addEventListener("click", (e) => {
   else if (action === "view-list") { listView = true; refresh(); }
   else if (action === "choose-dest") chooseDest(btn.dataset.loc);
   else if (action === "back-destination") backToDestination();
-  else if (action === "choose-means") setPlan(selectedDestId);
+  else if (action === "choose-means") setPlan(selectedDestId, btn.dataset.mean);
   else if (action === "cancel-plan") cancelPlan();
   else if (action === "select-item") selectItem(btn.dataset.item);
   else if (action === "give") { giveMode = true; refresh(); }

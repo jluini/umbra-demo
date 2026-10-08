@@ -132,11 +132,11 @@ const formatTime = (date, lang) =>
               li.textContent = resolveName(loc.name) + " — sin ruta";
               li.style.color = "gray";
             } else {
-              const walkTime = Math.round(game.computeWalkTime(dist));
+              const walkTime = Math.round(game.computeTravelTime(dist, "walk"));
               li.textContent = resolveName(loc.name) + " — " + walkTime + " min (" + dist + " km)";
               li.style.cursor = "pointer";
               li.addEventListener("click", () => {
-                game.setPlan(actor.id, loc.id);
+                game.setPlan(actor.id, loc.id, "walk");
                 walkToMode = false;
                 renderInventory();
                 renderAll();

@@ -269,7 +269,7 @@ function renderLocations() {
       } else {
         card.classList.add("selectable");
         card.dataset.locationId = loc.id;
-        const walkTime = activeEngine.computeWalkTime(distance);
+        const walkTime = activeEngine.computeTravelTime(distance, "walk");
         const dist = document.createElement("div");
         dist.className = "loc-distance";
         dist.textContent = Presentation.formatDistance(distance) + " · " + Presentation.formatDuration(walkTime);
@@ -533,7 +533,7 @@ function exitWalkTo() {
 
 function chooseDestination(locationId) {
   walkToMode = false;
-  activeEngine.setPlan(selectedActorId, locationId);
+  activeEngine.setPlan(selectedActorId, locationId, "walk");
   renderActorPanel();
   renderLocations();
   renderMap();
