@@ -33,6 +33,9 @@ const uiTranslations = {
       chooseDestHint: "Tocá un lugar alcanzable en el mapa. Los atenuados no tienen ruta.",
       tripInfo: "de viaje · elegí cómo ir",
       arrives: "llega",
+      tooManyItems: "No puede llevar tantos objetos para este medio.",
+      planBlocked: "No se puede: invalidaría un plan de viaje.",
+      plansCancelled: "Se canceló un plan de viaje (ya no era válido).",
       onTheWayTo: "En camino a",
       giveTo: "Dar a…",
       dropHere: "Dejar aquí",
@@ -65,6 +68,7 @@ const missionTitle = document.getElementById("mission-title");
 const clockEl = document.getElementById("clockBtn");
 const runBtn = document.getElementById("runBtn");
 const datePop = document.getElementById("datePop");
+const dayToast = document.getElementById("dayToast");
 
 const avatarsEl = document.getElementById("avatars");
 const inventoryBar = document.getElementById("inventoryBar");
@@ -223,6 +227,7 @@ function loadGame(gameConfig) {
     activeEngine.on("plan:cancel", onPlansChanged);
     activeEngine.on("plans:started", onPlansChanged);
     activeEngine.on("plans:completed", onPlansChanged);
+    activeEngine.on("plans:cancelled", onPlansCancelled);
     activeEngine.on("item:give", onItemsChanged);
     activeEngine.on("item:drop", onItemsChanged);
     activeEngine.on("item:take", onItemsChanged);
@@ -375,6 +380,14 @@ function resetGameUI() {
 const t = (key) => activeI18n.t(key);
 const lang = () => activeI18n.language();
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+let toastTimer = null;
+function showToast(text) {
+  dayToast.textContent = text;
+  dayToast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { dayToast.hidden = true; }, 3000);
+}
 
 function actorName(id) {
   return activeI18n.t(Utils.buildKey("actors", id, "name"));
@@ -724,9 +737,12 @@ function meansSheetHTML(a) {
   const rows = means.map((m) => {
     const duration = activeEngine.computeTravelTime(d, m.id);
     const arrival = new Date(activeEngine.getClock().getTime() + duration * 60000);
-    return '<button class="mean-row" data-action="choose-means" data-mean="' + m.id + '">' +
+    const disabled = m.blocked ? " disabled" : "";
+    const action = m.blocked ? "" : ' data-action="choose-means"';
+    const note = m.blocked ? " <small>" + esc(t("ui.tooManyItems")) + "</small>" : "";
+    return '<button class="mean-row' + disabled + '"' + action + ' data-mean="' + m.id + '">' +
       '<span class="mi">' + (m.icon || "🚶") + "</span>" +
-      '<span class="mn">' + esc(meanName(m.id)) + "</span>" +
+      '<span class="mn">' + esc(meanName(m.id)) + note + "</span>" +
       '<span class="mm"><b>' + Presentation.formatDuration(duration) + "</b><small>" + esc(t("ui.arrives")) + " " +
       Presentation.formatDateTime(arrival, lang(), "time") + "</small></span></button>";
   }).join("");
@@ -863,9 +879,12 @@ function takeTo(actorId) {
   if (!selectedLooseItem) return;
   const item = activeEngine.getConfig().items[selectedLooseItem.itemId];
   if (!item) return;
-  activeEngine.takeItem(actorId, item, 1);
-  selectedLooseItem = null;
-  takeMode = false;
+  if (activeEngine.takeItem(actorId, item, 1)) {
+    selectedLooseItem = null;
+    takeMode = false;
+  } else {
+    showToast(t("ui.planBlocked"));
+  }
   refresh();
 }
 
@@ -877,6 +896,8 @@ function giveTo(targetId) {
   if (activeEngine.giveItem(a.id, targetId, item, 1)) {
     giveMode = false;
     if (activeEngine.getItemCount(a.id, selectedItemId) === 0) selectedItemId = null;
+  } else {
+    showToast(t("ui.planBlocked"));
   }
   refresh();
 }
@@ -897,8 +918,11 @@ function dropItem() {
   if (!a || !selectedItemId) return;
   const item = activeEngine.getConfig().items[selectedItemId];
   if (!item) return;
-  activeEngine.dropItem(a.id, item, 1);
-  if (activeEngine.getItemCount(a.id, selectedItemId) === 0) selectedItemId = null;
+  if (activeEngine.dropItem(a.id, item, 1)) {
+    if (activeEngine.getItemCount(a.id, selectedItemId) === 0) selectedItemId = null;
+  } else {
+    showToast(t("ui.planBlocked"));
+  }
   refresh();
 }
 
@@ -907,6 +931,12 @@ function handleLocationClick(locationId) {
 }
 
 function onPlansChanged() {
+  refresh();
+}
+
+function onPlansCancelled() {
+  showToast(t("ui.plansCancelled"));
+  if (activeEngine && !activeEngine.canAdvance()) stopAdvancing();
   refresh();
 }
 

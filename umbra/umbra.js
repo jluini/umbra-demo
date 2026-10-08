@@ -225,6 +225,44 @@ const validateItems = (config) => {
   }
 };
 
+// Means may constrain how many items an actor can carry when traveling. A
+// capacity entry is "<max>:<group>" where group is one or more item ids joined
+// by "|". Only "optional" items may be listed; reserved categories ("people")
+// are ignored for now.
+const RESERVED_CAPACITY = new Set(["people"]);
+const parseCapacity = (entry, meanId) => {
+  const sep = typeof entry === "string" ? entry.indexOf(":") : -1;
+  if (sep <= 0) {
+    throw new Error("umbra: mean '" + meanId + "' has invalid capacity '" + entry + "' (expected '<max>:<item|...>')");
+  }
+  const maxText = entry.slice(0, sep);
+  if (!/^[0-9]+$/.test(maxText)) {
+    throw new Error("umbra: mean '" + meanId + "' has invalid capacity max in '" + entry + "'");
+  }
+  const group = entry.slice(sep + 1).split("|").filter(Boolean);
+  if (!group.length) {
+    throw new Error("umbra: mean '" + meanId + "' has an empty capacity group in '" + entry + "'");
+  }
+  return { max: Number(maxText), group };
+};
+const validateMeans = (config) => {
+  for (const [meanId, def] of Object.entries(config.means || {})) {
+    for (const entry of def.capacity || []) {
+      const { group } = parseCapacity(entry, meanId);
+      for (const itemId of group) {
+        if (RESERVED_CAPACITY.has(itemId)) continue;
+        const item = config.items && config.items[itemId];
+        if (!item) {
+          throw new Error("umbra: mean '" + meanId + "' capacity references unknown item '" + itemId + "'");
+        }
+        if (itemCarry(item) !== "optional") {
+          throw new Error("umbra: mean '" + meanId + "' capacity references item '" + itemId + "' which is not carry 'optional'");
+        }
+      }
+    }
+  }
+};
+
 const expandItems = (config, actorId, entries) => {
   const items = [];
   for (const entry of entries || []) {
@@ -522,6 +560,7 @@ const create = (config = {}) => {
     missions: Object.values(injectIds(config.missions)),
   };
   validateItems(config);
+  validateMeans(config);
   let distMatrix = {};
 
   const state = {
@@ -553,10 +592,58 @@ const create = (config = {}) => {
     const skillsOk = requiredSkills(id, def).every((skill) => skills.includes(skill));
     return itemsOk && skillsOk;
   };
+  // A mean's capacity limits how many "additional" items the actor may carry
+  // (the mean's required items are exempt). "required" items are never
+  // constrained; unlisted items are free; "none" items are implicitly forbidden
+  // (max 0) unless required by the mean.
+  const countMap = (items) => {
+    const m = new Map();
+    for (const it of items) m.set(it.id, (m.get(it.id) || 0) + 1);
+    return m;
+  };
+  // "none" items are implicitly "0:<item>" in every mean (they can only be used
+  // as a mean's required item, never carried in addition).
+  const noneItemIds = Object.keys(config.items || {}).filter((id) => itemCarry(config.items[id]) === "none");
+  const carryIssue = (def, id, counts) => {
+    const required = def.items || [];
+    const extra = (itemId) => Math.max(0, (counts.get(itemId) || 0) - (required.includes(itemId) ? 1 : 0));
+    for (const entry of def.capacity || []) {
+      const { max, group } = parseCapacity(entry, id);
+      let count = 0;
+      for (const itemId of group) {
+        if (RESERVED_CAPACITY.has(itemId)) continue;
+        count += extra(itemId);
+      }
+      if (count > max) return { reason: "capacity" };
+    }
+    let noneExcess = 0;
+    for (const itemId of noneItemIds) noneExcess += extra(itemId);
+    if (noneExcess > 0) return { reason: "capacity" };
+    return null;
+  };
+  // Why a pending plan would be invalid with the given item counts
+  // (null = valid): "unknown" (no such mean), "mean" (items/skills), "capacity".
+  const planInvalidReason = (actor, plan, counts) => {
+    const c = counts || countMap(actor.items);
+    const def = meansOf()[plan.mean];
+    if (!def) return "unknown";
+    const itemsOk = (def.items || []).every((itemId) => (c.get(itemId) || 0) > 0);
+    const skills = actor.preset.skills || [];
+    const skillsOk = requiredSkills(plan.mean, def).every((skill) => skills.includes(skill));
+    if (!itemsOk || !skillsOk) return "mean";
+    return carryIssue(def, plan.mean, c) ? "capacity" : null;
+  };
+  const planWouldBreak = (actor, counts) => {
+    const plan = state.plans[actor.id];
+    return !!plan && planInvalidReason(actor, plan, counts) !== null;
+  };
   const availableMeans = (actor) =>
     Object.entries(meansOf())
       .filter(([id]) => actorHasMean(actor, id))
-      .map(([id, def]) => ({ id, icon: def.icon, pace: def.pace }));
+      .map(([id, def]) => {
+        const issue = carryIssue(def, id, countMap(actor.items));
+        return { id, icon: def.icon, pace: def.pace, blocked: !!issue, reason: issue ? issue.reason : null };
+      });
   const computeTravelTime = (distance, meanId) => {
     const def = meansOf()[meanId];
     const pace = def && typeof def.pace === "number" ? def.pace : WALKING_PACE;
@@ -607,9 +694,15 @@ const create = (config = {}) => {
   const commitPlans = () => {
     if (!isRunning()) return false;
     let started = false;
+    const cancelled = [];
     for (const [actorId, plan] of Object.entries(state.plans)) {
       const actor = findActor(state.mission, actorId);
-      if (!actor) continue;
+      const reason = actor ? planInvalidReason(actor, plan) : "unknown";
+      if (reason) {
+        cancelled.push({ actorId, plan, reason });
+        delete state.plans[actorId];
+        continue;
+      }
       actor.activity = {
         kind: "transit",
         mean: plan.mean,
@@ -621,6 +714,7 @@ const create = (config = {}) => {
       delete state.plans[actorId];
       started = true;
     }
+    if (cancelled.length) emit("plans:cancelled", { cancelled });
     if (started) emit("plans:started", { startTime: state.internalTime });
     return started;
   };
@@ -685,7 +779,8 @@ const create = (config = {}) => {
       if (!findLocation(state.mission, destination)) return false;
       const means = availableMeans(actor);
       const mean = meanId || (means[0] && means[0].id);
-      if (!means.some((m) => m.id === mean)) return false;
+      const chosen = means.find((m) => m.id === mean);
+      if (!chosen || chosen.blocked) return false;
       state.plans[actorId] = buildPlan(actor, destination, distMatrix, mean, computeTravelTime);
       emit("plan:set", { actorId, plan: state.plans[actorId] });
       return true;
@@ -705,6 +800,13 @@ const create = (config = {}) => {
       // TODO: sólo actores idle pueden dar/recibir items; en el futuro un actor "at" podría recibir items incluso no estando idle?
       if (from.activity.kind !== "idle" || to.activity.kind !== "idle") return false;
       if (from.activity.at !== to.activity.at) return false;
+      if (!item) return false;
+      // Don't allow a transfer that would invalidate a pending plan.
+      const fromCounts = countMap(from.items);
+      fromCounts.set(item.id, Math.max(0, (fromCounts.get(item.id) || 0) - quantity));
+      const toCounts = countMap(to.items);
+      toCounts.set(item.id, (toCounts.get(item.id) || 0) + quantity);
+      if (planWouldBreak(from, fromCounts) || planWouldBreak(to, toCounts)) return false;
       if (!moveItem(from, to, item, quantity)) return false;
       emit("item:give", { from: fromActorId, to: toActorId, item, quantity });
       // Rules are only evaluated when a plan completes. If item transfers should
@@ -722,6 +824,9 @@ const create = (config = {}) => {
       const location = findLocation(state.mission, actor.activity.at);
       if (!location) return false;
       if (countItem(actor, item.id) < quantity) return false;
+      const dropCounts = countMap(actor.items);
+      dropCounts.set(item.id, Math.max(0, (dropCounts.get(item.id) || 0) - quantity));
+      if (planWouldBreak(actor, dropCounts)) return false;
       removeItems(actor, item.id, quantity);
       if (!location.items) location.items = [];
       for (let i = 0; i < quantity; i++) location.items.push(item);
@@ -737,6 +842,9 @@ const create = (config = {}) => {
       if (!location || !Array.isArray(location.items)) return false;
       const available = location.items.filter((it) => it.id === item.id).length;
       if (available < quantity) return false;
+      const takeCounts = countMap(actor.items);
+      takeCounts.set(item.id, (takeCounts.get(item.id) || 0) + quantity);
+      if (planWouldBreak(actor, takeCounts)) return false;
       let removed = 0;
       for (let i = location.items.length - 1; i >= 0 && removed < quantity; i--) {
         if (location.items[i].id === item.id) { location.items.splice(i, 1); removed++; }

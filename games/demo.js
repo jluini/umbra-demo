@@ -330,7 +330,7 @@ const config = {
     taxi:  { icon: "🚕", pace: 2.5, capacity: ["0:bike"], skills: [] },
     metro: { icon: "🚇", pace: 3, capacity: ["1:bike"], skills: ["walk"], cost: {  } },
     car_1: { icon: "🚗", pace: 3, items: ["car_1"], capacity: ["3:people", "0:bike"] },
-    car_2: { icon: "🚙", pace: 3, items: ["car2"], capacity: ["3:people", "0:bike"] },
+    car_2: { icon: "🚙", pace: 3, items: ["car_2"], capacity: ["3:people", "0:bike"] },
     van:   { icon: "🚐", pace: 3, items: ["van"], capacity: ["3:people|bike"] },
   },
   routes: [

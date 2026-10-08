@@ -517,6 +517,173 @@ check(tk.takeItem("bob", tk.getConfig().items.skate, 1) === false, "cannot take 
 check(tk.takeItem("ghost", tk.getConfig().items.skate, 1) === false, "unknown actor is rejected");
 tk.stop();
 
+// Mean capacity: how many "additional" items an actor may carry when traveling.
+const capConfig = (opts = {}) => ({
+  items: { bike: { carry: "optional" }, long: { carry: "optional" }, cider: {}, car: { carry: "none" } },
+  actors: { alice: { key: 1, skills: ["walk", "bike", "car"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: opts.means || {
+    walk: { icon: "🚶", pace: 10, capacity: ["1:bike"] },
+    bike: { icon: "🚲", pace: 4, items: ["bike"], capacity: ["0:bike|long"] },
+    taxi: { icon: "🚕", pace: 2.5, capacity: ["0:bike"], skills: [] },
+    metro: { icon: "🚇", pace: 3, capacity: ["1:bike"], skills: ["walk"] },
+    van: { icon: "🚐", pace: 3, items: ["car"], capacity: ["0:bike"], skills: ["car"] },
+  },
+  missions: {
+    cap: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a", items: opts.items || ["bike"] } },
+      locations: { a: {}, b: {} },
+    },
+  },
+});
+const capIds = (game) => game.getAvailableMeans("alice").map((m) => m.id + (m.blocked ? "!" : ""));
+
+const cap1 = window.Umbra.create(capConfig());
+cap1.start();
+check(capIds(cap1).join(",") === "walk,bike,taxi!,metro", "capacity: 1 bike -> taxi blocked (0:bike), bike ok (required exempt)");
+check(cap1.setPlan("alice", "b", "taxi") === false, "setPlan rejects a capacity-blocked mean");
+check(cap1.setPlan("alice", "b", "walk") === true, "setPlan allows a capacity-ok mean");
+cap1.stop();
+
+const cap2 = window.Umbra.create(capConfig({ items: ["bike", "bike"] }));
+cap2.start();
+check(capIds(cap2).join(",") === "walk!,bike!,taxi!,metro!", "capacity: 2 bikes -> walk/bike/taxi/metro blocked");
+cap2.stop();
+
+const cap3 = window.Umbra.create(capConfig({ items: ["car"] }));
+cap3.start();
+check(capIds(cap3).join(",") === "walk!,taxi!,metro!,van", "capacity: 'none' item blocked everywhere except when required");
+cap3.stop();
+
+// A required "none" item means exactly one: any extra unit is blocked too.
+const noneReqConfig = (items) => ({
+  items: { car_1: { carry: "none" }, cider: {} },
+  actors: { alice: { key: 1, skills: ["car"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: { car_1: { icon: "🚗", pace: 3, items: ["car_1"], skills: ["car"] } },
+  missions: {
+    n: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a", items } },
+      locations: { a: {}, b: {} },
+    },
+  },
+});
+const nr1 = window.Umbra.create(noneReqConfig(["car_1"]));
+nr1.start();
+check(nr1.getAvailableMeans("alice").map((m) => m.id + (m.blocked ? "!" : "")).join(",") === "car_1", "capacity: 1 required 'none' item -> ok");
+nr1.stop();
+const nr2 = window.Umbra.create(noneReqConfig(["car_1", "car_1"]));
+nr2.start();
+check(nr2.getAvailableMeans("alice").map((m) => m.id + (m.blocked ? "!" : "")).join(",") === "car_1!", "capacity: 2 required 'none' items -> blocked (excess counts)");
+nr2.stop();
+
+expectThrowConfig("capacity referencing a required item is rejected", capConfig({ means: { walk: { icon: "🚶", pace: 10, capacity: ["0:cider"] } } }));
+expectThrowConfig("capacity referencing a none item is rejected", capConfig({ means: { walk: { icon: "🚶", pace: 10, capacity: ["0:car"] } } }));
+expectThrowConfig("capacity referencing an unknown item is rejected", capConfig({ means: { walk: { icon: "🚶", pace: 10, capacity: ["0:ghost"] } } }));
+expectThrowConfig("capacity with invalid format is rejected", capConfig({ means: { walk: { icon: "🚶", pace: 10, capacity: ["bike"] } } }));
+expectThrowConfig("capacity with a non-numeric max is rejected", capConfig({ means: { walk: { icon: "🚶", pace: 10, capacity: ["x:bike"] } } }));
+const capPeople = window.Umbra.create(capConfig({ means: { walk: { icon: "🚶", pace: 10, capacity: ["3:people"] } } }));
+capPeople.start();
+check(capPeople.getStatus() === "running", "capacity reserved category 'people' is allowed");
+capPeople.stop();
+
+// Pending plans are protected: a transfer that would invalidate one is rejected.
+const invConfig = () => ({
+  items: { bike: { carry: "optional" }, cider: {} },
+  actors: { alice: { key: 1, skills: ["walk", "bike"] }, bob: { key: 2, skills: ["walk"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: {
+    walk: { icon: "🚶", pace: 10, capacity: ["1:bike"] },
+    bike: { icon: "🚲", pace: 4, items: ["bike"], capacity: ["0:bike"] },
+  },
+  missions: {
+    inv: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a", items: ["bike"] }, bob: { location: "a" } },
+      locations: { a: {}, b: {} },
+    },
+  },
+});
+const inv = window.Umbra.create(invConfig());
+inv.start();
+check(inv.setPlan("alice", "b", "bike") === true, "plan set via a mean that requires an item");
+check(inv.giveItem("alice", "bob", inv.getConfig().items.bike) === false, "giveItem rejected: would break the giver's plan");
+check(inv.dropItem("alice", inv.getConfig().items.bike) === false, "dropItem rejected: would break the plan");
+check(inv.cancelPlan("alice") === true, "plan cancelled");
+check(inv.giveItem("alice", "bob", inv.getConfig().items.bike) === true, "giveItem allowed once the plan is gone");
+inv.stop();
+
+const invTakeConfig = () => ({
+  items: { bike: { carry: "optional" }, cider: {} },
+  actors: { alice: { key: 1, skills: ["walk"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: {
+    walk: { icon: "🚶", pace: 10, capacity: ["1:bike"] },
+    taxi: { icon: "🚕", pace: 2.5, capacity: ["0:bike"], skills: [] },
+  },
+  missions: {
+    inv: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a" } },
+      locations: { a: { items: ["bike"] }, b: {} },
+    },
+  },
+});
+const invTake = window.Umbra.create(invTakeConfig());
+invTake.start();
+check(invTake.setPlan("alice", "b", "taxi") === true, "plan set via taxi (no bikes held)");
+check(invTake.takeItem("alice", invTake.getConfig().items.bike) === false, "takeItem rejected: would exceed the taxi capacity");
+check(invTake.cancelPlan("alice") === true, "plan cancelled");
+check(invTake.takeItem("alice", invTake.getConfig().items.bike) === true, "takeItem allowed once the plan is gone");
+invTake.stop();
+
+// Safety net: commitPlans revalidates and cancels invalid plans (e.g. via trade).
+const invTradeConfig = () => ({
+  items: { bike: { carry: "optional" }, cider: {} },
+  actors: { alice: { key: 1, skills: ["walk", "bike"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: { bike: { icon: "🚲", pace: 4, items: ["bike"], capacity: ["0:bike"] } },
+  missions: {
+    inv: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a", items: ["bike"] } },
+      locations: {
+        a: { trades: { sell: { cost: [{ item: "bike", quantity: 1 }], reward: [{ item: "cider", quantity: 1 }] } } },
+        b: {},
+      },
+    },
+  },
+});
+const invTrade = window.Umbra.create(invTradeConfig());
+invTrade.start();
+check(invTrade.setPlan("alice", "b", "bike") === true, "plan set before trade");
+check(invTrade.trade("alice", "a", "sell") === true, "trade removes the required item (unguarded for now)");
+let cancelledEvent = null;
+invTrade.on("plans:cancelled", (e) => { cancelledEvent = e; });
+invTrade.advance();
+check(cancelledEvent && cancelledEvent.cancelled.length === 1 && cancelledEvent.cancelled[0].actorId === "alice" && cancelledEvent.cancelled[0].reason === "mean",
+  "commitPlans cancels an invalid plan and emits plans:cancelled with a reason");
+check(invTrade.getActor("alice").activity.kind === "idle", "cancelled plan did not start transit");
+check(Object.keys(invTrade.getPlans()).length === 0, "cancelled plan cleared");
+invTrade.stop();
+
+// A valid plan commits normally (no cancellation event).
+const invOk = window.Umbra.create(invConfig());
+invOk.start();
+let okCancelled = false;
+invOk.on("plans:cancelled", () => { okCancelled = true; });
+invOk.setPlan("alice", "b", "walk");
+invOk.advance();
+check(!okCancelled && invOk.getActor("alice").activity.kind === "transit", "valid plan commits without cancellation");
+invOk.stop();
+
 if (failures > 0) {
   console.error(failures + " failure(s)");
   process.exit(1);
