@@ -40,6 +40,8 @@ const config = {
         coin: { name: "Coin" },
 
         // vehicles
+        skate: { name: "Skate" },
+        long:  { name: "Longboard" },
         bike:  { name: "Bike" },
         car_1: { name: "Red Car" },
         car_2: { name: "Blue Car" },
@@ -54,14 +56,16 @@ const config = {
         forest: { name: "Forest" },
       },
       means: {
-        walk:     { name: "TODO" },
-        bike:     { name: "TODO" },
-        skate:    { name: "TODO" },
-        taxi:     { name: "TODO" },
-        metro:    { name: "TODO" },
-        car_1:    { name: "TODO" },
-        car_2:    { name: "TODO" },
-        van:      { name: "TODO" }
+        walk:  { name: "TODO" },
+        taxi:  { name: "TODO" },
+        metro: { name: "TODO" },
+
+        skate: { name: "TODO" },
+        long:  { name: "TODO" },
+        bike:  { name: "TODO" },
+        car_1: { name: "TODO" },
+        car_2: { name: "TODO" },
+        van:   { name: "TODO" }
       },
       missions: {
         test: {
@@ -119,6 +123,8 @@ const config = {
         coin: { name: "Moneda" },
 
         // vehicles
+        skate: { name: "Patineta" },
+        long:  { name: "Longboard" },
         bike:  { name: "Bicicleta" },
         car_1: { name: "Auto Rojo" },
         car_2: { name: "Auto Azul" },
@@ -133,14 +139,15 @@ const config = {
         forest: { name: "Bosque" },
       },
       means: {
-        walk:     { name: "A pie" },
-        bike:     { name: "Bicicleta" },
-        skate:    { name: "Patineta" },
-        taxi:     { name: "Taxi" },
-        metro:    { name: "Metro" },
-        car_1:    { name: "Auto rojo"},
-        car_2:    { name: "Auto azul"},
-        van:      { name: "Camioneta"}
+        walk:  { name: "A pie" },
+        taxi:  { name: "Taxi" },
+        metro: { name: "Metro" },
+        skate: { name: "Patineta" },
+        long:  { name: "Longboard" },
+        bike:  { name: "Bicicleta" },
+        car_1: { name: "Auto rojo"},
+        car_2: { name: "Auto azul"},
+        van:   { name: "Camioneta"}
       },
       missions: {
         test: {
@@ -203,7 +210,9 @@ const config = {
         coin: { name: "Moeda" },
 
         // vehicles
-        bike:  { name: "Bicicleta" },
+        skate: { name: "TODO" },
+        long:  { name: "TODO" },
+        bike:  { name: "TODO" },
         car_1: { name: "TODO" },
         car_2: { name: "TODO" },
         van:   { name: "TODO" },
@@ -217,14 +226,16 @@ const config = {
         forest: { name: "Floresta" },
       },
       means: {
-        walk:     { name: "TODO" },
-        bike:     { name: "TODO" },
-        skate:    { name: "TODO" },
-        taxi:     { name: "TODO" },
-        metro:    { name: "TODO" },
-        car_1:    { name: "TODO" },
-        car_2:    { name: "TODO" },
-        van:      { name: "TODO" },
+        walk:  { name: "TODO" },
+        taxi:  { name: "TODO" },
+        metro: { name: "TODO" },
+
+        skate: { name: "TODO" },
+        long:  { name: "TODO" },
+        bike:  { name: "TODO" },
+        car_1: { name: "TODO" },
+        car_2: { name: "TODO" },
+        van:   { name: "TODO" },
       },
       plan: {
         walkTo: "Caminhar até...",
@@ -306,10 +317,10 @@ const config = {
   locations: {
     aliceHouse:   { pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x: 0, y: -300, width: 200, height: 200 } },
     bobHouse:     { pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x: -400, y: 0, width: 200, height: 200 } },
-    charlesHouse: { pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x:  400, y: 0, width: 200, height: 200 } },
+    charlesHouse: { pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x:  400, y: 0, width: 200, height: 200 }, itemSide: "right" },
     market:       { pictureUrl: "../games/demo/assets/locations/supermarket.svg", map: { x: 0, y:  300, width: 220, height: 220 } },
     square:       { map: { x:    0, y:    0, width: 260, height: 260 } },
-    forest:       { map: { x:  350, y:  350, width: 240, height: 240 } },
+    forest:       { map: { x:  350, y:  350, width: 240, height: 240 }, itemSide: "right" },
   },
   means: {
     walk:  { icon: "🚶", pace: 10, capacity: ["1:bike"] },
@@ -396,8 +407,8 @@ const config = {
       },
       locations: {
         aliceHouse: {},
-        bobHouse: {},
-        charlesHouse: {},
+        bobHouse: { items: ["car_1", "car_2", "van"] },
+        charlesHouse: { items: ["car_2"] },
         square: { items: ["van"] },
         forest: {},
         market: {},

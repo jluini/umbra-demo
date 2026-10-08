@@ -18,9 +18,10 @@ const TAP_THRESHOLD = 6;
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 // scene = {
-//   locations: [{ id, map:{x,y,width,height}, pictureUrl?, state?, badge? }],
+//   locations: [{ id, map:{x,y,width,height}, pictureUrl?, itemSide?, state?, badge? }],
 //   routes:    [{ from, to, active? }],
 //   tokens:    [{ id, at, color?, avatarUrl?, initial?, title? }],
+//   items:     [{ key, at, avatarHtml?, icon?, title? }],
 // }
 // state: "current" | "reachable" | "dim" | "selected"
 const createMobileMap = (viewport, options) => {
@@ -49,9 +50,10 @@ const createMobileMap = (viewport, options) => {
   // Reconciliation state.
   let builtSig = null;
   let layoutSig = null;
-  const locEls = new Map();   // locId -> { root, img, label, badge, occ }
+  const locEls = new Map();   // locId -> { root, img, label, badge, occ, loose }
   const routeEls = [];        // index -> <path>
   const occEls = new Map();   // actorId -> element
+  const itemEls = new Map();  // item key -> element
 
   /* ---------- layout ---------- */
 
@@ -166,6 +168,7 @@ const createMobileMap = (viewport, options) => {
     routeEls.length = 0;
     locEls.clear();
     occEls.clear();
+    itemEls.clear();
 
     for (const r of scene.routes || []) {
       const path = document.createElementNS(SVG_NS, "path");
@@ -206,6 +209,10 @@ const createMobileMap = (viewport, options) => {
       occ.className = "occupants";
       root.appendChild(occ);
 
+      const loose = document.createElement("div");
+      loose.className = "loose-items side-" + (loc.itemSide === "right" ? "right" : "left");
+      root.appendChild(loose);
+
       // A single handler; only acts while the marker is selectable (Fase A).
       if (onLocationClick) {
         root.addEventListener("click", (ev) => {
@@ -214,7 +221,7 @@ const createMobileMap = (viewport, options) => {
       }
 
       markersEl.appendChild(root);
-      locEls.set(loc.id, { root, img, label, badge, occ });
+      locEls.set(loc.id, { root, img, label, badge, occ, loose });
     }
   };
 
@@ -264,6 +271,26 @@ const createMobileMap = (viewport, options) => {
     }
   };
 
+  const reconcileItems = () => {
+    const desired = new Map();
+    for (const it of scene.items || []) desired.set(it.key, it);
+    for (const [key, el] of [...itemEls]) {
+      if (!desired.has(key)) { el.remove(); itemEls.delete(key); }
+    }
+    for (const [key, it] of desired) {
+      const host = locEls.get(it.at);
+      if (!host) continue;
+      let el = itemEls.get(key);
+      if (!el) {
+        if (!renderAvatar) continue;
+        el = renderAvatar(it, "item");
+        el.classList.add("loose-item");
+        itemEls.set(key, el);
+      }
+      if (el.parentNode !== host.loose) host.loose.appendChild(el);
+    }
+  };
+
   const applyState = () => {
     for (const loc of scene.locations) {
       const el = locEls.get(loc.id);
@@ -276,17 +303,20 @@ const createMobileMap = (viewport, options) => {
       root.classList.toggle("is-selectable", loc.state === "reachable");
       if (loc.badge != null) { el.badge.textContent = loc.badge; el.badge.hidden = false; }
       else { el.badge.hidden = true; }
+      el.loose.classList.toggle("side-right", loc.itemSide === "right");
+      el.loose.classList.toggle("side-left", loc.itemSide !== "right");
     }
     (scene.routes || []).forEach((r, i) => {
       const pathEl = routeEls[i];
       if (pathEl) pathEl.classList.toggle("active", !!r.active);
     });
     reconcileOccupants();
+    reconcileItems();
   };
 
   const render = (nextScene, nextI18n) => {
     if (nextScene) scene = nextScene;
-    if (!scene) scene = { locations: [], routes: [], tokens: [] };
+    if (!scene) scene = { locations: [], routes: [], tokens: [], items: [] };
     if (nextI18n) i18n = nextI18n;
 
     const sig = structuralSig();

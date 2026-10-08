@@ -399,6 +399,8 @@ function renderAvatar(entity, role) {
     img.alt = "";
     img.draggable = false;
     el.appendChild(img);
+  } else if (entity.avatarHtml) {
+    el.innerHTML = entity.avatarHtml;
   } else {
     el.textContent = entity.initial != null ? entity.initial : "";
   }
@@ -483,7 +485,7 @@ function buildScene() {
   const selecting = sheetMode === "destination" && actor && actor.activity.kind === "idle";
 
   const locations = mission.locations.map((l) => {
-    const entry = { id: l.id, map: l.map, pictureUrl: l.pictureUrl };
+    const entry = { id: l.id, map: l.map, pictureUrl: l.pictureUrl, itemSide: l.itemSide };
     if (selecting) {
       if (l.id === actor.activity.at) entry.state = "current";
       else {
@@ -522,7 +524,19 @@ function buildScene() {
       title: actorName(a.id),
     }));
 
-  return { locations, routes, tokens };
+  const items = [];
+  for (const l of mission.locations) {
+    (l.items || []).forEach((item, n) => {
+      items.push({
+        key: l.id + ":" + n,
+        at: l.id,
+        avatarHtml: itemIconHTML(item),
+        title: itemName(item.id),
+      });
+    });
+  }
+
+  return { locations, routes, tokens, items };
 }
 
 function renderMap() {

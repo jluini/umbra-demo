@@ -340,6 +340,23 @@
     cursor: pointer;
   }
 
+  /* Loose items lying in a location: a vertical column centered on the marker,
+     anchored fully to one side (mirror of the actor row below). */
+  .loose-items {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    pointer-events: none;
+  }
+  .loose-items.side-left { right: 100%; margin-right: 5px; }
+  .loose-items.side-right { left: 100%; margin-left: 5px; }
+  .loose-items .loose-item { pointer-events: auto; }
+  .av-item { --c: var(--line); background: var(--panel-2); width: 26px; height: 26px; border-width: 1.5px; border-radius: 7px; font-size: 12px; }
+  .av-item svg, .av-item img { width: 82%; height: 82%; display: block; object-fit: contain; }
+
   .transit-token {
     position: absolute;
     transform: translate(-50%, -50%);
