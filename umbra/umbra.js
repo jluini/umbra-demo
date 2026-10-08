@@ -248,6 +248,19 @@ const expandItems = (config, actorId, entries) => {
   return items;
 };
 
+// Config collections keyed by id: the key is the id, so entries must not carry
+// their own 'id'. It is injected here into the processed objects.
+const injectIds = (map) => {
+  const out = {};
+  for (const [id, def] of Object.entries(map || {})) {
+    if (Object.prototype.hasOwnProperty.call(def, "id")) {
+      throw new Error("umbra: config entry '" + id + "' must not define 'id' (the key is the id)");
+    }
+    out[id] = { ...def, id };
+  }
+  return out;
+};
+
 const buildActors = (config, mission, missionLocs) => {
   return Object.entries(mission.actors || {}).map(([id, entry]) => {
     if (Object.prototype.hasOwnProperty.call(entry, "id")) {
@@ -266,18 +279,19 @@ const buildActors = (config, mission, missionLocs) => {
   });
 };
 
-const normalizeLocationEntries = (entries) =>
-  (entries || []).map((entry) => (typeof entry === "string" ? { id: entry } : entry));
-
-// A mission selects locations (by id) and may override/augment any field of the
-// game-level location definition (shallow spread: the mission entry wins).
+// A mission selects locations keyed by id and may override/augment any field of
+// the game-level location definition (shallow spread: the mission entry wins).
+// The key is the id, so entries must not carry their own 'id'.
 const buildLocations = (config, missionDef) =>
-  normalizeLocationEntries(missionDef.locations).map((entry) => {
-    const base = config.locations[entry.id];
-    if (!base) {
-      throw new Error("umbra: mission references unknown location '" + entry.id + "'");
+  Object.entries(missionDef.locations || {}).map(([id, override]) => {
+    if (Object.prototype.hasOwnProperty.call(override, "id")) {
+      throw new Error("umbra: mission location '" + id + "' must not define 'id' (the key is the id)");
     }
-    return { ...base, ...entry };
+    const base = config.locations[id];
+    if (!base) {
+      throw new Error("umbra: mission references unknown location '" + id + "'");
+    }
+    return { ...base, ...override, id };
   });
 
 // --- Trades ---------------------------------------------------------------
@@ -439,7 +453,7 @@ const buildMission = (config, requestedIndex = getInitialMissionIndex()) => {
     throw new Error("umbra: initial mission '" + index + "' not found");
   }
 
-  const missionLocs = new Set(normalizeLocationEntries(missionDef.locations).map((l) => l.id));
+  const missionLocs = new Set(Object.keys(missionDef.locations || {}));
   const actors = buildActors(config, missionDef, missionLocs);
   const locations = buildLocations(config, missionDef);
   validateTrades(config, locations);
@@ -459,6 +473,13 @@ const buildMission = (config, requestedIndex = getInitialMissionIndex()) => {
 };
 
 const create = (config = {}) => {
+  config = {
+    ...config,
+    actors: injectIds(config.actors),
+    items: injectIds(config.items),
+    locations: injectIds(config.locations),
+    means: injectIds(config.means),
+  };
   let distMatrix = {};
 
   const state = {

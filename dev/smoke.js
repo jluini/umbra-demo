@@ -18,16 +18,16 @@ const check = (cond, label) => {
 };
 
 const config = {
-  items: { cider: { id: "cider" }, bread: { id: "bread" } },
+  items: { cider: {}, bread: {} },
   actors: {
-    alice: { id: "alice", key: 1, skills: ["walk", "bike", "car"] },
-    bob: { id: "bob", key: 2, skills: ["walk"] },
+    alice: { key: 1, skills: ["walk", "bike", "car"] },
+    bob: { key: 2, skills: ["walk"] },
   },
   locations: {
-    a: { id: "a" },
-    b: { id: "b" },
-    c: { id: "c" },
-    d: { id: "d" },
+    a: {},
+    b: {},
+    c: {},
+    d: {},
   },
   routes: [
     { from: "a", to: "b", distance: 1.5 },
@@ -48,7 +48,7 @@ const config = {
       alice: { location: "a", items: ["cider", "bread"] },
       bob: { location: "a" },
     },
-    locations: ["a", "b", "c"],
+    locations: { a: {}, b: {}, c: {} },
     briefing: [{ text: "missions.test.briefing.situation" }],
   }, {
     id: "test2",
@@ -58,7 +58,7 @@ const config = {
       alice: { location: "b", items: ["cider"] },
       bob: { location: "c" },
     },
-    locations: ["a", "b", "c"],
+    locations: { a: {}, b: {}, c: {} },
     briefing: [{ text: "missions.test2.briefing.situation" }],
   }],
 };
@@ -79,7 +79,11 @@ check(game.getMission().briefing.length === 1, "mission briefing structure passe
 check(game.getActor("alice").activity.kind === "idle", "actor starts idle");
 check(game.getActor("alice").activity.at === "a", "actor starts at its mission location");
 check(game.getActor("alice").id === "alice", "runtime actor id comes from the config key");
-check(game.getInventory("alice")[0] === config.items.cider, "starting inventory");
+check(game.getInventory("alice")[0].id === "cider", "starting inventory");
+check(game.getConfig().actors.alice.id === "alice", "config actor id injected from key");
+check(game.getConfig().items.cider.id === "cider", "config item id injected from key");
+check(game.getConfig().locations.a.id === "a", "config location id injected from key");
+check(game.getConfig().means.walk.id === "walk", "config mean id injected from key");
 
 check(game.distance("a", "c") === 3.5, "shortest path a->c is 3.5");
 check(game.distance("c", "a") === 3.5, "routes are bidirectional");
@@ -89,8 +93,8 @@ check(game.getAvailableMeans("bob").map((m) => m.id).join(",") === "walk,taxi,me
 check(game.getAvailableMeans("bob").every((m) => m.id !== "bike"), "bob cannot use bike (no item, no skill)");
 check(game.computeTravelTime(1.5, "bike") === 6, "bike time is 6 min for 1.5 km");
 
-check(game.giveItem("alice", "bob", config.items.cider) === true, "giveItem within same location");
-check(game.getInventory("bob").includes(config.items.cider), "bob received the cider");
+check(game.giveItem("alice", "bob", game.getConfig().items.cider) === true, "giveItem within same location");
+check(game.getInventory("bob").some((it) => it.id === "cider"), "bob received the cider");
 
 check(game.setPlan("alice", "d") === false, "setPlan rejected for a location outside the mission");
 check(game.setPlan("alice", "c") === true, "setPlan accepted");
@@ -115,8 +119,8 @@ check(Object.keys(game.getPlans()).length === 0, "no pending plans during transi
 check(game.setPlan("alice", "a") === false, "setPlan rejected while in transit");
 check(game.cancelPlan("alice") === false, "cancelPlan rejected while in transit");
 
-check(game.giveItem("alice", "bob", config.items.bread) === false, "giveItem rejected when sender is in transit");
-check(game.giveItem("bob", "alice", config.items.cider) === false, "giveItem rejected when recipient is in transit");
+check(game.giveItem("alice", "bob", game.getConfig().items.bread) === false, "giveItem rejected when sender is in transit");
+check(game.giveItem("bob", "alice", game.getConfig().items.cider) === false, "giveItem rejected when recipient is in transit");
 
 let arrival = null;
 game.on("plans:completed", ({ completed }) => { arrival = completed[0]; });
@@ -128,7 +132,7 @@ check(game.getActor("alice").activity.kind === "idle" && game.getActor("alice").
 check(game.getPlan("alice") === null, "no plan after arrival");
 check(game.canAdvance() === false, "canAdvance false once nothing is in progress");
 
-check(game.giveItem("alice", "bob", config.items.bread) === false, "giveItem rejected across different locations");
+check(game.giveItem("alice", "bob", game.getConfig().items.bread) === false, "giveItem rejected across different locations");
 
 check(game.stop().getStatus() === "ready", "stop -> ready");
 
@@ -156,8 +160,8 @@ game4.stop();
 // Reaching the deadline ends the mission in defeat.
 const deadlineConfig = {
   items: {},
-  actors: { alice: { id: "alice", key: 1 } },
-  locations: { a: { id: "a" }, b: { id: "b" } },
+  actors: { alice: { key: 1 } },
+  locations: { a: {}, b: {} },
   routes: [{ from: "a", to: "b", distance: 10 }],
   means: { walk: { icon: "🚶", pace: 10, skills: [] } },
   missions: [{
@@ -165,7 +169,7 @@ const deadlineConfig = {
     start: "2024-12-31T22:00:00",
     deadline: "2024-12-31T22:10:00",
     actors: { alice: { location: "a" } },
-    locations: ["a", "b"],
+    locations: { a: {}, b: {} },
   }],
 };
 const game5 = window.Umbra.create(deadlineConfig);
@@ -191,12 +195,12 @@ game5.stop();
 
 // Rules: victory/defeat conditions evaluated when a plan completes.
 const rulesConfig = {
-  items: { cider: { id: "cider" } },
+  items: { cider: {} },
   actors: {
-    alice: { id: "alice", key: 1 },
-    bob: { id: "bob", key: 2 },
+    alice: { key: 1 },
+    bob: { key: 2 },
   },
-  locations: { a: { id: "a" }, b: { id: "b" }, c: { id: "c" } },
+  locations: { a: {}, b: {}, c: {} },
   routes: [
     { from: "a", to: "b", distance: 1 },
     { from: "b", to: "c", distance: 1 },
@@ -211,7 +215,7 @@ const rulesConfig = {
         alice: { location: "a", items: [] },
         bob: { location: "c", items: [] },
       },
-      locations: ["a", "b", "c"],
+      locations: { a: {}, b: {}, c: {} },
       rules: [
         { effect: "victory", conditions: [{ kind: "actorsAt", actors: ["alice"], at: "b" }], message: "rules.victory" },
         { effect: "defeat", conditions: [{ kind: "actorsTogether", actors: ["alice", "bob"] }], message: "rules.defeat" },
@@ -225,7 +229,7 @@ const rulesConfig = {
         alice: { location: "a", items: [] },
         bob: { location: "a", items: [] },
       },
-      locations: ["a", "b", "c"],
+      locations: { a: {}, b: {}, c: {} },
       rules: [
         { effect: "victory", conditions: [{ kind: "actorsAt", actors: ["alice", "bob"], at: "b" }], message: "rules.victory" },
         { effect: "defeat", conditions: [{ kind: "actorsTogether", actors: ["alice", "bob"] }], message: "rules.defeat" },
@@ -292,12 +296,12 @@ expectStartThrow("empty conditions are rejected", [{ effect: "victory", conditio
 
 // Stackable items: quantities in starting items and partial transfers.
 const qtyConfig = {
-  items: { coin: { id: "coin", stackable: true }, cider: { id: "cider" } },
+  items: { coin: { stackable: true }, cider: {} },
   actors: {
-    alice: { id: "alice", key: 1 },
-    bob: { id: "bob", key: 2 },
+    alice: { key: 1 },
+    bob: { key: 2 },
   },
-  locations: { a: { id: "a" } },
+  locations: { a: {} },
   routes: [],
   missions: [{
     id: "qty",
@@ -307,7 +311,7 @@ const qtyConfig = {
       alice: { location: "a", items: ["coin:5", "cider"] },
       bob: { location: "a", items: [] },
     },
-    locations: ["a"],
+    locations: { a: {} },
   }],
 };
 
@@ -317,11 +321,11 @@ check(qg.getItemCount("alice", "coin") === 5, "starting quantity expands to N it
 check(qg.getInventory("alice").length === 6, "inventory holds N coins plus one cider");
 const qgGroups = qg.getItemGroups("alice");
 check(qgGroups.length === 2 && qgGroups[0].count === 5, "getItemGroups groups a stack");
-check(qg.giveItem("alice", "bob", qtyConfig.items.coin, 2) === true, "giveItem with quantity");
+check(qg.giveItem("alice", "bob", qg.getConfig().items.coin, 2) === true, "giveItem with quantity");
 check(qg.getItemCount("alice", "coin") === 3, "sender keeps the remainder");
 check(qg.getItemCount("bob", "coin") === 2, "receiver gets the quantity");
-check(qg.giveItem("alice", "bob", qtyConfig.items.coin, 10) === false, "giveItem rejects insufficient quantity");
-check(qg.giveItem("alice", "bob", qtyConfig.items.cider) === true, "giveItem defaults to quantity 1");
+check(qg.giveItem("alice", "bob", qg.getConfig().items.coin, 10) === false, "giveItem rejects insufficient quantity");
+check(qg.giveItem("alice", "bob", qg.getConfig().items.cider) === true, "giveItem defaults to quantity 1");
 qg.stop();
 
 const qtyConfigWith = (items) => ({
@@ -339,41 +343,50 @@ const expectThrowConfig = (label, cfg) => {
   try { window.Umbra.create(cfg).start(); } catch { threw = true; }
   check(threw, label);
 };
+const idConfig = (patch) => ({
+  items: {},
+  actors: { alice: { key: 1 } },
+  locations: { a: {} },
+  routes: [],
+  means: { walk: { icon: "🚶", pace: 10, skills: [] } },
+  missions: [{ id: "x", start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00", actors: { alice: { location: "a" } }, locations: { a: {} } }],
+  ...patch,
+});
 expectThrowConfig("zero quantity is rejected", qtyConfigWith(["coin:0"]));
 expectThrowConfig("fractional quantity is rejected", qtyConfigWith(["coin:1.5"]));
 expectThrowConfig("unknown item in starting items is rejected", qtyConfigWith(["nope:1"]));
 expectThrowConfig("stackable without a quantity is rejected", qtyConfigWith(["coin"]));
 expectThrowConfig("non-stackable with a quantity is rejected", qtyConfigWith(["cider:3"]));
 expectThrowConfig("non-numeric quantity is rejected", qtyConfigWith(["coin:x"]));
-expectThrowConfig("mission actor entry must not define 'id'", {
-  items: {},
-  actors: { alice: { id: "alice", key: 1 } },
-  locations: { a: { id: "a" } },
-  routes: [],
-  missions: [{
-    id: "x", start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
-    actors: { alice: { location: "a", id: "alice" } },
-    locations: ["a"],
-  }],
-});
+expectThrowConfig("mission actor entry must not define 'id'", idConfig({
+  missions: [{ id: "x", start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00", actors: { alice: { location: "a", id: "alice" } }, locations: { a: {} } }],
+}));
+expectThrowConfig("config actor must not define 'id'", idConfig({ actors: { alice: { key: 1, id: "alice" } } }));
+expectThrowConfig("config item must not define 'id'", idConfig({ items: { cider: { id: "cider" } } }));
+expectThrowConfig("config location must not define 'id'", idConfig({ locations: { a: { id: "a" } } }));
+expectThrowConfig("config mean must not define 'id'", idConfig({ means: { walk: { id: "walk", icon: "🚶", pace: 10, skills: [] } } }));
+expectThrowConfig("mission location override must not define 'id'", idConfig({
+  missions: [{ id: "x", start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00", actors: { alice: { location: "a" } }, locations: { a: { id: "a" } } }],
+}));
 
-// Trades: mission location entries (string or object) and item exchanges.
+// Trades: mission locations keyed by id and item exchanges.
 const tradesConfig = {
-  items: { coin: { id: "coin", stackable: true }, cider: { id: "cider" } },
-  actors: { alice: { id: "alice", key: 1 } },
-  locations: { shop: { id: "shop", map: { x: 0, y: 0, width: 10, height: 10 } } },
+  items: { coin: { stackable: true }, cider: {} },
+  actors: { alice: { key: 1 } },
+  locations: { shop: { map: { x: 0, y: 0, width: 10, height: 10 } } },
   routes: [],
   missions: [{
     id: "trade",
     start: "2024-12-31T22:00:00",
     deadline: "2025-01-01T00:00:00",
     actors: { alice: { location: "shop", items: ["coin:5"] } },
-    locations: [{
-      id: "shop",
-      trades: [
-        { id: "cider", cost: [{ item: "coin", quantity: 3 }], reward: [{ item: "cider", quantity: 1 }] },
-      ],
-    }],
+    locations: {
+      shop: {
+        trades: [
+          { id: "cider", cost: [{ item: "coin", quantity: 3 }], reward: [{ item: "cider", quantity: 1 }] },
+        ],
+      },
+    },
   }],
 };
 
@@ -397,7 +410,7 @@ const tradesConfigWith = (trades) => ({
   ...tradesConfig,
   missions: [{
     ...tradesConfig.missions[0],
-    locations: [{ id: "shop", trades }],
+    locations: { shop: { trades } },
   }],
 });
 expectThrowConfig("trade with unknown item is rejected", tradesConfigWith([{ id: "x", cost: [{ item: "nope", quantity: 1 }], reward: [] }]));

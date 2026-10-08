@@ -8,9 +8,9 @@ const config = {
     es: { actors: "Rockers", items: "Objetos", alicia: "Alicia", bob: "Rober", carlos: "Carlos" },
   },
   actors: {
-    alicia: { id: "alicia", key: 1 },
-    bob: { id: "bob", key: 2 },
-    carlos: { id: "carlos", key: 3 },
+    alicia: { key: 1 },
+    bob: { key: 2 },
+    carlos: { key: 3 },
   },
   missions: [
     {

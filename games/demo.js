@@ -275,42 +275,41 @@ const config = {
     },
   },
   actors: {
-    alice:   { id: "alice",   key: 1, color: "#e94560", skills: ["walk"], avatarUrl: "../games/demo/assets/actors/girl2.svg",  avatar: avatarSilhouette("#e94560", /* { style: "long", color: "#7a4a24" } */) },
-    bob:     { id: "bob",     key: 2, color: "#4ea1d3", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/boy.svg",    avatar: avatarSilhouette("#4ea1d3") },
-    charles: { id: "charles", key: 3, color: "#e0a458", skills: ["walk", "bike", "skate", "long"], avatarUrl: "../games/demo/assets/actors/male2.svg",  avatar: avatarSilhouette("#e0a458", /*{ style: "short", color: "#c9a24a" } */) },
-    dave:    { id: "dave",    key: 4, color: "#6ab04c", skills: [], avatarUrl: "../games/demo/assets/actors/boy2.svg",   avatar: avatarSilhouette("#6ab04c") },
-    elena:   { id: "elena",   key: 5, color: "#000000", skills: ["car", "bike"], avatarUrl: "../games/demo/assets/actors/girl.svg" },
-    fiona:   { id: "fiona",   key: 6, color: "#000000", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/female_hippie.svg" },
-    george:  { id: "george",  key: 7, color: "#000000", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/male_professional.svg" },
+    alice:   { key: 1, color: "#e94560", skills: ["walk"], avatarUrl: "../games/demo/assets/actors/girl2.svg",  avatar: avatarSilhouette("#e94560", /* { style: "long", color: "#7a4a24" } */) },
+    bob:     { key: 2, color: "#4ea1d3", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/boy.svg",    avatar: avatarSilhouette("#4ea1d3") },
+    charles: { key: 3, color: "#e0a458", skills: ["walk", "bike", "skate", "long"], avatarUrl: "../games/demo/assets/actors/male2.svg",  avatar: avatarSilhouette("#e0a458", /*{ style: "short", color: "#c9a24a" } */) },
+    dave:    { key: 4, color: "#6ab04c", skills: [], avatarUrl: "../games/demo/assets/actors/boy2.svg",   avatar: avatarSilhouette("#6ab04c") },
+    elena:   { key: 5, color: "#000000", skills: ["car", "bike"], avatarUrl: "../games/demo/assets/actors/girl.svg" },
+    fiona:   { key: 6, color: "#000000", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/female_hippie.svg" },
+    george:  { key: 7, color: "#000000", skills: ["walk", "bike"], avatarUrl: "../games/demo/assets/actors/male_professional.svg" },
   },
   items: {
-    cider: { id: "cider", avatarString: "🍾" },
-    bike: { id: "bike", avatar: bikeIcon(), avatarString: "🚲", /* avatarSize: "2.2rem" */ },
-    chocolates: { id: "chocolates", avatarString: "🍫" },
-    diamond: { id: "diamond", avatarString: "🔷" },
-    key: { id: "key", avatar: keyIcon },
-    redPotion: { id: "redPotion", avatar: potionIcon("#c62f4c") },
-    bluePotion: { id: "bluePotion", avatar: potionIcon("#3a83ad") },
-    yellowPotion: { id: "yellowPotion", avatar: potionIcon("#c9a93a") },
-    greenPotion: { id: "greenPotion", avatar: potionIcon("#558f3c") },
-    starCoin: { id: "starCoin", avatar: starCoinIcon },
-    coin: { id: "coin", stackable: true, avatarString: "🪙", avatar: coinIcon, /* avatarSize: "2.2rem" */ },
+    cider: { avatarString: "🍾" },
+    chocolates: { avatarString: "🍫" },
+    diamond: { avatarString: "🔷" },
+    key: { avatar: keyIcon },
+    redPotion: { avatar: potionIcon("#c62f4c") },
+    bluePotion: { avatar: potionIcon("#3a83ad") },
+    yellowPotion: { avatar: potionIcon("#c9a93a") },
+    greenPotion: { avatar: potionIcon("#558f3c") },
+    starCoin: { avatar: starCoinIcon },
+    coin: { stackable: true, avatarString: "🪙", avatar: coinIcon, /* avatarSize: "2.2rem" */ },
 
     // vehicles
-    skate: { id: "skate", avatarString: "🛹" },
-    long:  { id: "long",  avatarString: "🏄‍♂️", detachable: true },
-    bike:  { id: "bike",  avatarString: "🚲", detachable: true /*avatar: bikeIcon(),*/ /* avatarSize: "2.2rem" */ },
-    car_1: { id: "car_1", avatarString: "🚗", portable: false }, // no se pueden "llevar"
-    car_2: { id: "car_2", avatarString: "🚙", portable: false },
-    van:   { id: "van",   avatarString: "🚐", portable: false },
+    skate: { avatarString: "🛹" },
+    long:  { avatarString: "🏄‍♂️", detachable: true },
+    bike:  { avatarString: "🚲", detachable: true /*avatar: bikeIcon(),*/ /* avatarSize: "2.2rem" */ },
+    car_1: { avatarString: "🚗", portable: false }, // no se pueden "llevar"
+    car_2: { avatarString: "🚙", portable: false },
+    van:   { avatarString: "🚐", portable: false },
   },
   locations: {
-    aliceHouse:   { id: "aliceHouse",   pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x: 0, y: -300, width: 200, height: 200 } },
-    bobHouse:     { id: "bobHouse",     pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x: -400, y: 0, width: 200, height: 200 } },
-    charlesHouse: { id: "charlesHouse", pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x:  400, y: 0, width: 200, height: 200 } },
-    market:       { id: "market",       pictureUrl: "../games/demo/assets/locations/supermarket.svg", map: { x: 0, y:  300, width: 220, height: 220 } },
-    square:       { id: "square",       map: { x:    0, y:    0, width: 260, height: 260 } },
-    forest:       { id: "forest",       map: { x:  350, y:  350, width: 240, height: 240 } },
+    aliceHouse:   { pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x: 0, y: -300, width: 200, height: 200 } },
+    bobHouse:     { pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x: -400, y: 0, width: 200, height: 200 } },
+    charlesHouse: { pictureUrl: "../games/demo/assets/locations/blue_house.svg", map: { x:  400, y: 0, width: 200, height: 200 } },
+    market:       { pictureUrl: "../games/demo/assets/locations/supermarket.svg", map: { x: 0, y:  300, width: 220, height: 220 } },
+    square:       { map: { x:    0, y:    0, width: 260, height: 260 } },
+    forest:       { map: { x:  350, y:  350, width: 240, height: 240 } },
   },
   means: {
     walk:  { icon: "🚶", pace: 10, capacity: ["1:bike"] },
@@ -351,17 +350,16 @@ const config = {
         bob: { location: "aliceHouse", items: ["coin:104"] },
         charles: { location: "charlesHouse", items: ["coin:6", "cider"] },
       },
-      locations: [
-        { id: "aliceHouse" },
-        { id: "charlesHouse" },
-        {
-          id: "market",
+      locations: {
+        aliceHouse: {},
+        charlesHouse: {},
+        market: {
           trades: [
             { id: "cider", cost: [{ item: "coin", quantity: 3 }], reward: [{ item: "cider", quantity: 1 }] },
             { id: "bike", cost: [{ item: "coin", quantity: 10 }], reward: [{ item: "bike", quantity: 1 }] },
           ]
         }
-      ],
+      },
       rules: [
         {
           effect: "victory",                                                              // win condition
@@ -398,7 +396,9 @@ const config = {
         fiona: { location: "square" },
         george: { location: "forest" }
       },
-      locations: ["aliceHouse", "bobHouse", "charlesHouse", "square", "forest", "market"],
+      locations: {
+        aliceHouse: {}, bobHouse: {}, charlesHouse: {}, square: {}, forest: {}, market: {},
+      },
       briefing: [
         { text: ".situation" },
         { label: "briefingLabels.goal", text: ".goal" },
