@@ -411,6 +411,33 @@ check(tg.canTrade("alice", "shop", "nope").reason === "unknown", "unknown trade 
 check(tg.canTrade("alice", "elsewhere", "cider").reason === "notHere", "wrong location is reported");
 tg.stop();
 
+// Trading is not allowed while the actor has a pending plan.
+const tradePlanConfig = {
+  items: { coin: { stackable: true }, cider: {} },
+  actors: { alice: { key: 1, skills: ["walk"] } },
+  locations: { shop: {}, home: {} },
+  routes: [{ from: "shop", to: "home", distance: 1 }],
+  means: { walk: { icon: "🚶", pace: 10, skills: [] } },
+  missions: {
+    tp: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "shop", items: ["coin:5"] } },
+      locations: {
+        shop: { trades: { cider: { cost: [{ item: "coin", quantity: 3 }], reward: [{ item: "cider", quantity: 1 }] } } },
+        home: {},
+      },
+    },
+  },
+};
+const tp = window.Umbra.create(tradePlanConfig);
+tp.start();
+tp.setPlan("alice", "home", "walk");
+check(tp.canTrade("alice", "shop", "cider").reason === "hasPlan", "trade blocked while a plan is pending (hasPlan)");
+check(tp.trade("alice", "shop", "cider") === false, "trade rejected while a plan is pending");
+tp.cancelPlan("alice");
+check(tp.canTrade("alice", "shop", "cider").ok === true && tp.trade("alice", "shop", "cider") === true, "trade allowed once the plan is gone");
+tp.stop();
+
 const tradesConfigWith = (trades) => ({
   ...tradesConfig,
   missions: {
@@ -643,36 +670,9 @@ check(invTake.cancelPlan("alice") === true, "plan cancelled");
 check(invTake.takeItem("alice", invTake.getConfig().items.bike) === true, "takeItem allowed once the plan is gone");
 invTake.stop();
 
-// Safety net: commitPlans revalidates and cancels invalid plans (e.g. via trade).
-const invTradeConfig = () => ({
-  items: { bike: { carry: "optional" }, cider: {} },
-  actors: { alice: { key: 1, skills: ["walk", "bike"] } },
-  locations: { a: {}, b: {} },
-  routes: [{ from: "a", to: "b", distance: 1 }],
-  means: { bike: { icon: "🚲", pace: 4, items: ["bike"], capacity: ["0:bike"] } },
-  missions: {
-    inv: {
-      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
-      actors: { alice: { location: "a", items: ["bike"] } },
-      locations: {
-        a: { trades: { sell: { cost: [{ item: "bike", quantity: 1 }], reward: [{ item: "cider", quantity: 1 }] } } },
-        b: {},
-      },
-    },
-  },
-});
-const invTrade = window.Umbra.create(invTradeConfig());
-invTrade.start();
-check(invTrade.setPlan("alice", "b", "bike") === true, "plan set before trade");
-check(invTrade.trade("alice", "a", "sell") === true, "trade removes the required item (unguarded for now)");
-let cancelledEvent = null;
-invTrade.on("plans:cancelled", (e) => { cancelledEvent = e; });
-invTrade.advance();
-check(cancelledEvent && cancelledEvent.cancelled.length === 1 && cancelledEvent.cancelled[0].actorId === "alice" && cancelledEvent.cancelled[0].reason === "mean",
-  "commitPlans cancels an invalid plan and emits plans:cancelled with a reason");
-check(invTrade.getActor("alice").activity.kind === "idle", "cancelled plan did not start transit");
-check(Object.keys(invTrade.getPlans()).length === 0, "cancelled plan cleared");
-invTrade.stop();
+// Note: with all inventory mutators (give/drop/take/trade) guarded against
+// pending plans, a plan cannot become invalid through the public API, so the
+// commitPlans revalidation is defensive (kept, but not reachable here).
 
 // A valid plan commits normally (no cancellation event).
 const invOk = window.Umbra.create(invConfig());

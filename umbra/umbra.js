@@ -700,6 +700,7 @@ const create = (config = {}) => {
     const actor = findActor(state.mission, actorId);
     if (!actor) return { ok: false, reason: "unknownActor" };
     if (actor.activity.kind !== "idle") return { ok: false, reason: "busy" };
+    if (state.plans[actorId]) return { ok: false, reason: "hasPlan" };
     if (actor.activity.at !== locationId) return { ok: false, reason: "notHere" };
     const trade = findTrade(state.mission, locationId, tradeId);
     if (!trade) return { ok: false, reason: "unknown" };

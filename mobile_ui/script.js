@@ -26,6 +26,9 @@ const uiTranslations = {
       confirmSwitchMessage: "Vas a perder el progreso actual y la misión empezará de nuevo.",
       changeMission: "Cambiar",
       moveTo: "Moverse a…",
+      trade: "Intercambiar",
+      cost: "por",
+      missingCost: "Faltan objetos para este intercambio.",
       chooseDestination: "Elegir destino",
       map: "Mapa",
       list: "Lista",
@@ -103,7 +106,7 @@ let advancing = false;
 let advanceTimer = null;
 let confirmAction = null;
 let selectedActorId = null;
-let sheetMode = "idle"; // idle | destination | means
+let sheetMode = "idle"; // idle | destination | means | trade
 let selectedDestId = null;
 let listView = false;
 let inventoryOpen = false;
@@ -177,11 +180,17 @@ function closeMenu() { menuEl.hidden = true; }
 function showResult() { resultEl.hidden = false; }
 function hideResult() { resultEl.hidden = true; }
 
-function openConfirm({ titleKey, messageKey, acceptKey, onAccept }) {
+function setConfirmText(el, key, literal) {
+  if (key != null) { Presentation.setI18nText(el, key, activeI18n); return; }
+  el.removeAttribute("data-i18n");
+  el.textContent = literal == null ? "" : literal;
+}
+
+function openConfirm({ titleKey, messageKey, acceptKey, title, message, accept, onAccept }) {
   confirmAction = onAccept;
-  Presentation.setI18nText(confirmTitle, titleKey, activeI18n);
-  Presentation.setI18nText(confirmMessage, messageKey, activeI18n);
-  Presentation.setI18nText(confirmAccept, acceptKey, activeI18n);
+  setConfirmText(confirmTitle, titleKey, title);
+  setConfirmText(confirmMessage, messageKey, message);
+  setConfirmText(confirmAccept, acceptKey, accept);
   confirmEl.hidden = false;
 }
 
@@ -233,6 +242,7 @@ function loadGame(gameConfig) {
     activeEngine.on("item:give", onItemsChanged);
     activeEngine.on("item:drop", onItemsChanged);
     activeEngine.on("item:take", onItemsChanged);
+    activeEngine.on("item:trade", onItemsChanged);
     activeEngine.on("mission:end", onMissionEnd);
     activeEngine.on("mission:reset", resetGameUI);
   }
@@ -720,7 +730,32 @@ function idleSheetHTML(a) {
       Presentation.formatDateTime(arrival, lang(), "time") + "</small></div>" +
       '<button class="x" data-action="cancel-plan">✕</button></div>';
   }
-  return '<div class="item-actions"><button class="primary" data-action="move">' + esc(t("ui.moveTo")) + "</button></div>";
+  let html = '<button class="primary" data-action="move">' + esc(t("ui.moveTo")) + "</button>";
+  if (activeEngine.getTrades(a.activity.at).length > 0) {
+    html += '<button class="primary" data-action="open-trades">' + esc(t("ui.trade")) + "</button>";
+  }
+  return '<div class="item-actions">' + html + "</div>";
+}
+
+function tradeRowHTML(a, trade) {
+  const reward = trade.reward || [];
+  const first = reward[0] ? activeEngine.getConfig().items[reward[0].item] : null;
+  const title = trade.label || (first ? itemName(first.id) : "");
+  const extra = reward.length > 1 ? " ×" + reward.reduce((n, e) => n + e.quantity, 0) : "";
+  const cost = (trade.cost || []).map((e) => e.quantity + " × " + itemName(e.item)).join(" + ");
+  const ok = activeEngine.canTrade(a.id, a.activity.at, trade.id).ok;
+  const note = ok ? esc(t("ui.cost")) + " " + esc(cost) : esc(t("ui.missingCost"));
+  return '<button class="mean-row' + (ok ? "" : " disabled") + '"' + (ok ? ' data-action="do-trade" data-trade="' + trade.id + '"' : "") + ">" +
+    '<span class="mi">' + itemIconHTML(first) + "</span>" +
+    '<span class="mn">' + esc(title) + extra + '<small>' + note + "</small></span></button>";
+}
+
+function tradeSheetHTML(a) {
+  const trades = activeEngine.getTrades(a.activity.at);
+  return '<div class="phase-bar">' +
+    '<button class="icon-btn" data-action="cancel-trades">←</button>' +
+    '<span class="phase-title">' + esc(t("ui.trade")) + " · " + esc(locationName(a.activity.at)) + "</span></div>" +
+    '<div class="means-list">' + trades.map((tr) => tradeRowHTML(a, tr)).join("") + "</div>";
 }
 
 function reachableList() {
@@ -791,6 +826,7 @@ function renderSheet() {
     html = actorHeaderHTML(a);
     if (sheetMode === "destination") html += destinationSheetHTML();
     else if (sheetMode === "means") html += meansSheetHTML(a);
+    else if (sheetMode === "trade") html += tradeSheetHTML(a);
     else html += idleSheetHTML(a);
   }
   sheetBody.innerHTML = html;
@@ -842,6 +878,42 @@ function cancelDestination() {
   selectedDestId = null;
   listView = false;
   refresh();
+}
+
+function openTrades() {
+  const a = activeEngine.getActor(selectedActorId);
+  if (!a || a.activity.kind !== "idle" || activeEngine.getPlan(a.id)) return;
+  sheetMode = "trade";
+  inventoryOpen = false;
+  selectedItemId = null;
+  giveMode = false;
+  selectedLooseItem = null;
+  takeMode = false;
+  refresh();
+}
+
+function cancelTrades() {
+  sheetMode = "idle";
+  refresh();
+}
+
+function tradeTerms(trade) {
+  const cost = (trade.cost || []).map((e) => e.quantity + " × " + itemName(e.item)).join(" + ");
+  const reward = (trade.reward || []).map((e) => e.quantity + " × " + itemName(e.item)).join(" + ");
+  return cost + " " + t("ui.cost") + " " + reward;
+}
+
+function doTrade(tradeId) {
+  const a = activeEngine.getActor(selectedActorId);
+  if (!a || !tradeId) return;
+  const trade = activeEngine.getTrades(a.activity.at).find((tr) => tr.id === tradeId);
+  if (!trade) return;
+  openConfirm({
+    title: t("ui.trade"),
+    message: tradeTerms(trade),
+    accept: t("ui.trade"),
+    onAccept: () => { activeEngine.trade(a.id, a.activity.at, tradeId); refresh(); },
+  });
 }
 
 function chooseDest(locId) {
@@ -1049,6 +1121,9 @@ sheetBody.addEventListener("click", (e) => {
   else if (action === "take") { takeMode = true; refresh(); }
   else if (action === "cancel-take") { takeMode = false; refresh(); }
   else if (action === "take-to") takeTo(btn.dataset.actor);
+  else if (action === "open-trades") openTrades();
+  else if (action === "cancel-trades") cancelTrades();
+  else if (action === "do-trade") doTrade(btn.dataset.trade);
 });
 
 inventoryBar.addEventListener("click", (e) => {
