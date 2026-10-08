@@ -282,13 +282,22 @@ const createMobileMap = (viewport, options) => {
       const host = locEls.get(it.at);
       if (!host) continue;
       let el = itemEls.get(key);
+      // Rebuild if missing or if the index now holds a different item, so the
+      // reused node never shows stale content nor a stale click target.
+      if (el && el.__itemId !== it.itemId) { el.remove(); itemEls.delete(key); el = null; }
       if (!el) {
         if (!renderAvatar) continue;
         el = renderAvatar(it, "item");
         el.classList.add("loose-item");
-        if (onItemClick) el.addEventListener("click", (ev) => { ev.stopPropagation(); onItemClick(it.at, it.itemId, key, ev); });
+        el.__itemId = it.itemId;
+        if (onItemClick) el.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          const cur = el.__item;
+          if (cur) onItemClick(cur.at, cur.itemId, cur.key, ev);
+        });
         itemEls.set(key, el);
       }
+      el.__item = it;
       el.classList.toggle("sel", !!it.selected);
       if (el.parentNode !== host.loose) host.loose.appendChild(el);
     }
