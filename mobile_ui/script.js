@@ -601,9 +601,9 @@ function renderInventory() {
 function itemHeaderHTML(a, itemId) {
   const item = activeEngine.getConfig().items[itemId] || { id: itemId };
   const name = item.stackable ? activeEngine.getItemCount(a.id, itemId) + " " + itemName(itemId) : itemName(itemId);
-  return '<div class="sheet-title"><span class="av av-head item-head">' + itemIconHTML(item) +
+  return '<div class="sheet-title"><span class="av av-head" style="--c:var(--item-color); --c-bg:var(--panel-2)">' + itemIconHTML(item) +
     "</span><h2>" + esc(name) + '</h2><span class="at">· ' + esc(actorName(a.id)) +
-    '</span><span class="at loc">· ' + esc(locationName(a.activity.at)) + "</span></div>";
+    '</span><span class="at">· ' + esc(locationName(a.activity.at)) + "</span></div>";
 }
 
 function itemActionsHTML(a) {
@@ -636,8 +636,8 @@ function givePanelHTML(a) {
 // A loose (location) item: subject first, then its location as context.
 function looseItemHeaderHTML(locationId, itemId) {
   const item = activeEngine.getConfig().items[itemId] || { id: itemId };
-  return '<div class="sheet-title"><span class="av av-head item-head">' + itemIconHTML(item) +
-    '</span><h2>' + esc(itemName(itemId)) + '</h2><span class="at loc">· ' +
+  return '<div class="sheet-title"><span class="av av-head" style="--c:var(--item-color); --c-bg:var(--panel-2)">' + itemIconHTML(item) +
+    '</span><h2>' + esc(itemName(itemId)) + '</h2><span class="at">· ' +
     esc(locationName(locationId)) + "</span></div>";
 }
 
@@ -669,7 +669,7 @@ function takePanelHTML() {
 function actorHeaderHTML(a) {
   return '<div class="sheet-title"><span class="av av-head" style="--c:' + a.preset.color + '">' +
     '<img src="' + a.preset.avatarUrl + '" alt=""></span><h2>' + esc(actorName(a.id)) + "</h2>" +
-    '<span class="at loc">· ' + esc(locationName(a.activity.at)) + "</span></div>";
+    '<span class="at">· ' + esc(locationName(a.activity.at)) + "</span></div>";
 }
 
 function idleSheetHTML(a) {
@@ -1026,6 +1026,7 @@ function boot() {
 
   playBtn.disabled = false;
   document.documentElement.style.setProperty("--sheet-h", "auto");
+  document.documentElement.dataset.cr = Flags.get("cr", "a1") === "a2" ? "a2" : "a1";
   loadGame(games[name].config);
   const requested = params.get("lang") || defaults.lang;
   const languages = activeI18n.languages();

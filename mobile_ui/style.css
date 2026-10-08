@@ -10,6 +10,7 @@
     --accent-2: #38d39f;
     --danger: #ff5c7a;
     --warn: #ffb454;
+    --item-color: var(--line);
     --sheet-h: 300px;
     --radius: 16px;
     color-scheme: dark;
@@ -135,10 +136,13 @@
     animation: bubbleIn 0.34s cubic-bezier(0.2, 0.8, 0.25, 1.2) both;
   }
 
-  /* Item mode header (sheet): item icon + name, in place of the actor. */
-  /* Subject icon in the sheet header: item icons reuse the actor avatar box. */
-  .sheet-title .item-head { --c: var(--line); background: var(--panel-2); font-size: 1.05rem; line-height: 1; }
-  .sheet-title .item-head svg, .sheet-title .item-head img { width: 62%; height: 62%; display: block; }
+  /* Subject icon in the sheet header (same component for actors and items; only
+     the data differs: image/icon and --c). Variant cr=a1 (default): bare;
+     cr=a2: boxed. Both keep the 36px footprint. */
+  .sheet-title .av-head { background: transparent; border: none; font-size: 1.6rem; line-height: 1; }
+  .sheet-title .av-head img, .sheet-title .av-head svg { width: 1.6rem; height: 1.6rem; display: block; }
+  [data-cr="a2"] .sheet-title .av-head { background: var(--c-bg, color-mix(in srgb, var(--c) 30%, #c9d3df)); border: 2px solid var(--c); font-size: 1.4rem; }
+  [data-cr="a2"] .sheet-title .av-head img, [data-cr="a2"] .sheet-title .av-head svg { width: 70%; height: 70%; }
 
   .avatar-btn {
     flex: 0 0 auto;
@@ -455,7 +459,8 @@
   .sheet-title { display: flex; align-items: center; flex-wrap: wrap; row-gap: 2px; gap: 9px; margin-bottom: 14px; }
   .sheet-title h2 { font-size: 1.05rem; }
   .sheet-title .at { color: var(--muted); font-size: 0.85rem; }
-  .sheet-title .at.loc { font-size: 0.78rem; }
+  /* Hierarchy by order: any context after another (3rd element onward) is darker. */
+  .sheet-title .at ~ .at { color: color-mix(in srgb, var(--muted) 58%, var(--panel)); }
   .sheet-body .activity, .sheet-body .item-detail { margin-top: 0; }
 
   .section-label {
