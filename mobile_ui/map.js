@@ -21,13 +21,14 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 //   locations: [{ id, map:{x,y,width,height}, pictureUrl?, itemSide?, state?, badge? }],
 //   routes:    [{ from, to, active? }],
 //   tokens:    [{ id, at, color?, avatarUrl?, initial?, title? }],
-//   items:     [{ key, at, avatarHtml?, icon?, title? }],
+//   items:     [{ key, at, itemId, avatarHtml?, icon?, title?, selected? }],
 // }
 // state: "current" | "reachable" | "dim" | "selected"
 const createMobileMap = (viewport, options) => {
   const opts = options || {};
   const onLocationClick = opts.onLocationClick || null;
   const onTokenClick = opts.onTokenClick || null;
+  const onItemClick = opts.onItemClick || null;
   const bottomInset = opts.bottomInset || (() => 0);
   const renderAvatar = opts.renderAvatar || null;
 
@@ -285,8 +286,10 @@ const createMobileMap = (viewport, options) => {
         if (!renderAvatar) continue;
         el = renderAvatar(it, "item");
         el.classList.add("loose-item");
+        if (onItemClick) el.addEventListener("click", (ev) => { ev.stopPropagation(); onItemClick(it.at, it.itemId, key, ev); });
         itemEls.set(key, el);
       }
+      el.classList.toggle("sel", !!it.selected);
       if (el.parentNode !== host.loose) host.loose.appendChild(el);
     }
   };

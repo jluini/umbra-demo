@@ -36,6 +36,8 @@ const uiTranslations = {
       onTheWayTo: "En camino a",
       giveTo: "Dar a…",
       dropHere: "Dejar aquí",
+      takeHere: "Tomar",
+      noTakers: "No hay nadie aquí para tomarlo.",
       givePrefix: "Dar",
       giveSuffix: " a…",
       noRecipients: "No hay nadie más aquí para recibirlo.",
@@ -101,6 +103,8 @@ let listView = false;
 let inventoryOpen = false;
 let selectedItemId = null;
 let giveMode = false;
+let selectedLooseItem = null; // { locationId, itemId, key }
+let takeMode = false;
 let lastInvActor = null;
 
 const REAL_MS_PER_GAME_MIN = 250;
@@ -108,6 +112,7 @@ const REAL_MS_PER_GAME_MIN = 250;
 const mobileMap = MobileMap.create(mapEl, {
   onLocationClick: handleLocationClick,
   onTokenClick: (id) => selectActor(id),
+  onItemClick: (locId, itemId, key) => selectLooseItem(locId, itemId, key),
   bottomInset: () => (sheetEl.hidden ? 0 : sheetEl.getBoundingClientRect().height),
   renderAvatar,
 });
@@ -220,6 +225,7 @@ function loadGame(gameConfig) {
     activeEngine.on("plans:completed", onPlansChanged);
     activeEngine.on("item:give", onItemsChanged);
     activeEngine.on("item:drop", onItemsChanged);
+    activeEngine.on("item:take", onItemsChanged);
     activeEngine.on("mission:end", onMissionEnd);
     activeEngine.on("mission:reset", resetGameUI);
   }
@@ -353,6 +359,8 @@ function resetGameUI() {
   inventoryOpen = false;
   selectedItemId = null;
   giveMode = false;
+  selectedLooseItem = null;
+  takeMode = false;
   lastInvActor = null;
   sheetEl.hidden = true;
   sheetBody.replaceChildren();
@@ -529,11 +537,14 @@ function buildScene() {
   const items = [];
   for (const l of mission.locations) {
     (l.items || []).forEach((item, n) => {
+      const key = l.id + ":" + n;
       items.push({
-        key: l.id + ":" + n,
+        key,
         at: l.id,
+        itemId: item.id,
         avatarHtml: itemIconHTML(item),
         title: itemName(item.id),
+        selected: !!selectedLooseItem && selectedLooseItem.locationId === l.id && selectedLooseItem.itemId === item.id,
       });
     });
   }
@@ -571,7 +582,7 @@ function itemsGridHTML(a) {
 // selected item is detailed in the sheet. Animates when opening or switching actor.
 function renderInventory() {
   const a = selectedActorId ? activeEngine.getActor(selectedActorId) : null;
-  const show = !!a && inventoryOpen && sheetMode === "idle" && a.activity.kind === "idle";
+  const show = !!a && inventoryOpen && !selectedLooseItem && sheetMode === "idle" && a.activity.kind === "idle";
   if (!show) {
     inventoryBar.hidden = true;
     inventoryBar.replaceChildren();
@@ -617,6 +628,37 @@ function givePanelHTML(a) {
       '<span class="rc">' + activeEngine.getItemCount(r.id, selectedItemId) + "</span></button>").join("") + "</div>";
   }
   html += '<button class="mini-btn ghost" data-action="cancel-give">' + esc(t("plan.cancel")) + "</button></div>";
+  return html;
+}
+
+// A loose (location) item: header shows the path "Location > Item".
+function looseItemHeaderHTML(locationId, itemId) {
+  const item = activeEngine.getConfig().items[itemId] || { id: itemId };
+  return '<div class="sheet-title item-title"><span class="it-icon">' + itemIconHTML(item) +
+    '</span><h2><span class="crumb">' + esc(locationName(locationId)) + "</span> › " +
+    esc(itemName(itemId)) + "</h2></div>";
+}
+
+function takeActionsHTML() {
+  if (takeMode) return takePanelHTML();
+  return '<button class="primary" data-action="take">' + esc(t("ui.takeHere")) + "</button>";
+}
+
+function takePanelHTML() {
+  const { locationId, itemId } = selectedLooseItem;
+  const takers = actorsAt(locationId);
+  let html = '<div class="item-detail giving"><div class="dn"><b>' +
+    esc(t("ui.takeHere")) + " " + esc(itemName(itemId)) + "</b></div>";
+  if (!takers.length) {
+    html += '<div class="recip-note">' + esc(t("ui.noTakers")) + "</div>";
+  } else {
+    html += '<div class="recip-list">' + takers.map((r) =>
+      '<button class="recip" data-action="take-to" data-actor="' + r.id + '">' +
+      '<span class="av av-map" style="--c:' + r.preset.color + '"><img src="' + r.preset.avatarUrl + '" alt=""></span>' +
+      '<span class="rn">' + esc(actorName(r.id)) + "</span>" +
+      '<span class="rc">' + activeEngine.getItemCount(r.id, itemId) + "</span></button>").join("") + "</div>";
+  }
+  html += '<button class="mini-btn ghost" data-action="cancel-take">' + esc(t("plan.cancel")) + "</button></div>";
   return html;
 }
 
@@ -694,7 +736,12 @@ function meansSheetHTML(a) {
 }
 
 function renderSheet() {
-  if (!selectedActorId || !activeEngine) { sheetBody.replaceChildren(); return; }
+  if (!activeEngine) { sheetBody.replaceChildren(); return; }
+  if (selectedLooseItem) {
+    sheetBody.innerHTML = looseItemHeaderHTML(selectedLooseItem.locationId, selectedLooseItem.itemId) + takeActionsHTML();
+    return;
+  }
+  if (!selectedActorId) { sheetBody.replaceChildren(); return; }
   const a = activeEngine.getActor(selectedActorId);
   let html;
   if (selectedItemId && sheetMode === "idle") {
@@ -709,7 +756,7 @@ function renderSheet() {
 }
 
 function refresh() {
-  sheetEl.hidden = !selectedActorId;
+  sheetEl.hidden = !(selectedActorId || selectedLooseItem);
   updateAvatarStates();
   renderSheet();
   renderInventory();
@@ -727,6 +774,8 @@ function selectActor(id) {
   inventoryOpen = true;
   selectedItemId = null;
   giveMode = false;
+  selectedLooseItem = null;
+  takeMode = false;
   refresh();
   const a = activeEngine ? activeEngine.getActor(id) : null;
   if (a) mobileMap.focusLocation(a.activity.at);
@@ -741,6 +790,8 @@ function enterDestination() {
   inventoryOpen = false;
   selectedItemId = null;
   giveMode = false;
+  selectedLooseItem = null;
+  takeMode = false;
   refresh();
 }
 
@@ -756,6 +807,8 @@ function chooseDest(locId) {
   if (!a || locId === a.activity.at || activeEngine.distance(a.activity.at, locId) === Infinity) return;
   sheetMode = "means";
   selectedDestId = locId;
+  selectedLooseItem = null;
+  takeMode = false;
   refresh();
 }
 
@@ -768,6 +821,8 @@ function setPlan(dest, meanId) {
   sheetMode = "idle";
   selectedDestId = null;
   listView = false;
+  selectedLooseItem = null;
+  takeMode = false;
   activeEngine.setPlan(selectedActorId, dest, meanId);
   refresh();
 }
@@ -780,6 +835,8 @@ function cancelPlan() {
 /* ---------- Items ---------- */
 
 function selectItem(itemId) {
+  selectedLooseItem = null;
+  takeMode = false;
   if (selectedItemId === itemId) {
     selectedItemId = null;
     giveMode = false;
@@ -787,6 +844,26 @@ function selectItem(itemId) {
     selectedItemId = itemId;
     giveMode = false;
   }
+  refresh();
+}
+
+function selectLooseItem(locationId, itemId, key) {
+  if (sheetMode !== "idle") return;
+  selectedActorId = null;
+  selectedItemId = null;
+  giveMode = false;
+  takeMode = false;
+  selectedLooseItem = { locationId, itemId, key };
+  refresh();
+}
+
+function takeTo(actorId) {
+  if (!selectedLooseItem) return;
+  const item = activeEngine.getConfig().items[selectedLooseItem.itemId];
+  if (!item) return;
+  activeEngine.takeItem(actorId, item, 1);
+  selectedLooseItem = null;
+  takeMode = false;
   refresh();
 }
 
@@ -802,8 +879,14 @@ function giveTo(targetId) {
   refresh();
 }
 
+function looseItemAvailable(sel) {
+  const loc = activeEngine.getLocation(sel.locationId);
+  return !!loc && (loc.items || []).some((it) => it.id === sel.itemId);
+}
+
 function onItemsChanged() {
   if (selectedItemId && activeEngine.getItemCount(selectedActorId, selectedItemId) === 0) selectedItemId = null;
+  if (selectedLooseItem && !looseItemAvailable(selectedLooseItem)) { selectedLooseItem = null; takeMode = false; }
   refresh();
 }
 
@@ -905,6 +988,9 @@ sheetBody.addEventListener("click", (e) => {
   else if (action === "drop") dropItem();
   else if (action === "cancel-give") { giveMode = false; refresh(); }
   else if (action === "give-to") giveTo(btn.dataset.actor);
+  else if (action === "take") { takeMode = true; refresh(); }
+  else if (action === "cancel-take") { takeMode = false; refresh(); }
+  else if (action === "take-to") takeTo(btn.dataset.actor);
 });
 
 inventoryBar.addEventListener("click", (e) => {

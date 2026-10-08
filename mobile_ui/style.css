@@ -354,6 +354,8 @@
   .loose-items.side-left { right: 100%; margin-right: 5px; }
   .loose-items.side-right { left: 100%; margin-left: 5px; }
   .loose-items .loose-item { pointer-events: auto; }
+  .loose-items .loose-item.sel { --c: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .sheet-title .crumb { color: var(--muted); }
   .av-item { --c: var(--line); background: var(--panel-2); width: 26px; height: 26px; border-width: 1.5px; border-radius: 7px; font-size: 12px; }
   .av-item svg, .av-item img { width: 82%; height: 82%; display: block; object-fit: contain; }
 

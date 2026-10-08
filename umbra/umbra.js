@@ -728,6 +728,23 @@ const create = (config = {}) => {
       emit("item:drop", { actorId, locationId: location.id, item, quantity });
       return true;
     },
+    takeItem(actorId, item, quantity = 1) {
+      if (!isRunning()) return false;
+      const actor = findActor(state.mission, actorId);
+      if (!actor || actor.activity.kind !== "idle") return false;
+      if (!item || !Number.isInteger(quantity) || quantity < 1) return false;
+      const location = findLocation(state.mission, actor.activity.at);
+      if (!location || !Array.isArray(location.items)) return false;
+      const available = location.items.filter((it) => it.id === item.id).length;
+      if (available < quantity) return false;
+      let removed = 0;
+      for (let i = location.items.length - 1; i >= 0 && removed < quantity; i--) {
+        if (location.items[i].id === item.id) { location.items.splice(i, 1); removed++; }
+      }
+      for (let i = 0; i < quantity; i++) actor.items.push(item);
+      emit("item:take", { actorId, locationId: location.id, item, quantity });
+      return true;
+    },
     canTrade(actorId, locationId, tradeId) {
       return evaluateTrade(actorId, locationId, tradeId);
     },

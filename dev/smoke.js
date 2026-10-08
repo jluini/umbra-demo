@@ -488,6 +488,35 @@ dg.advance();
 check(dg.dropItem("alice", dg.getConfig().items.hoop, 1) === false, "dropping is rejected while in transit");
 dg.stop();
 
+// takeItem moves a loose location item into an idle actor's inventory (same location).
+const takeConfig = {
+  items: { skate: { carry: "optional" }, cider: {} },
+  actors: { alice: { key: 1, skills: ["walk"] }, bob: { key: 2, skills: ["walk"] } },
+  locations: { a: {}, b: {} },
+  routes: [],
+  means: { walk: { icon: "🚶", pace: 10, skills: [] } },
+  missions: {
+    take: {
+      start: "2024-12-31T22:00:00",
+      deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a" }, bob: { location: "b" } },
+      locations: { a: { items: ["skate"] }, b: {} },
+    },
+  },
+};
+const tk = window.Umbra.create(takeConfig);
+tk.start();
+let takeEvent = null;
+tk.on("item:take", (e) => { takeEvent = e; });
+check(tk.takeItem("alice", tk.getConfig().items.skate, 1) === true, "takeItem moves a loose item into the actor inventory");
+check(tk.getItemCount("alice", "skate") === 1, "actor now carries the taken item");
+check(tk.getLocation("a").items.length === 0, "location no longer holds the taken item");
+check(takeEvent && takeEvent.actorId === "alice" && takeEvent.item.id === "skate", "item:take is emitted");
+check(tk.takeItem("alice", tk.getConfig().items.skate, 1) === false, "cannot take an item that is not there");
+check(tk.takeItem("bob", tk.getConfig().items.skate, 1) === false, "cannot take from another location");
+check(tk.takeItem("ghost", tk.getConfig().items.skate, 1) === false, "unknown actor is rejected");
+tk.stop();
+
 if (failures > 0) {
   console.error(failures + " failure(s)");
   process.exit(1);
