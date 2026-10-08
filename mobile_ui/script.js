@@ -22,6 +22,9 @@ const uiTranslations = {
       confirmAbortMessage: "Vas a perder el progreso y volver al menú.",
       confirmRestartTitle: "¿Reiniciar la misión?",
       confirmRestartMessage: "Vas a perder el progreso actual y la misión comenzará de nuevo.",
+      confirmSwitchTitle: "¿Cambiar de misión?",
+      confirmSwitchMessage: "Vas a perder el progreso actual y la misión empezará de nuevo.",
+      changeMission: "Cambiar",
       moveTo: "Moverse a…",
       chooseDestination: "Elegir destino",
       map: "Mapa",
@@ -49,6 +52,8 @@ const resultEl = document.getElementById("result");
 const confirmEl = document.getElementById("confirm");
 
 const playBtn = document.getElementById("playBtn");
+const playLabel = playBtn.querySelector("[data-i18n]");
+const titlesMissions = document.getElementById("titlesMissions");
 const langSelector = document.getElementById("lang-selector");
 const menuBtn = document.getElementById("menuBtn");
 const missionBtn = document.getElementById("missionBtn");
@@ -219,17 +224,15 @@ function loadGame(gameConfig) {
 }
 
 function startGame(missionIndex) {
-  if (activeEngine) activeEngine.start(missionIndex);
-  else hideTitles();
+  if (!activeEngine) { hideTitles(); return; }
+  if (activeEngine.getStatus() !== "ready") activeEngine.stop();
+  activeEngine.start(missionIndex);
 }
 
 function enterGame(missionIndex) {
-  if (!started) {
-    started = true;
-    startGame(missionIndex);
-  } else {
-    hideTitles();
-  }
+  if (activeEngine && activeEngine.getStatus() === "running") { hideTitles(); return; }
+  started = true;
+  startGame(missionIndex);
 }
 
 function restartMission() {
@@ -239,14 +242,64 @@ function restartMission() {
   activeEngine.start(currentMissionIndex);
 }
 
+// One temporary button per available mission. They always start a mission from
+// scratch; if a game is in progress, ask for confirmation first.
+function renderMissionButtons() {
+  if (!titlesMissions) return;
+  titlesMissions.replaceChildren();
+  if (!activeEngine) return;
+  activeEngine.getConfig().missions.forEach((_, i) => {
+    const btn = document.createElement("button");
+    btn.dataset.menu = "mission";
+    btn.dataset.mission = String(i);
+    btn.textContent = "M" + (i + 1);
+    titlesMissions.appendChild(btn);
+  });
+}
+
+// The main button is "Play" (or "Continue" while a mission is running).
+function updatePlayButton() {
+  const running = !!activeEngine && activeEngine.getStatus() === "running";
+  Presentation.setI18nText(playLabel, running ? "menu.continue" : "menu.play", activeI18n);
+}
+
+function requestMission(index) {
+  if (!activeEngine) return;
+  const missions = activeEngine.getConfig().missions || [];
+  if (index < 0 || index >= missions.length) return;
+  if (activeEngine.getStatus() === "running") {
+    openConfirm({
+      titleKey: "ui.confirmSwitchTitle",
+      messageKey: "ui.confirmSwitchMessage",
+      acceptKey: "ui.changeMission",
+      onAccept: () => switchMission(index),
+    });
+  } else {
+    switchMission(index);
+  }
+}
+
+function switchMission(index) {
+  if (!activeEngine) return;
+  hideTitles();
+  hideResult();
+  hideBriefing();
+  hideDatePop();
+  closeMenu();
+  started = true;
+  if (activeEngine.getStatus() !== "ready") activeEngine.stop();
+  activeEngine.start(index);
+}
+
 function backToMenu() {
-  if (activeEngine) activeEngine.stop();
-  started = false;
+  if (activeEngine && activeEngine.getStatus() === "ended") activeEngine.stop();
+  started = true;
   hideResult();
   closeMenu();
   hideBriefing();
   hideDatePop();
   showTitles();
+  updatePlayButton();
 }
 
 function onMissionStart({ mission }) {
@@ -758,6 +811,11 @@ function stopAdvancing() {
 
 playBtn.addEventListener("click", () => enterGame());
 
+titlesMissions.addEventListener("click", (e) => {
+  const btn = e.target.closest('[data-menu="mission"]');
+  if (btn) requestMission(Number(btn.dataset.mission));
+});
+
 menuBtn.addEventListener("click", openMenu);
 
 missionBtn.addEventListener("click", () => {
@@ -843,6 +901,8 @@ function boot() {
   const requested = params.get("lang") || defaults.lang;
   const languages = activeI18n.languages();
   setLanguage(languages.includes(requested) ? requested : languages[0]);
+  renderMissionButtons();
+  updatePlayButton();
   showTitles();
 
   const missionParam = params.get("play");
