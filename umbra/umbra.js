@@ -584,10 +584,16 @@ const create = (config = {}) => {
   const meansOf = () => config.means || {};
   const defaultSkill = (id) => id.replace(/_[^_]*$/, "");
   const requiredSkills = (id, def) => (Array.isArray(def.skills) ? def.skills : [defaultSkill(id)]);
+  // A required item can be satisfied by the actor's inventory or by a loose,
+  // not-yet-reserved item at the actor's current location.
+  const hasLooseItem = (locationId, itemId) => {
+    const loc = findLocation(state.mission, locationId);
+    return !!loc && (loc.items || []).some((it) => it.id === itemId);
+  };
   const actorHasMean = (actor, id) => {
     const def = meansOf()[id];
     if (!def) return false;
-    const itemsOk = (def.items || []).every((itemId) => countItem(actor, itemId) > 0);
+    const itemsOk = (def.items || []).every((itemId) => countItem(actor, itemId) > 0 || hasLooseItem(actor.activity.at, itemId));
     const skills = actor.preset.skills || [];
     const skillsOk = requiredSkills(id, def).every((skill) => skills.includes(skill));
     return itemsOk && skillsOk;
@@ -624,7 +630,9 @@ const create = (config = {}) => {
   // Why a pending plan would be invalid with the given item counts
   // (null = valid): "unknown" (no such mean), "mean" (items/skills), "capacity".
   const planInvalidReason = (actor, plan, counts) => {
-    const c = counts || countMap(actor.items);
+    const c = new Map(counts || countMap(actor.items));
+    // A reserved vehicle counts as if carried for capacity/items purposes.
+    if (plan.vehicle) c.set(plan.vehicle.itemId, (c.get(plan.vehicle.itemId) || 0) + 1);
     const def = meansOf()[plan.mean];
     if (!def) return "unknown";
     const itemsOk = (def.items || []).every((itemId) => (c.get(itemId) || 0) > 0);
@@ -662,6 +670,16 @@ const create = (config = {}) => {
       const elapsed = state.internalTime - actor.activity.startedAt;
       if (elapsed >= actor.activity.duration) {
         const locationId = actor.activity.to;
+        const vehicle = actor.activity.vehicle;
+        if (vehicle) {
+          const item = vehicle.item;
+          if (itemCarry(item) === "none") {
+            const dest = findLocation(state.mission, locationId);
+            if (dest) { if (!dest.items) dest.items = []; dest.items.push(item); }
+          } else {
+            actor.items.push(item);
+          }
+        }
         actor.activity = { kind: "idle", at: locationId };
         completed.push({ actorId: actor.id, locationId });
       }
@@ -699,6 +717,10 @@ const create = (config = {}) => {
       const actor = findActor(state.mission, actorId);
       const reason = actor ? planInvalidReason(actor, plan) : "unknown";
       if (reason) {
+        if (plan.vehicle && actor) {
+          const loc = findLocation(state.mission, actor.activity.at);
+          if (loc) { if (!loc.items) loc.items = []; loc.items.push(plan.vehicle.item); }
+        }
         cancelled.push({ actorId, plan, reason });
         delete state.plans[actorId];
         continue;
@@ -706,6 +728,7 @@ const create = (config = {}) => {
       actor.activity = {
         kind: "transit",
         mean: plan.mean,
+        vehicle: plan.vehicle || null,
         from: actor.activity.at,
         to: plan.destination,
         startedAt: state.internalTime,
@@ -717,6 +740,19 @@ const create = (config = {}) => {
     if (cancelled.length) emit("plans:cancelled", { cancelled });
     if (started) emit("plans:started", { startTime: state.internalTime });
     return started;
+  };
+
+  // Drops a pending plan, returning any reserved vehicle to its origin location.
+  const releasePlan = (actorId) => {
+    const plan = state.plans[actorId];
+    if (!plan) return false;
+    if (plan.vehicle) {
+      const actor = findActor(state.mission, actorId);
+      const loc = actor && findLocation(state.mission, actor.activity.at);
+      if (loc) { if (!loc.items) loc.items = []; loc.items.push(plan.vehicle.item); }
+    }
+    delete state.plans[actorId];
+    return true;
   };
 
   const api = {
@@ -777,18 +813,32 @@ const create = (config = {}) => {
       const actor = findActor(state.mission, actorId);
       if (!actor || actor.activity.kind !== "idle") return false;
       if (!findLocation(state.mission, destination)) return false;
+      // Setting a new plan cancels any pending one (releasing its reserved vehicle).
+      if (releasePlan(actorId)) emit("plan:cancel", { actorId });
       const means = availableMeans(actor);
       const mean = meanId || (means[0] && means[0].id);
       const chosen = means.find((m) => m.id === mean);
       if (!chosen || chosen.blocked) return false;
-      state.plans[actorId] = buildPlan(actor, destination, distMatrix, mean, computeTravelTime);
+      // Reserve a loose required item (at most one item with carry != required).
+      const def = meansOf()[mean];
+      let vehicle = null;
+      for (const itemId of def.items || []) {
+        if (countItem(actor, itemId) > 0) continue;
+        const loc = findLocation(state.mission, actor.activity.at);
+        const items = (loc && loc.items) || [];
+        const idx = items.findIndex((it) => it.id === itemId);
+        if (idx < 0) return false;
+        vehicle = { itemId, item: items.splice(idx, 1)[0] };
+      }
+      const plan = buildPlan(actor, destination, distMatrix, mean, computeTravelTime);
+      if (vehicle) plan.vehicle = vehicle;
+      state.plans[actorId] = plan;
       emit("plan:set", { actorId, plan: state.plans[actorId] });
       return true;
     },
     cancelPlan(actorId) {
       if (!isRunning()) return false;
-      if (!state.plans[actorId]) return false;
-      delete state.plans[actorId];
+      if (!releasePlan(actorId)) return false;
       emit("plan:cancel", { actorId });
       return true;
     },
@@ -837,7 +887,7 @@ const create = (config = {}) => {
       if (!isRunning()) return false;
       const actor = findActor(state.mission, actorId);
       if (!actor || actor.activity.kind !== "idle") return false;
-      if (!item || !Number.isInteger(quantity) || quantity < 1) return false;
+      if (!item || itemCarry(item) === "none" || !Number.isInteger(quantity) || quantity < 1) return false;
       const location = findLocation(state.mission, actor.activity.at);
       if (!location || !Array.isArray(location.items)) return false;
       const available = location.items.filter((it) => it.id === item.id).length;

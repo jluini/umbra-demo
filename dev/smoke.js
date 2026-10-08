@@ -684,6 +684,100 @@ invOk.advance();
 check(!okCancelled && invOk.getActor("alice").activity.kind === "transit", "valid plan commits without cancellation");
 invOk.stop();
 
+// Loose vehicles: a required item lying at the actor's location can be used,
+// reserving it for the trip (and placed on arrival per its carry policy).
+const looseVehConfig = (aItems) => ({
+  items: { bike: { carry: "optional" }, car_1: { carry: "none" }, cider: {} },
+  actors: { alice: { key: 1, skills: ["walk", "bike", "car"] }, bob: { key: 2, skills: ["bike"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: {
+    bike: { icon: "🚲", pace: 4, items: ["bike"], capacity: ["0:bike"] },
+    car_1: { icon: "🚗", pace: 3, items: ["car_1"], capacity: ["0:bike"] },
+  },
+  missions: {
+    lv: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a" }, bob: { location: "a" } },
+      locations: { a: { items: aItems }, b: {} },
+    },
+  },
+});
+const lvIds = (game, id) => game.getAvailableMeans(id).map((m) => m.id).join(",");
+const advanceUntilIdle = (game, actorId) => {
+  game.advance(); // commit pending plans
+  for (let i = 0; i < 20 && game.getActor(actorId).activity.kind === "transit"; i++) game.advance();
+};
+
+const lv = window.Umbra.create(looseVehConfig(["bike"]));
+lv.start();
+check(lvIds(lv, "alice").includes("bike"), "loose vehicle: bike available from the location");
+check(lv.setPlan("alice", "b", "bike") === true, "loose vehicle: plan set via a loose required item");
+check(lv.getLocation("a").items.length === 0, "loose vehicle: reserved item removed from the location");
+check(lv.getPlan("alice").vehicle && lv.getPlan("alice").vehicle.itemId === "bike", "plan holds the reserved vehicle");
+check(!lvIds(lv, "bob").includes("bike"), "reservation blocks other actors at the same location");
+check(lv.cancelPlan("alice") === true, "cancel plan releases the reservation");
+check(lv.getLocation("a").items.length === 1 && lvIds(lv, "bob").includes("bike"), "released item is available again");
+lv.stop();
+
+const lv2 = window.Umbra.create(looseVehConfig(["bike"]));
+lv2.start();
+lv2.setPlan("bob", "b", "bike");
+advanceUntilIdle(lv2, "bob");
+check(lv2.getActor("bob").activity.kind === "idle" && lv2.getActor("bob").activity.at === "b", "optional reserved vehicle: actor arrived");
+check(lv2.getItemCount("bob", "bike") === 1, "optional reserved vehicle goes to the actor inventory on arrival");
+check((lv2.getLocation("b").items || []).length === 0, "optional vehicle is not left at the destination");
+lv2.stop();
+
+const lv3 = window.Umbra.create(looseVehConfig(["car_1"]));
+lv3.start();
+check(lv3.takeItem("alice", lv3.getConfig().items.car_1) === false, "takeItem rejects carry 'none'");
+check(lv3.setPlan("alice", "b", "car_1") === true, "plan set via a loose 'none' vehicle");
+advanceUntilIdle(lv3, "alice");
+check(lv3.getActor("alice").activity.at === "b", "none reserved vehicle: actor arrived");
+check(lv3.getLocation("b").items.some((it) => it.id === "car_1"), "none reserved vehicle is left loose at the destination");
+check(lv3.getItemCount("alice", "car_1") === 0, "none reserved vehicle is not kept in inventory");
+lv3.stop();
+
+// A reserved vehicle counts as inventory for plan validity: an extra required
+// item is excess and must invalidate the plan (so the transfer is rejected).
+const resCapConfig = () => ({
+  items: { bike: { carry: "optional" } },
+  actors: { alice: { key: 1, skills: ["bike"] }, bob: { key: 2, skills: ["bike"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: { bike: { icon: "🚲", pace: 4, items: ["bike"], capacity: ["0:bike"] } },
+  missions: {
+    rc: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a", items: ["bike"] }, bob: { location: "a" } },
+      locations: { a: { items: ["bike"] }, b: {} },
+    },
+  },
+});
+const rc = window.Umbra.create(resCapConfig());
+rc.start();
+check(rc.setPlan("bob", "b", "bike") === true, "reserved capacity: bob plans via the loose bike");
+check(rc.getPlan("bob").vehicle && rc.getPlan("bob").vehicle.itemId === "bike", "reserved capacity: bike is reserved");
+check(rc.giveItem("alice", "bob", rc.getConfig().items.bike) === false, "reserved capacity: extra bike rejected (reserved counts as carried)");
+check(rc.getPlan("bob") !== null, "reserved capacity: plan still pending after rejected give");
+rc.advance();
+check(rc.getActor("bob").activity.kind === "transit", "reserved capacity: plan still commits normally");
+rc.stop();
+
+// setPlan with an existing plan cancels it first (releasing its reserved vehicle).
+const rc2 = window.Umbra.create(resCapConfig());
+rc2.start();
+rc2.setPlan("bob", "b", "bike");
+check(rc2.getLocation("a").items.filter((it) => it.id === "bike").length === 0, "setPlan replace: loose bike reserved");
+let planCancels = 0;
+rc2.on("plan:cancel", () => { planCancels++; });
+check(rc2.setPlan("bob", "b", "bike") === true, "setPlan replace: re-plan succeeds");
+check(planCancels === 1, "setPlan replace: previous plan cancelled (plan:cancel emitted)");
+check(rc2.getLocation("a").items.filter((it) => it.id === "bike").length === 0, "setPlan replace: released then re-reserved (no orphan)");
+check(rc2.getPlan("bob").vehicle && rc2.getPlan("bob").vehicle.itemId === "bike", "setPlan replace: new plan holds a reserved vehicle");
+rc2.stop();
+
 if (failures > 0) {
   console.error(failures + " failure(s)");
   process.exit(1);

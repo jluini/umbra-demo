@@ -40,6 +40,7 @@ const uiTranslations = {
       giveTo: "Dar a…",
       dropHere: "Dejar aquí",
       takeHere: "Tomar",
+      cannotTake: "No se puede llevar; se usa para viajar.",
       noTakers: "No hay nadie aquí para tomarlo.",
       givePrefix: "Dar",
       giveSuffix: " a…",
@@ -655,6 +656,10 @@ function looseItemHeaderHTML(locationId, itemId) {
 }
 
 function takeActionsHTML() {
+  const item = activeEngine.getConfig().items[selectedLooseItem.itemId];
+  if (!item || item.carry === "none") {
+    return '<div class="phase-sub">' + esc(t("ui.cannotTake")) + "</div>";
+  }
   if (takeMode) return takePanelHTML();
   return '<div class="item-actions"><button class="primary" data-action="take">' + esc(t("ui.takeHere")) + "</button></div>";
 }
@@ -774,6 +779,7 @@ function renderSheet() {
 }
 
 function refresh() {
+  if (selectedLooseItem && activeEngine && !looseItemAvailable(selectedLooseItem)) { selectedLooseItem = null; takeMode = false; }
   sheetEl.hidden = !(selectedActorId || selectedLooseItem);
   updateAvatarStates();
   renderSheet();
