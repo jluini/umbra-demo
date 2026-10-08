@@ -321,7 +321,7 @@ const config = {
     metro: { icon: "🚇", pace: 3, capacity: ["1:bike"], skills: ["walk"], cost: {  } },
     car_1: { icon: "🚗", pace: 3, items: ["car_1"], capacity: ["3:people", "0:bike"] },
     car_2: { icon: "🚙", pace: 3, items: ["car2"], capacity: ["3:people", "0:bike"] },
-    van: { icon: "🚐", pace: 3, items: ["van"], capacity: ["3:people|bike"] },
+    van:   { icon: "🚐", pace: 3, items: ["van"], capacity: ["3:people|bike"] },
   },
   routes: [
     {
@@ -346,11 +346,11 @@ const config = {
       id: "test",
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
-      actors: [
-        { id: "alice", location: "aliceHouse", items: ["coin:56", "bike", "chocolates"] },
-        { id: "bob", location: "aliceHouse", items: ["coin:104"] },
-        { id: "charles", location: "charlesHouse", items: ["coin:6", "cider"] },
-      ],
+      actors: {
+        alice: { location: "aliceHouse", items: ["coin:56", "bike", "chocolates"] },
+        bob: { location: "aliceHouse", items: ["coin:104"] },
+        charles: { location: "charlesHouse", items: ["coin:6", "cider"] },
+      },
       locations: [
         { id: "aliceHouse" },
         { id: "charlesHouse" },
@@ -389,15 +389,15 @@ const config = {
       id: "test2",
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
-      actors: [
-        { id: "alice", location: "aliceHouse", items: ["coin:120", "bike", "chocolates"] },
-        { id: "bob", location: "aliceHouse", items: ["redPotion", "bluePotion", "yellowPotion"] },
-        { id: "charles", location: "charlesHouse", items: ["diamond", "greenPotion", "cider", "starCoin", "key"] },
-        { id: "dave", location: "charlesHouse", items: ["car_1"] },
-        { id: "elena", location: "charlesHouse" },
-        { id: "fiona", location: "square" },
-        { id: "george", location: "forest" }
-      ],
+      actors: {
+        alice: { location: "aliceHouse", items: ["coin:120", "bike", "chocolates"] },
+        bob: { location: "aliceHouse", items: ["redPotion", "bluePotion", "yellowPotion"] },
+        charles: { location: "charlesHouse", items: ["diamond", "greenPotion", "cider", "starCoin", "key"] },
+        dave: { location: "charlesHouse" },
+        elena: { location: "charlesHouse" },
+        fiona: { location: "square" },
+        george: { location: "forest" }
+      },
       locations: ["aliceHouse", "bobHouse", "charlesHouse", "square", "forest", "market"],
       briefing: [
         { text: ".situation" },

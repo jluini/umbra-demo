@@ -44,20 +44,20 @@ const config = {
     id: "test",
     start: "2024-12-31T22:00:00",
     deadline: "2025-01-01T00:00:00",
-    actors: [
-      { id: "alice", location: "a", items: ["cider", "bread"] },
-      { id: "bob", location: "a" },
-    ],
+    actors: {
+      alice: { location: "a", items: ["cider", "bread"] },
+      bob: { location: "a" },
+    },
     locations: ["a", "b", "c"],
     briefing: [{ text: "missions.test.briefing.situation" }],
   }, {
     id: "test2",
     start: "2025-06-01T10:00:00",
     deadline: "2025-06-01T12:00:00",
-    actors: [
-      { id: "alice", location: "b", items: ["cider"] },
-      { id: "bob", location: "c" },
-    ],
+    actors: {
+      alice: { location: "b", items: ["cider"] },
+      bob: { location: "c" },
+    },
     locations: ["a", "b", "c"],
     briefing: [{ text: "missions.test2.briefing.situation" }],
   }],
@@ -78,6 +78,7 @@ check(game.getMission().index === 0, "initial mission index is 0");
 check(game.getMission().briefing.length === 1, "mission briefing structure passes through");
 check(game.getActor("alice").activity.kind === "idle", "actor starts idle");
 check(game.getActor("alice").activity.at === "a", "actor starts at its mission location");
+check(game.getActor("alice").id === "alice", "runtime actor id comes from the config key");
 check(game.getInventory("alice")[0] === config.items.cider, "starting inventory");
 
 check(game.distance("a", "c") === 3.5, "shortest path a->c is 3.5");
@@ -163,7 +164,7 @@ const deadlineConfig = {
     id: "deadline",
     start: "2024-12-31T22:00:00",
     deadline: "2024-12-31T22:10:00",
-    actors: [{ id: "alice", location: "a" }],
+    actors: { alice: { location: "a" } },
     locations: ["a", "b"],
   }],
 };
@@ -206,10 +207,10 @@ const rulesConfig = {
       id: "rules",
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
-      actors: [
-        { id: "alice", location: "a", items: [] },
-        { id: "bob", location: "c", items: [] },
-      ],
+      actors: {
+        alice: { location: "a", items: [] },
+        bob: { location: "c", items: [] },
+      },
       locations: ["a", "b", "c"],
       rules: [
         { effect: "victory", conditions: [{ kind: "actorsAt", actors: ["alice"], at: "b" }], message: "rules.victory" },
@@ -220,10 +221,10 @@ const rulesConfig = {
       id: "precedence",
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
-      actors: [
-        { id: "alice", location: "a", items: [] },
-        { id: "bob", location: "a", items: [] },
-      ],
+      actors: {
+        alice: { location: "a", items: [] },
+        bob: { location: "a", items: [] },
+      },
       locations: ["a", "b", "c"],
       rules: [
         { effect: "victory", conditions: [{ kind: "actorsAt", actors: ["alice", "bob"], at: "b" }], message: "rules.victory" },
@@ -302,10 +303,10 @@ const qtyConfig = {
     id: "qty",
     start: "2024-12-31T22:00:00",
     deadline: "2025-01-01T00:00:00",
-    actors: [
-      { id: "alice", location: "a", items: ["coin:5", "cider"] },
-      { id: "bob", location: "a", items: [] },
-    ],
+    actors: {
+      alice: { location: "a", items: ["coin:5", "cider"] },
+      bob: { location: "a", items: [] },
+    },
     locations: ["a"],
   }],
 };
@@ -327,10 +328,10 @@ const qtyConfigWith = (items) => ({
   ...qtyConfig,
   missions: [{
     ...qtyConfig.missions[0],
-    actors: [
-      { id: "alice", location: "a", items },
-      { id: "bob", location: "a", items: [] },
-    ],
+    actors: {
+      alice: { location: "a", items },
+      bob: { location: "a", items: [] },
+    },
   }],
 });
 const expectThrowConfig = (label, cfg) => {
@@ -344,6 +345,17 @@ expectThrowConfig("unknown item in starting items is rejected", qtyConfigWith(["
 expectThrowConfig("stackable without a quantity is rejected", qtyConfigWith(["coin"]));
 expectThrowConfig("non-stackable with a quantity is rejected", qtyConfigWith(["cider:3"]));
 expectThrowConfig("non-numeric quantity is rejected", qtyConfigWith(["coin:x"]));
+expectThrowConfig("mission actor entry must not define 'id'", {
+  items: {},
+  actors: { alice: { id: "alice", key: 1 } },
+  locations: { a: { id: "a" } },
+  routes: [],
+  missions: [{
+    id: "x", start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+    actors: { alice: { location: "a", id: "alice" } },
+    locations: ["a"],
+  }],
+});
 
 // Trades: mission location entries (string or object) and item exchanges.
 const tradesConfig = {
@@ -355,7 +367,7 @@ const tradesConfig = {
     id: "trade",
     start: "2024-12-31T22:00:00",
     deadline: "2025-01-01T00:00:00",
-    actors: [{ id: "alice", location: "shop", items: ["coin:5"] }],
+    actors: { alice: { location: "shop", items: ["coin:5"] } },
     locations: [{
       id: "shop",
       trades: [

@@ -249,17 +249,20 @@ const expandItems = (config, actorId, entries) => {
 };
 
 const buildActors = (config, mission, missionLocs) => {
-  return (mission.actors || []).map((a) => {
-    const preset = config.actors && config.actors[a.id];
+  return Object.entries(mission.actors || {}).map(([id, entry]) => {
+    if (Object.prototype.hasOwnProperty.call(entry, "id")) {
+      throw new Error("umbra: actor '" + id + "' must not define 'id' (the key is the id)");
+    }
+    const preset = config.actors && config.actors[id];
     if (!preset) {
-      throw new Error("umbra: actor '" + a.id + "' is not defined in config.actors");
+      throw new Error("umbra: actor '" + id + "' is not defined in config.actors");
     }
-    const loc = config.locations[a.location];
-    if (!loc || !missionLocs.has(a.location)) {
-      throw new Error("umbra: actor '" + a.id + "' starts at '" + a.location + "' which is not in mission locations");
+    const loc = config.locations[entry.location];
+    if (!loc || !missionLocs.has(entry.location)) {
+      throw new Error("umbra: actor '" + id + "' starts at '" + entry.location + "' which is not in mission locations");
     }
-    const items = expandItems(config, a.id, a.items);
-    return { id: a.id, preset, activity: { kind: "idle", at: a.location }, items };
+    const items = expandItems(config, id, entry.items);
+    return { id, preset, activity: { kind: "idle", at: entry.location }, items };
   });
 };
 
@@ -374,7 +377,7 @@ const evaluateRules = (rules, mission) => {
 
 const validateRules = (config, missionDef, missionLocs) => {
   const rules = missionDef.rules || [];
-  const actorIds = new Set((missionDef.actors || []).map((a) => a.id));
+  const actorIds = new Set(Object.keys(missionDef.actors || {}));
   const itemIds = new Set(Object.keys(config.items || {}));
 
   const checkActorsCondition = (condition) => {

@@ -23,7 +23,7 @@ const config = {
       },
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
-      actors: ["alicia", "bob"],
+      actors: { alicia: {}, bob: {} },
     },
   ],
 };
