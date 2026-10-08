@@ -136,8 +136,9 @@
   }
 
   /* Item mode header (sheet): item icon + name, in place of the actor. */
-  .sheet-title .it-icon { font-size: 1.7rem; line-height: 1; }
-  .sheet-title .it-icon svg, .sheet-title .it-icon img { width: 1.7rem; height: 1.7rem; display: block; }
+  /* Subject icon in the sheet header: item icons reuse the actor avatar box. */
+  .sheet-title .item-head { --c: var(--line); background: var(--panel-2); font-size: 1.05rem; line-height: 1; }
+  .sheet-title .item-head svg, .sheet-title .item-head img { width: 62%; height: 62%; display: block; }
 
   .avatar-btn {
     flex: 0 0 auto;
@@ -355,7 +356,6 @@
   .loose-items.side-right { left: 100%; margin-left: 5px; }
   .loose-items .loose-item { pointer-events: auto; }
   .loose-items .loose-item.sel { --c: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
-  .sheet-title .crumb { color: var(--muted); }
   .av-item { --c: var(--line); background: var(--panel-2); width: 26px; height: 26px; border-width: 1.5px; border-radius: 7px; font-size: 12px; }
   .av-item svg, .av-item img { width: 82%; height: 82%; display: block; object-fit: contain; }
 
@@ -452,9 +452,11 @@
   }
 
   /* ---------- Sheet content ---------- */
-  .sheet-title { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+  .sheet-title { display: flex; align-items: center; flex-wrap: wrap; row-gap: 2px; gap: 9px; margin-bottom: 14px; }
   .sheet-title h2 { font-size: 1.05rem; }
   .sheet-title .at { color: var(--muted); font-size: 0.85rem; }
+  .sheet-title .at.loc { font-size: 0.78rem; }
+  .sheet-body .activity, .sheet-body .item-detail { margin-top: 0; }
 
   .section-label {
     font-size: 0.68rem;

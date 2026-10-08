@@ -37,7 +37,7 @@ const config = {
         yellowPotion: { name: "Yellow Potion" },
         greenPotion: { name: "Green Potion" },
         starCoin: { name: "Star Coin" },
-        coin: { name: "Coin" },
+        coin: { name: "Coins" /* TODO: usando siempre plural */ },
 
         // vehicles
         skate: { name: "Skate" },
@@ -120,7 +120,7 @@ const config = {
         yellowPotion: { name: "Poción amarilla" },
         greenPotion: { name: "Poción verde" },
         starCoin: { name: "Moneda con estrella" },
-        coin: { name: "Moneda" },
+        coin: { name: "Monedas" /* TODO: usando siempre plural */ },
 
         // vehicles
         skate: { name: "Patineta" },
@@ -207,7 +207,7 @@ const config = {
         yellowPotion: { name: "Poção amarela" },
         greenPotion: { name: "Poção verde" },
         starCoin: { name: "Moeda com estrela" },
-        coin: { name: "Moeda" },
+        coin: { name: "Moedas" /* TODO: usando siempre plural */ },
 
         // vehicles
         skate: { name: "TODO" },
@@ -304,7 +304,7 @@ const config = {
     yellowPotion: { avatar: potionIcon("#c9a93a") },
     greenPotion: { avatar: potionIcon("#558f3c") },
     starCoin: { avatar: starCoinIcon },
-    coin: { stackable: true, avatarString: "🪙", avatar: coinIcon, /* avatarSize: "2.2rem" */ },
+    coin: { stackable: true, avatarString: "🪙", /*avatar: coinIcon,*/ /* avatarSize: "2.2rem" */ },
 
     // vehicles
     skate: { avatarString: "🛹", carry: "required" },

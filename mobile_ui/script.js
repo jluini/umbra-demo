@@ -598,10 +598,12 @@ function renderInventory() {
   }
 }
 
-function itemHeaderHTML(itemId) {
+function itemHeaderHTML(a, itemId) {
   const item = activeEngine.getConfig().items[itemId] || { id: itemId };
-  return '<div class="sheet-title item-title"><span class="it-icon">' + itemIconHTML(item) +
-    '</span><h2>' + esc(itemName(itemId)) + "</h2></div>";
+  const name = item.stackable ? activeEngine.getItemCount(a.id, itemId) + " " + itemName(itemId) : itemName(itemId);
+  return '<div class="sheet-title"><span class="av av-head item-head">' + itemIconHTML(item) +
+    "</span><h2>" + esc(name) + '</h2><span class="at">· ' + esc(actorName(a.id)) +
+    '</span><span class="at loc">· ' + esc(locationName(a.activity.at)) + "</span></div>";
 }
 
 function itemActionsHTML(a) {
@@ -631,17 +633,17 @@ function givePanelHTML(a) {
   return html;
 }
 
-// A loose (location) item: header shows the path "Location > Item".
+// A loose (location) item: subject first, then its location as context.
 function looseItemHeaderHTML(locationId, itemId) {
   const item = activeEngine.getConfig().items[itemId] || { id: itemId };
-  return '<div class="sheet-title item-title"><span class="it-icon">' + itemIconHTML(item) +
-    '</span><h2><span class="crumb">' + esc(locationName(locationId)) + "</span> › " +
-    esc(itemName(itemId)) + "</h2></div>";
+  return '<div class="sheet-title"><span class="av av-head item-head">' + itemIconHTML(item) +
+    '</span><h2>' + esc(itemName(itemId)) + '</h2><span class="at loc">· ' +
+    esc(locationName(locationId)) + "</span></div>";
 }
 
 function takeActionsHTML() {
   if (takeMode) return takePanelHTML();
-  return '<button class="primary" data-action="take">' + esc(t("ui.takeHere")) + "</button>";
+  return '<div class="item-actions"><button class="primary" data-action="take">' + esc(t("ui.takeHere")) + "</button></div>";
 }
 
 function takePanelHTML() {
@@ -667,7 +669,7 @@ function takePanelHTML() {
 function actorHeaderHTML(a) {
   return '<div class="sheet-title"><span class="av av-head" style="--c:' + a.preset.color + '">' +
     '<img src="' + a.preset.avatarUrl + '" alt=""></span><h2>' + esc(actorName(a.id)) + "</h2>" +
-    '<span class="at">· ' + esc(locationName(a.activity.at)) + "</span></div>";
+    '<span class="at loc">· ' + esc(locationName(a.activity.at)) + "</span></div>";
 }
 
 function idleSheetHTML(a) {
@@ -686,7 +688,7 @@ function idleSheetHTML(a) {
       Presentation.formatDateTime(arrival, lang(), "time") + "</small></div>" +
       '<button class="x" data-action="cancel-plan">✕</button></div>';
   }
-  return '<button class="primary" data-action="move">' + esc(t("ui.moveTo")) + "</button>";
+  return '<div class="item-actions"><button class="primary" data-action="move">' + esc(t("ui.moveTo")) + "</button></div>";
 }
 
 function reachableList() {
@@ -745,7 +747,7 @@ function renderSheet() {
   const a = activeEngine.getActor(selectedActorId);
   let html;
   if (selectedItemId && sheetMode === "idle") {
-    html = itemHeaderHTML(selectedItemId) + itemActionsHTML(a);
+    html = itemHeaderHTML(a, selectedItemId) + itemActionsHTML(a);
   } else {
     html = actorHeaderHTML(a);
     if (sheetMode === "destination") html += destinationSheetHTML();
