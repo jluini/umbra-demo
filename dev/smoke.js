@@ -424,6 +424,39 @@ expectThrowConfig("trade with unknown item is rejected", tradesConfigWith({ x: {
 expectThrowConfig("trade with invalid quantity is rejected", tradesConfigWith({ x: { cost: [{ item: "coin", quantity: 0 }], reward: [] } }));
 expectThrowConfig("trade entry must not define 'id'", tradesConfigWith({ x: { id: "x", cost: [], reward: [] } }));
 
+// Items lying loose in a location (carry: optional/none) and itemAt over them.
+const looseConfig = ({ items, locationItems } = {}) => ({
+  items: items || { skate: { carry: "optional" }, van: { carry: "none" } },
+  actors: { alice: { key: 1, skills: ["walk"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: { walk: { icon: "🚶", pace: 10, skills: [] } },
+  missions: {
+    items: {
+      start: "2024-12-31T22:00:00",
+      deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a" } },
+      locations: { a: {}, b: { items: locationItems || ["van", "skate"] } },
+      rules: [{ effect: "victory", conditions: [{ kind: "itemAt", item: "van", at: "b" }], message: "items.victory" }],
+    },
+  },
+});
+const ig = window.Umbra.create(looseConfig());
+ig.start();
+const bLoc = ig.getMission().locations.find((l) => l.id === "b");
+check(bLoc.items.length === 2 && bLoc.items[0].id === "van" && bLoc.items[1].id === "skate", "location items expand to item objects");
+ig.setPlan("alice", "b");
+let itemsEnd = null;
+ig.on("mission:end", (e) => { itemsEnd = e; });
+for (let i = 0; i < 50 && !itemsEnd; i++) ig.advance();
+check(itemsEnd && itemsEnd.effect === "victory", "itemAt sees a loose location item");
+ig.stop();
+
+expectThrowConfig("required item cannot lie loose in a location", looseConfig({ items: { cider: {} }, locationItems: ["cider"] }));
+expectThrowConfig("unknown loose item is rejected", looseConfig({ locationItems: ["nope"] }));
+expectThrowConfig("invalid carry value is rejected", looseConfig({ items: { skate: { carry: "sometimes" } }, locationItems: ["skate"] }));
+expectThrowConfig("stackable item cannot be optional/none", looseConfig({ items: { coin: { stackable: true, carry: "optional" } }, locationItems: [] }));
+
 if (failures > 0) {
   console.error(failures + " failure(s)");
   process.exit(1);

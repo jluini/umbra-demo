@@ -209,6 +209,22 @@ const addItems = (actor, item, quantity) => {
   for (let i = 0; i < quantity; i++) actor.items.push(item);
 };
 
+// Items have a `carry` policy: "required" (default, must be carried by an actor),
+// "optional" (actor or location) or "none" (lives in a location). Stackable items
+// can only be "required".
+const CARRY_VALUES = ["required", "optional", "none"];
+const itemCarry = (item) => (item && item.carry) || "required";
+const validateItems = (config) => {
+  for (const [id, item] of Object.entries(config.items || {})) {
+    if (item.carry !== undefined && !CARRY_VALUES.includes(item.carry)) {
+      throw new Error("umbra: item '" + id + "' has invalid 'carry' (expected 'required', 'optional' or 'none')");
+    }
+    if (item.stackable && itemCarry(item) !== "required") {
+      throw new Error("umbra: item '" + id + "' is stackable, so its 'carry' must be 'required'");
+    }
+  }
+};
+
 const expandItems = (config, actorId, entries) => {
   const items = [];
   for (const entry of entries || []) {
@@ -244,6 +260,24 @@ const expandItems = (config, actorId, entries) => {
       }
     }
     for (let i = 0; i < quantity; i++) items.push(config.items[id]);
+  }
+  return items;
+};
+
+// Items lying loose in a location. Only "optional"/"none" items may be loose,
+// and locations hold no quantities.
+const expandLocationItems = (config, locationId, entries) => {
+  const items = [];
+  for (const entry of entries || []) {
+    const id = typeof entry === "string" ? entry : (entry && entry.id);
+    const item = id ? config.items[id] : undefined;
+    if (!item) {
+      throw new Error("umbra: location '" + locationId + "' has unknown item '" + entry + "'");
+    }
+    if (itemCarry(item) === "required") {
+      throw new Error("umbra: location '" + locationId + "' cannot hold item '" + id + "' (carry must be 'optional' or 'none')");
+    }
+    items.push(item);
   }
   return items;
 };
@@ -299,6 +333,12 @@ const buildLocations = (config, missionDef) =>
       }
       location.trades = injectIds(location.trades);
     }
+    if (location.items !== undefined) {
+      if (!Array.isArray(location.items)) {
+        throw new Error("umbra: location '" + id + "' has invalid 'items' (must be an array of item ids)");
+      }
+      location.items = expandLocationItems(config, id, location.items);
+    }
     return location;
   });
 
@@ -341,9 +381,12 @@ const EFFECT_PRIORITY = ["defeat", "victory"];
 
 const actorLocation = (actor) => actor.activity.at;
 
-const itemAt = ({ item, at }, mission) =>
-  mission.actors.some((actor) =>
+const itemAt = ({ item, at }, mission) => {
+  const location = findLocation(mission, at);
+  if (location && (location.items || []).some((it) => it.id === item)) return true;
+  return mission.actors.some((actor) =>
     actorLocation(actor) === at && actor.items.some((it) => it.id === item));
+};
 
 const actorsAt = ({ actors, at, exact }, mission) => {
   const present = mission.actors.filter((actor) => actorLocation(actor) === at);
@@ -478,6 +521,7 @@ const create = (config = {}) => {
     means: injectIds(config.means),
     missions: Object.values(injectIds(config.missions)),
   };
+  validateItems(config);
   let distMatrix = {};
 
   const state = {
