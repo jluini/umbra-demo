@@ -20,8 +20,8 @@ const check = (cond, label) => {
 const config = {
   items: { cider: { id: "cider" }, bread: { id: "bread" } },
   actors: {
-    alice: { id: "alice", key: 1 },
-    bob: { id: "bob", key: 2 },
+    alice: { id: "alice", key: 1, skills: ["walk", "bike", "car"] },
+    bob: { id: "bob", key: 2, skills: ["walk"] },
   },
   locations: {
     a: { id: "a" },
@@ -36,6 +36,9 @@ const config = {
   means: {
     walk: { icon: "🚶", pace: 10 },
     bike: { icon: "🚲", pace: 4, items: ["bread"] },
+    taxi: { icon: "🚕", pace: 2.5, skills: [] },
+    metro: { icon: "🚇", pace: 3, skills: ["walk"] },
+    car_2: { icon: "🚙", pace: 3 },
   },
   missions: [{
     id: "test",
@@ -80,8 +83,9 @@ check(game.getInventory("alice")[0] === config.items.cider, "starting inventory"
 check(game.distance("a", "c") === 3.5, "shortest path a->c is 3.5");
 check(game.distance("c", "a") === 3.5, "routes are bidirectional");
 check(game.computeTravelTime(1.5, "walk") === 15, "walk time is 15 min for 1.5 km");
-check(game.getAvailableMeans("alice").map((m) => m.id).join(",") === "walk,bike", "alice can use walk and bike");
-check(game.getAvailableMeans("bob").map((m) => m.id).join(",") === "walk", "bob can only walk");
+check(game.getAvailableMeans("alice").map((m) => m.id).join(",") === "walk,bike,taxi,metro,car_2", "alice means: item+skill gating (incl. derived 'car')");
+check(game.getAvailableMeans("bob").map((m) => m.id).join(",") === "walk,taxi,metro", "bob means: explicit skills only");
+check(game.getAvailableMeans("bob").every((m) => m.id !== "bike"), "bob cannot use bike (no item, no skill)");
 check(game.computeTravelTime(1.5, "bike") === 6, "bike time is 6 min for 1.5 km");
 
 check(game.giveItem("alice", "bob", config.items.cider) === true, "giveItem within same location");
@@ -154,6 +158,7 @@ const deadlineConfig = {
   actors: { alice: { id: "alice", key: 1 } },
   locations: { a: { id: "a" }, b: { id: "b" } },
   routes: [{ from: "a", to: "b", distance: 10 }],
+  means: { walk: { icon: "🚶", pace: 10, skills: [] } },
   missions: [{
     id: "deadline",
     start: "2024-12-31T22:00:00",
@@ -195,6 +200,7 @@ const rulesConfig = {
     { from: "a", to: "b", distance: 1 },
     { from: "b", to: "c", distance: 1 },
   ],
+  means: { walk: { icon: "🚶", pace: 10, skills: [] } },
   missions: [
     {
       id: "rules",

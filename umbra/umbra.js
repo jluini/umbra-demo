@@ -472,21 +472,25 @@ const create = (config = {}) => {
   const listeners = {};
   const emit = (name, data) => { (listeners[name] || []).forEach((fn) => fn(data)); };
 
-  // Means (transport modes): available when the actor holds every required item.
+  // Means (transport modes): available when the actor holds every required item
+  // and has every required skill. A mean without an explicit skills list requires
+  // a single skill named after its id with the last "_segment" stripped
+  // (e.g. "walk" -> "walk", "car_2" -> "car").
   const meansOf = () => config.means || {};
+  const defaultSkill = (id) => id.replace(/_[^_]*$/, "");
+  const requiredSkills = (id, def) => (Array.isArray(def.skills) ? def.skills : [defaultSkill(id)]);
   const actorHasMean = (actor, id) => {
     const def = meansOf()[id];
     if (!def) return false;
-    const required = def.items || [];
-    return required.every((itemId) => countItem(actor, itemId) > 0);
+    const itemsOk = (def.items || []).every((itemId) => countItem(actor, itemId) > 0);
+    const skills = actor.preset.skills || [];
+    const skillsOk = requiredSkills(id, def).every((skill) => skills.includes(skill));
+    return itemsOk && skillsOk;
   };
-  const availableMeans = (actor) => {
-    const list = Object.entries(meansOf())
+  const availableMeans = (actor) =>
+    Object.entries(meansOf())
       .filter(([id]) => actorHasMean(actor, id))
       .map(([id, def]) => ({ id, icon: def.icon, pace: def.pace }));
-    if (!list.length) list.push({ id: "walk", icon: "🚶", pace: WALKING_PACE });
-    return list;
-  };
   const computeTravelTime = (distance, meanId) => {
     const def = meansOf()[meanId];
     const pace = def && typeof def.pace === "number" ? def.pace : WALKING_PACE;

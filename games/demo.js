@@ -29,7 +29,6 @@ const config = {
       },
       items: {
         cider: { name: "Cider" },
-        bike: { name: "Bike" },
         chocolates: { name: "Box of Chocolates" },
         diamond: { name: "Diamond" },
         key: { name: "Vault Key" },
@@ -39,6 +38,12 @@ const config = {
         greenPotion: { name: "Green Potion" },
         starCoin: { name: "Star Coin" },
         coin: { name: "Coin" },
+
+        // vehicles
+        bike:  { name: "Bike" },
+        car_1: { name: "Red Car" },
+        car_2: { name: "Blue Car" },
+        van:   { name: "Van" },
       },
       locations: {
         aliceHouse: { name: "Alice's House" },
@@ -54,6 +59,9 @@ const config = {
         skate:    { name: "TODO" },
         taxi:     { name: "TODO" },
         metro:    { name: "TODO" },
+        car_1:    { name: "TODO" },
+        car_2:    { name: "TODO" },
+        van:      { name: "TODO" }
       },
       missions: {
         test: {
@@ -100,7 +108,6 @@ const config = {
       },
       items: {
         cider: { name: "Sidra" },
-        bike: { name: "Bicicleta" },
         chocolates: { name: "Caja de Bombones" },
         diamond: { name: "Diamante" },
         key: { name: "Llave de la bóveda" },
@@ -110,6 +117,12 @@ const config = {
         greenPotion: { name: "Poción verde" },
         starCoin: { name: "Moneda con estrella" },
         coin: { name: "Moneda" },
+
+        // vehicles
+        bike:  { name: "Bicicleta" },
+        car_1: { name: "Auto Rojo" },
+        car_2: { name: "Auto Azul" },
+        van:   { name: "Camioneta" },
       },
       locations: {
         aliceHouse: { name: "Casa de Alicia" },
@@ -125,6 +138,9 @@ const config = {
         skate:    { name: "Patineta" },
         taxi:     { name: "Taxi" },
         metro:    { name: "Metro" },
+        car_1:    { name: "Auto rojo"},
+        car_2:    { name: "Auto azul"},
+        van:      { name: "Camioneta"}
       },
       missions: {
         test: {
@@ -176,7 +192,6 @@ const config = {
       },
       items: {
         cider: { name: "Sidra" },
-        bike: { name: "Bicicleta" },
         chocolates: { name: "Caixa de Bombons" },
         diamond: { name: "Diamante" },
         key: { name: "Chave do cofre" },
@@ -186,6 +201,12 @@ const config = {
         greenPotion: { name: "Poção verde" },
         starCoin: { name: "Moeda com estrela" },
         coin: { name: "Moeda" },
+
+        // vehicles
+        bike:  { name: "Bicicleta" },
+        car_1: { name: "TODO" },
+        car_2: { name: "TODO" },
+        van:   { name: "TODO" },
       },
       locations: {
         aliceHouse: { name: "Casa da Alice" },
@@ -201,6 +222,9 @@ const config = {
         skate:    { name: "TODO" },
         taxi:     { name: "TODO" },
         metro:    { name: "TODO" },
+        car_1:    { name: "TODO" },
+        car_2:    { name: "TODO" },
+        van:      { name: "TODO" },
       },
       plan: {
         walkTo: "Caminhar até...",
@@ -369,7 +393,7 @@ const config = {
         { id: "alice", location: "aliceHouse", items: ["coin:120", "bike", "chocolates"] },
         { id: "bob", location: "aliceHouse", items: ["redPotion", "bluePotion", "yellowPotion"] },
         { id: "charles", location: "charlesHouse", items: ["diamond", "greenPotion", "cider", "starCoin", "key"] },
-        { id: "dave", location: "charlesHouse" },
+        { id: "dave", location: "charlesHouse", items: ["car_1"] },
         { id: "elena", location: "charlesHouse" },
         { id: "fiona", location: "square" },
         { id: "george", location: "forest" }
