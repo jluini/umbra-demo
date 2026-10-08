@@ -12,9 +12,8 @@ const config = {
     bob: { key: 2 },
     carlos: { key: 3 },
   },
-  missions: [
-    {
-      id: "test",
+  missions: {
+    test: {
       name: { en: "Test", es: "Prueba", pt: "Teste" },
       briefing: {
         en: "Alice and Bob finished New Year's dinner at Alicia's house. They need to buy cider and bring it back before the new year starts.",
@@ -25,7 +24,7 @@ const config = {
       deadline: "2025-01-01T00:00:00",
       actors: { alicia: {}, bob: {} },
     },
-  ],
+  },
 };
 
 const create = () => {

@@ -340,9 +340,8 @@ const config = {
       means: ["walk", "bike", "skate"]
     },
   ],
-  missions: [
-    {
-      id: "test",
+  missions: {
+    test: {
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: {
@@ -354,10 +353,10 @@ const config = {
         aliceHouse: {},
         charlesHouse: {},
         market: {
-          trades: [
-            { id: "cider", cost: [{ item: "coin", quantity: 3 }], reward: [{ item: "cider", quantity: 1 }] },
-            { id: "bike", cost: [{ item: "coin", quantity: 10 }], reward: [{ item: "bike", quantity: 1 }] },
-          ]
+          trades: {
+            cider: { cost: [{ item: "coin", quantity: 3 }], reward: [{ item: "cider", quantity: 1 }] },
+            bike: { cost: [{ item: "coin", quantity: 10 }], reward: [{ item: "bike", quantity: 1 }] },
+          }
         }
       },
       rules: [
@@ -383,8 +382,7 @@ const config = {
         { label: "briefingLabels.hints", entries: [".hints.marketHours", ".hints.chocolates", ".hints.relation"] }
       ]
     },
-    {
-      id: "test2",
+    test2: {
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: {
@@ -405,7 +403,7 @@ const config = {
         { label: "briefingLabels.hints", entries: [".hints.hint1", ".hints.hint2", ".hints.hint3"] }
       ]
     },
-  ],
+  },
 };
 
 window.Demo = { id: "demo", config };

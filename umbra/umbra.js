@@ -169,7 +169,7 @@ const findLocation = (mission, id) =>
   mission ? (mission.locations.find((l) => l.id === id) || null) : null;
 
 const findTrade = (mission, locationId, tradeId) =>
-  (findLocation(mission, locationId)?.trades || []).find((t) => t.id === tradeId) || null;
+  (findLocation(mission, locationId)?.trades || {})[tradeId] || null;
 
 const buildPlan = (actor, destination, matrix, mean, travelTime) => ({
   destination,
@@ -281,7 +281,8 @@ const buildActors = (config, mission, missionLocs) => {
 
 // A mission selects locations keyed by id and may override/augment any field of
 // the game-level location definition (shallow spread: the mission entry wins).
-// The key is the id, so entries must not carry their own 'id'.
+// The key is the id, so entries must not carry their own 'id'. A location's
+// `trades` is likewise a map keyed by trade id (also normalized here).
 const buildLocations = (config, missionDef) =>
   Object.entries(missionDef.locations || {}).map(([id, override]) => {
     if (Object.prototype.hasOwnProperty.call(override, "id")) {
@@ -291,12 +292,19 @@ const buildLocations = (config, missionDef) =>
     if (!base) {
       throw new Error("umbra: mission references unknown location '" + id + "'");
     }
-    return { ...base, ...override, id };
+    const location = { ...base, ...override, id };
+    if (location.trades !== undefined) {
+      if (location.trades === null || typeof location.trades !== "object" || Array.isArray(location.trades)) {
+        throw new Error("umbra: location '" + id + "' has invalid 'trades' (must be an object keyed by trade id)");
+      }
+      location.trades = injectIds(location.trades);
+    }
+    return location;
   });
 
 // --- Trades ---------------------------------------------------------------
-// A location of a mission may define `trades`: a list of
-// { id, cost: [{ item, quantity }], reward: [{ item, quantity }], label? }.
+// A location of a mission may define `trades`: a map keyed by trade id of
+// { cost: [{ item, quantity }], reward: [{ item, quantity }], label? }.
 
 const validateTradeItems = (itemIds, locationId, tradeId, field, entries) => {
   if (!Array.isArray(entries)) {
@@ -317,20 +325,9 @@ const validateTrades = (config, locations) => {
   const itemIds = new Set(Object.keys(config.items || {}));
   for (const location of locations) {
     if (location.trades === undefined) continue;
-    if (!Array.isArray(location.trades)) {
-      throw new Error("umbra: location '" + location.id + "' has invalid 'trades'");
-    }
-    const ids = new Set();
-    for (const trade of location.trades) {
-      if (!trade || typeof trade.id !== "string" || trade.id === "") {
-        throw new Error("umbra: location '" + location.id + "' has a trade without a valid id");
-      }
-      if (ids.has(trade.id)) {
-        throw new Error("umbra: location '" + location.id + "' has duplicate trade id '" + trade.id + "'");
-      }
-      ids.add(trade.id);
-      validateTradeItems(itemIds, location.id, trade.id, "cost", trade.cost);
-      validateTradeItems(itemIds, location.id, trade.id, "reward", trade.reward);
+    for (const [tradeId, trade] of Object.entries(location.trades)) {
+      validateTradeItems(itemIds, location.id, tradeId, "cost", trade.cost);
+      validateTradeItems(itemIds, location.id, tradeId, "reward", trade.reward);
     }
   }
 };
@@ -479,6 +476,7 @@ const create = (config = {}) => {
     items: injectIds(config.items),
     locations: injectIds(config.locations),
     means: injectIds(config.means),
+    missions: Object.values(injectIds(config.missions)),
   };
   let distMatrix = {};
 
@@ -626,7 +624,7 @@ const create = (config = {}) => {
     },
     getTrades(locationId) {
       const location = findLocation(state.mission, locationId);
-      return location && Array.isArray(location.trades) ? location.trades : [];
+      return location && location.trades ? Object.values(location.trades) : [];
     },
     distance(from, to) { return distanceFrom(distMatrix, from, to); },
     computeTravelTime,

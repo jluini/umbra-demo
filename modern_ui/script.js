@@ -980,7 +980,7 @@ function loadGame(gameConfig) {
   renderLanguageSelector(langSelector, gameConfig, "name");
   renderLanguageSelector(langSelectorInline, gameConfig, "code");
 
-  const hasMissions = Array.isArray(gameConfig.missions) && gameConfig.missions.length > 0;
+  const hasMissions = !!gameConfig.missions && Object.keys(gameConfig.missions).length > 0;
   activeEngine = hasMissions ? Umbra.create(gameConfig) : null;
   if (activeEngine) {
     activeEngine.on("mission:start", onMissionStart);

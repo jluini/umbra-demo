@@ -40,27 +40,28 @@ const config = {
     metro: { icon: "🚇", pace: 3, skills: ["walk"] },
     car_2: { icon: "🚙", pace: 3 },
   },
-  missions: [{
-    id: "test",
-    start: "2024-12-31T22:00:00",
-    deadline: "2025-01-01T00:00:00",
-    actors: {
-      alice: { location: "a", items: ["cider", "bread"] },
-      bob: { location: "a" },
+  missions: {
+    test: {
+      start: "2024-12-31T22:00:00",
+      deadline: "2025-01-01T00:00:00",
+      actors: {
+        alice: { location: "a", items: ["cider", "bread"] },
+        bob: { location: "a" },
+      },
+      locations: { a: {}, b: {}, c: {} },
+      briefing: [{ text: "missions.test.briefing.situation" }],
     },
-    locations: { a: {}, b: {}, c: {} },
-    briefing: [{ text: "missions.test.briefing.situation" }],
-  }, {
-    id: "test2",
-    start: "2025-06-01T10:00:00",
-    deadline: "2025-06-01T12:00:00",
-    actors: {
-      alice: { location: "b", items: ["cider"] },
-      bob: { location: "c" },
+    test2: {
+      start: "2025-06-01T10:00:00",
+      deadline: "2025-06-01T12:00:00",
+      actors: {
+        alice: { location: "b", items: ["cider"] },
+        bob: { location: "c" },
+      },
+      locations: { a: {}, b: {}, c: {} },
+      briefing: [{ text: "missions.test2.briefing.situation" }],
     },
-    locations: { a: {}, b: {}, c: {} },
-    briefing: [{ text: "missions.test2.briefing.situation" }],
-  }],
+  },
 };
 
 const game = window.Umbra.create(config);
@@ -164,13 +165,14 @@ const deadlineConfig = {
   locations: { a: {}, b: {} },
   routes: [{ from: "a", to: "b", distance: 10 }],
   means: { walk: { icon: "🚶", pace: 10, skills: [] } },
-  missions: [{
-    id: "deadline",
-    start: "2024-12-31T22:00:00",
-    deadline: "2024-12-31T22:10:00",
-    actors: { alice: { location: "a" } },
-    locations: { a: {}, b: {} },
-  }],
+  missions: {
+    deadline: {
+      start: "2024-12-31T22:00:00",
+      deadline: "2024-12-31T22:10:00",
+      actors: { alice: { location: "a" } },
+      locations: { a: {}, b: {} },
+    },
+  },
 };
 const game5 = window.Umbra.create(deadlineConfig);
 game5.start();
@@ -206,9 +208,8 @@ const rulesConfig = {
     { from: "b", to: "c", distance: 1 },
   ],
   means: { walk: { icon: "🚶", pace: 10, skills: [] } },
-  missions: [
-    {
-      id: "rules",
+  missions: {
+    rules: {
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: {
@@ -221,8 +222,7 @@ const rulesConfig = {
         { effect: "defeat", conditions: [{ kind: "actorsTogether", actors: ["alice", "bob"] }], message: "rules.defeat" },
       ],
     },
-    {
-      id: "precedence",
+    precedence: {
       start: "2024-12-31T22:00:00",
       deadline: "2025-01-01T00:00:00",
       actors: {
@@ -235,7 +235,7 @@ const rulesConfig = {
         { effect: "defeat", conditions: [{ kind: "actorsTogether", actors: ["alice", "bob"] }], message: "rules.defeat" },
       ],
     },
-  ],
+  },
 };
 
 // Victory rule fires when its completion makes the condition true.
@@ -276,7 +276,7 @@ rg3.stop();
 // Rule validation rejects typos.
 const rulesConfigWith = (rules) => ({
   ...rulesConfig,
-  missions: [{ ...rulesConfig.missions[0], rules }],
+  missions: { rules: { ...rulesConfig.missions.rules, rules } },
 });
 const expectStartThrow = (label, rules) => {
   let threw = false;
@@ -303,16 +303,17 @@ const qtyConfig = {
   },
   locations: { a: {} },
   routes: [],
-  missions: [{
-    id: "qty",
-    start: "2024-12-31T22:00:00",
-    deadline: "2025-01-01T00:00:00",
-    actors: {
-      alice: { location: "a", items: ["coin:5", "cider"] },
-      bob: { location: "a", items: [] },
+  missions: {
+    qty: {
+      start: "2024-12-31T22:00:00",
+      deadline: "2025-01-01T00:00:00",
+      actors: {
+        alice: { location: "a", items: ["coin:5", "cider"] },
+        bob: { location: "a", items: [] },
+      },
+      locations: { a: {} },
     },
-    locations: { a: {} },
-  }],
+  },
 };
 
 const qg = window.Umbra.create(qtyConfig);
@@ -330,13 +331,15 @@ qg.stop();
 
 const qtyConfigWith = (items) => ({
   ...qtyConfig,
-  missions: [{
-    ...qtyConfig.missions[0],
-    actors: {
-      alice: { location: "a", items },
-      bob: { location: "a", items: [] },
+  missions: {
+    qty: {
+      ...qtyConfig.missions.qty,
+      actors: {
+        alice: { location: "a", items },
+        bob: { location: "a", items: [] },
+      },
     },
-  }],
+  },
 });
 const expectThrowConfig = (label, cfg) => {
   let threw = false;
@@ -349,7 +352,7 @@ const idConfig = (patch) => ({
   locations: { a: {} },
   routes: [],
   means: { walk: { icon: "🚶", pace: 10, skills: [] } },
-  missions: [{ id: "x", start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00", actors: { alice: { location: "a" } }, locations: { a: {} } }],
+  missions: { x: { start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00", actors: { alice: { location: "a" } }, locations: { a: {} } } },
   ...patch,
 });
 expectThrowConfig("zero quantity is rejected", qtyConfigWith(["coin:0"]));
@@ -359,14 +362,15 @@ expectThrowConfig("stackable without a quantity is rejected", qtyConfigWith(["co
 expectThrowConfig("non-stackable with a quantity is rejected", qtyConfigWith(["cider:3"]));
 expectThrowConfig("non-numeric quantity is rejected", qtyConfigWith(["coin:x"]));
 expectThrowConfig("mission actor entry must not define 'id'", idConfig({
-  missions: [{ id: "x", start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00", actors: { alice: { location: "a", id: "alice" } }, locations: { a: {} } }],
+  missions: { x: { start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00", actors: { alice: { location: "a", id: "alice" } }, locations: { a: {} } } },
 }));
 expectThrowConfig("config actor must not define 'id'", idConfig({ actors: { alice: { key: 1, id: "alice" } } }));
 expectThrowConfig("config item must not define 'id'", idConfig({ items: { cider: { id: "cider" } } }));
 expectThrowConfig("config location must not define 'id'", idConfig({ locations: { a: { id: "a" } } }));
 expectThrowConfig("config mean must not define 'id'", idConfig({ means: { walk: { id: "walk", icon: "🚶", pace: 10, skills: [] } } }));
+expectThrowConfig("config mission must not define 'id'", idConfig({ missions: { x: { id: "x", start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00", actors: { alice: { location: "a" } }, locations: { a: {} } } } }));
 expectThrowConfig("mission location override must not define 'id'", idConfig({
-  missions: [{ id: "x", start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00", actors: { alice: { location: "a" } }, locations: { a: { id: "a" } } }],
+  missions: { x: { start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00", actors: { alice: { location: "a" } }, locations: { a: { id: "a" } } } },
 }));
 
 // Trades: mission locations keyed by id and item exchanges.
@@ -375,19 +379,20 @@ const tradesConfig = {
   actors: { alice: { key: 1 } },
   locations: { shop: { map: { x: 0, y: 0, width: 10, height: 10 } } },
   routes: [],
-  missions: [{
-    id: "trade",
-    start: "2024-12-31T22:00:00",
-    deadline: "2025-01-01T00:00:00",
-    actors: { alice: { location: "shop", items: ["coin:5"] } },
-    locations: {
-      shop: {
-        trades: [
-          { id: "cider", cost: [{ item: "coin", quantity: 3 }], reward: [{ item: "cider", quantity: 1 }] },
-        ],
+  missions: {
+    trade: {
+      start: "2024-12-31T22:00:00",
+      deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "shop", items: ["coin:5"] } },
+      locations: {
+        shop: {
+          trades: {
+            cider: { cost: [{ item: "coin", quantity: 3 }], reward: [{ item: "cider", quantity: 1 }] },
+          },
+        },
       },
     },
-  }],
+  },
 };
 
 const tg = window.Umbra.create(tradesConfig);
@@ -408,14 +413,16 @@ tg.stop();
 
 const tradesConfigWith = (trades) => ({
   ...tradesConfig,
-  missions: [{
-    ...tradesConfig.missions[0],
-    locations: { shop: { trades } },
-  }],
+  missions: {
+    trade: {
+      ...tradesConfig.missions.trade,
+      locations: { shop: { trades } },
+    },
+  },
 });
-expectThrowConfig("trade with unknown item is rejected", tradesConfigWith([{ id: "x", cost: [{ item: "nope", quantity: 1 }], reward: [] }]));
-expectThrowConfig("trade with invalid quantity is rejected", tradesConfigWith([{ id: "x", cost: [{ item: "coin", quantity: 0 }], reward: [] }]));
-expectThrowConfig("duplicate trade id is rejected", tradesConfigWith([{ id: "x", cost: [], reward: [] }, { id: "x", cost: [], reward: [] }]));
+expectThrowConfig("trade with unknown item is rejected", tradesConfigWith({ x: { cost: [{ item: "nope", quantity: 1 }], reward: [] } }));
+expectThrowConfig("trade with invalid quantity is rejected", tradesConfigWith({ x: { cost: [{ item: "coin", quantity: 0 }], reward: [] } }));
+expectThrowConfig("trade entry must not define 'id'", tradesConfigWith({ x: { id: "x", cost: [], reward: [] } }));
 
 if (failures > 0) {
   console.error(failures + " failure(s)");
