@@ -270,7 +270,7 @@ const config = {
     yellowPotion: { id: "yellowPotion", avatar: potionIcon("#c9a93a") },
     greenPotion: { id: "greenPotion", avatar: potionIcon("#558f3c") },
     starCoin: { id: "starCoin", avatar: starCoinIcon },
-    coin: { id: "coin", stackable: true, avatar: coinIcon, /* avatarSize: "2.2rem" */ },
+    coin: { id: "coin", stackable: true, avatarString: "🪙", avatar: coinIcon, /* avatarSize: "2.2rem" */ },
 
     // vehicles
     skate: { id: "skate", avatarString: "🛹" },

@@ -137,6 +137,7 @@
 
   /* Item mode header (sheet): item icon + name, in place of the actor. */
   .sheet-title .it-icon { font-size: 1.7rem; line-height: 1; }
+  .sheet-title .it-icon svg, .sheet-title .it-icon img { width: 1.7rem; height: 1.7rem; display: block; }
 
   .avatar-btn {
     flex: 0 0 auto;
@@ -474,6 +475,7 @@
   .item-tile:active { transform: scale(0.96); }
   .item-tile.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--panel-2)); }
   .item-tile .ii { line-height: 1; }
+  .item-tile .ii svg, .item-tile .ii img { width: 1.9rem; height: 1.9rem; display: block; }
   .item-tile .item-count {
     position: absolute;
     right: 3px;

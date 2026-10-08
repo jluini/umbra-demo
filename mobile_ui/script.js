@@ -31,6 +31,11 @@ const uiTranslations = {
       tripInfo: "de viaje · elegí cómo ir",
       arrives: "llega",
       onTheWayTo: "En camino a",
+      giveTo: "Dar a…",
+      givePrefix: "Dar",
+      giveSuffix: " a…",
+      noRecipients: "No hay nadie más aquí para recibirlo.",
+      noItems: "Sin objetos",
     },
   },
   // TODO: en
@@ -87,6 +92,10 @@ let selectedActorId = null;
 let sheetMode = "idle"; // idle | destination | means
 let selectedDestId = null;
 let listView = false;
+let inventoryOpen = false;
+let selectedItemId = null;
+let giveMode = false;
+let lastInvActor = null;
 
 const REAL_MS_PER_GAME_MIN = 250;
 
@@ -203,6 +212,7 @@ function loadGame(gameConfig) {
     activeEngine.on("plan:cancel", onPlansChanged);
     activeEngine.on("plans:started", onPlansChanged);
     activeEngine.on("plans:completed", onPlansChanged);
+    activeEngine.on("item:give", onItemsChanged);
     activeEngine.on("mission:end", onMissionEnd);
     activeEngine.on("mission:reset", resetGameUI);
   }
@@ -285,9 +295,15 @@ function resetGameUI() {
   sheetMode = "idle";
   selectedDestId = null;
   listView = false;
+  inventoryOpen = false;
+  selectedItemId = null;
+  giveMode = false;
+  lastInvActor = null;
   sheetEl.hidden = true;
   sheetBody.replaceChildren();
   avatarsEl.replaceChildren();
+  inventoryBar.hidden = true;
+  inventoryBar.replaceChildren();
   updateRunButton();
 }
 
@@ -302,6 +318,15 @@ function actorName(id) {
 }
 function locationName(id) {
   return activeI18n.t(Utils.buildKey("locations", id, "name"));
+}
+function itemName(id) {
+  return activeI18n.t(Utils.buildKey("items", id, "name"));
+}
+// Item icon: raw SVG/HTML in item.avatar, a glyph in item.avatarString, else initial.
+function itemIconHTML(item) {
+  if (item && item.avatar) return item.avatar;
+  if (item && item.avatarString) return esc(item.avatarString);
+  return esc(String((item && item.id) || "?").charAt(0).toUpperCase());
 }
 
 function renderAvatar(entity, role) {
@@ -444,6 +469,76 @@ function renderMap() {
   if (activeEngine) mobileMap.render(buildScene(), activeI18n);
 }
 
+/* ---------- Items / inventory ---------- */
+
+function actorsAt(locationId) {
+  return activeEngine.getActors().filter((a) => a.activity.kind === "idle" && a.activity.at === locationId);
+}
+
+function itemTileHTML(group) {
+  const name = itemName(group.item.id);
+  const sel = selectedItemId === group.item.id ? " sel" : "";
+  return '<button class="item-tile' + sel + '" data-action="select-item" data-item="' + group.item.id + '"' +
+    ' title="' + esc(name) + '" aria-label="' + esc(name) + '">' +
+    '<span class="ii">' + itemIconHTML(group.item) + "</span>" +
+    (group.count > 1 ? '<span class="item-count">' + group.count + "</span>" : "") +
+    "</button>";
+}
+
+function itemsGridHTML(a) {
+  const groups = activeEngine.getItemGroups(a.id);
+  if (!groups.length) return '<div class="chips"><span class="chip empty">' + esc(t("ui.noItems")) + "</span></div>";
+  return '<div class="items-grid">' + groups.map(itemTileHTML).join("") + "</div>";
+}
+
+// Inventory bar (floats below the avatars row). Shows only the item tiles; the
+// selected item is detailed in the sheet. Animates when opening or switching actor.
+function renderInventory() {
+  const a = selectedActorId ? activeEngine.getActor(selectedActorId) : null;
+  const show = !!a && inventoryOpen && sheetMode === "idle" && a.activity.kind === "idle";
+  if (!show) {
+    inventoryBar.hidden = true;
+    inventoryBar.replaceChildren();
+    lastInvActor = null;
+    return;
+  }
+  const animate = inventoryBar.hidden || a.id !== lastInvActor;
+  inventoryBar.hidden = false;
+  inventoryBar.innerHTML = itemsGridHTML(a);
+  lastInvActor = a.id;
+  if (animate) {
+    inventoryBar.querySelectorAll(".item-tile").forEach((el) => el.classList.add("bubble-in"));
+  }
+}
+
+function itemHeaderHTML(itemId) {
+  const item = activeEngine.getConfig().items[itemId] || { id: itemId };
+  return '<div class="sheet-title item-title"><span class="it-icon">' + itemIconHTML(item) +
+    '</span><h2>' + esc(itemName(itemId)) + "</h2></div>";
+}
+
+function itemActionsHTML(a) {
+  if (giveMode) return givePanelHTML(a);
+  return '<button class="primary" data-action="give">' + esc(t("ui.giveTo")) + "</button>";
+}
+
+function givePanelHTML(a) {
+  const recipients = actorsAt(a.activity.at).filter((x) => x.id !== a.id);
+  let html = '<div class="item-detail giving"><div class="dn"><b>' +
+    esc(t("ui.givePrefix")) + " " + esc(itemName(selectedItemId)) + esc(t("ui.giveSuffix")) + "</b></div>";
+  if (!recipients.length) {
+    html += '<div class="recip-note">' + esc(t("ui.noRecipients")) + "</div>";
+  } else {
+    html += '<div class="recip-list">' + recipients.map((r) =>
+      '<button class="recip" data-action="give-to" data-actor="' + r.id + '">' +
+      '<span class="av av-map" style="--c:' + r.preset.color + '"><img src="' + r.preset.avatarUrl + '" alt=""></span>' +
+      '<span class="rn">' + esc(actorName(r.id)) + "</span>" +
+      '<span class="rc">' + activeEngine.getItemCount(r.id, selectedItemId) + "</span></button>").join("") + "</div>";
+  }
+  html += '<button class="mini-btn ghost" data-action="cancel-give">' + esc(t("plan.cancel")) + "</button></div>";
+  return html;
+}
+
 /* ---------- Sheet ---------- */
 
 function actorHeaderHTML(a) {
@@ -518,10 +613,15 @@ function meansSheetHTML(a) {
 function renderSheet() {
   if (!selectedActorId || !activeEngine) { sheetBody.replaceChildren(); return; }
   const a = activeEngine.getActor(selectedActorId);
-  let html = actorHeaderHTML(a);
-  if (sheetMode === "destination") html += destinationSheetHTML();
-  else if (sheetMode === "means") html += meansSheetHTML(a);
-  else html += idleSheetHTML(a);
+  let html;
+  if (selectedItemId && sheetMode === "idle") {
+    html = itemHeaderHTML(selectedItemId) + itemActionsHTML(a);
+  } else {
+    html = actorHeaderHTML(a);
+    if (sheetMode === "destination") html += destinationSheetHTML();
+    else if (sheetMode === "means") html += meansSheetHTML(a);
+    else html += idleSheetHTML(a);
+  }
   sheetBody.innerHTML = html;
 }
 
@@ -529,6 +629,7 @@ function refresh() {
   sheetEl.hidden = !selectedActorId;
   updateAvatarStates();
   renderSheet();
+  renderInventory();
   renderMap();
   updateRunButton();
 }
@@ -540,6 +641,9 @@ function selectActor(id) {
   sheetMode = "idle";
   selectedDestId = null;
   listView = false;
+  inventoryOpen = true;
+  selectedItemId = null;
+  giveMode = false;
   refresh();
   const a = activeEngine ? activeEngine.getActor(id) : null;
   if (a) mobileMap.focusLocation(a.activity.at);
@@ -551,6 +655,9 @@ function enterDestination() {
   sheetMode = "destination";
   selectedDestId = null;
   listView = false;
+  inventoryOpen = false;
+  selectedItemId = null;
+  giveMode = false;
   refresh();
 }
 
@@ -584,6 +691,36 @@ function setPlan(dest) {
 
 function cancelPlan() {
   activeEngine.cancelPlan(selectedActorId);
+  refresh();
+}
+
+/* ---------- Items ---------- */
+
+function selectItem(itemId) {
+  if (selectedItemId === itemId) {
+    selectedItemId = null;
+    giveMode = false;
+  } else {
+    selectedItemId = itemId;
+    giveMode = false;
+  }
+  refresh();
+}
+
+function giveTo(targetId) {
+  const a = activeEngine.getActor(selectedActorId);
+  if (!a || !selectedItemId) return;
+  const item = activeEngine.getConfig().items[selectedItemId];
+  if (!item) return;
+  if (activeEngine.giveItem(a.id, targetId, item, 1)) {
+    giveMode = false;
+    if (activeEngine.getItemCount(a.id, selectedItemId) === 0) selectedItemId = null;
+  }
+  refresh();
+}
+
+function onItemsChanged() {
+  if (selectedItemId && activeEngine.getItemCount(selectedActorId, selectedItemId) === 0) selectedItemId = null;
   refresh();
 }
 
@@ -665,6 +802,16 @@ sheetBody.addEventListener("click", (e) => {
   else if (action === "back-destination") backToDestination();
   else if (action === "choose-means") setPlan(selectedDestId);
   else if (action === "cancel-plan") cancelPlan();
+  else if (action === "select-item") selectItem(btn.dataset.item);
+  else if (action === "give") { giveMode = true; refresh(); }
+  else if (action === "cancel-give") { giveMode = false; refresh(); }
+  else if (action === "give-to") giveTo(btn.dataset.actor);
+});
+
+inventoryBar.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  if (btn.dataset.action === "select-item") selectItem(btn.dataset.item);
 });
 
 btnRestart.addEventListener("click", restartMission);
