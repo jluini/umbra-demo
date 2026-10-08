@@ -293,12 +293,13 @@ const createMobileMap = (viewport, options) => {
         if (onItemClick) el.addEventListener("click", (ev) => {
           ev.stopPropagation();
           const cur = el.__item;
-          if (cur) onItemClick(cur.at, cur.itemId, cur.key, ev);
+          if (cur) onItemClick(cur.at, cur.itemId, cur.key, cur.reservedBy || null, ev);
         });
         itemEls.set(key, el);
       }
       el.__item = it;
       el.classList.toggle("sel", !!it.selected);
+      el.classList.toggle("reserved", !!it.reserved);
       if (el.parentNode !== host.loose) host.loose.appendChild(el);
     }
   };

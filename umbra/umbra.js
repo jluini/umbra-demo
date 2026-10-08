@@ -709,6 +709,24 @@ const create = (config = {}) => {
     return { ok: true };
   };
 
+  // Reservation bookkeeping: a loose vehicle is moved from a location's
+  // available `items` into its `reserved` list while it backs a pending plan.
+  const takeReservation = (locationId, actorId, item) => {
+    const loc = findLocation(state.mission, locationId);
+    if (!loc || !Array.isArray(loc.reserved)) return null;
+    const i = loc.reserved.findIndex((r) => r.item === item && r.actorId === actorId);
+    return i < 0 ? null : loc.reserved.splice(i, 1)[0];
+  };
+  const releaseVehicle = (actorId, plan) => {
+    if (!plan || !plan.vehicle) return;
+    const actor = findActor(state.mission, actorId);
+    const loc = actor && findLocation(state.mission, actor.activity.at);
+    if (!loc) return;
+    takeReservation(loc.id, actorId, plan.vehicle.item);
+    if (!loc.items) loc.items = [];
+    loc.items.push(plan.vehicle.item);
+  };
+
   const commitPlans = () => {
     if (!isRunning()) return false;
     let started = false;
@@ -717,14 +735,13 @@ const create = (config = {}) => {
       const actor = findActor(state.mission, actorId);
       const reason = actor ? planInvalidReason(actor, plan) : "unknown";
       if (reason) {
-        if (plan.vehicle && actor) {
-          const loc = findLocation(state.mission, actor.activity.at);
-          if (loc) { if (!loc.items) loc.items = []; loc.items.push(plan.vehicle.item); }
-        }
+        releaseVehicle(actorId, plan);
         cancelled.push({ actorId, plan, reason });
         delete state.plans[actorId];
         continue;
       }
+      // The vehicle leaves the location's reserved list and travels with the actor.
+      if (plan.vehicle) takeReservation(actor.activity.at, actorId, plan.vehicle.item);
       actor.activity = {
         kind: "transit",
         mean: plan.mean,
@@ -746,11 +763,7 @@ const create = (config = {}) => {
   const releasePlan = (actorId) => {
     const plan = state.plans[actorId];
     if (!plan) return false;
-    if (plan.vehicle) {
-      const actor = findActor(state.mission, actorId);
-      const loc = actor && findLocation(state.mission, actor.activity.at);
-      if (loc) { if (!loc.items) loc.items = []; loc.items.push(plan.vehicle.item); }
-    }
+    releaseVehicle(actorId, plan);
     delete state.plans[actorId];
     return true;
   };
@@ -828,7 +841,10 @@ const create = (config = {}) => {
         const items = (loc && loc.items) || [];
         const idx = items.findIndex((it) => it.id === itemId);
         if (idx < 0) return false;
-        vehicle = { itemId, item: items.splice(idx, 1)[0] };
+        const item = items.splice(idx, 1)[0];
+        if (!loc.reserved) loc.reserved = [];
+        loc.reserved.push({ item, actorId });
+        vehicle = { itemId, item, actorId };
       }
       const plan = buildPlan(actor, destination, distMatrix, mean, computeTravelTime);
       if (vehicle) plan.vehicle = vehicle;

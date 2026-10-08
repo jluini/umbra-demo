@@ -713,17 +713,20 @@ const lv = window.Umbra.create(looseVehConfig(["bike"]));
 lv.start();
 check(lvIds(lv, "alice").includes("bike"), "loose vehicle: bike available from the location");
 check(lv.setPlan("alice", "b", "bike") === true, "loose vehicle: plan set via a loose required item");
-check(lv.getLocation("a").items.length === 0, "loose vehicle: reserved item removed from the location");
+check(lv.getLocation("a").items.length === 0, "loose vehicle: reserved item leaves the available pool");
+check((lv.getLocation("a").reserved || []).length === 1 && lv.getLocation("a").reserved[0].actorId === "alice", "loose vehicle: held in location.reserved while pending");
 check(lv.getPlan("alice").vehicle && lv.getPlan("alice").vehicle.itemId === "bike", "plan holds the reserved vehicle");
 check(!lvIds(lv, "bob").includes("bike"), "reservation blocks other actors at the same location");
 check(lv.cancelPlan("alice") === true, "cancel plan releases the reservation");
-check(lv.getLocation("a").items.length === 1 && lvIds(lv, "bob").includes("bike"), "released item is available again");
+check(lv.getLocation("a").items.length === 1 && (lv.getLocation("a").reserved || []).length === 0 && lvIds(lv, "bob").includes("bike"), "release clears reserved and returns the item");
 lv.stop();
 
 const lv2 = window.Umbra.create(looseVehConfig(["bike"]));
 lv2.start();
 lv2.setPlan("bob", "b", "bike");
+check((lv2.getLocation("a").reserved || []).length === 1, "reserved present while the plan is pending");
 advanceUntilIdle(lv2, "bob");
+check((lv2.getLocation("a").reserved || []).length === 0, "reserved leaves the location on commit (hidden in transit)");
 check(lv2.getActor("bob").activity.kind === "idle" && lv2.getActor("bob").activity.at === "b", "optional reserved vehicle: actor arrived");
 check(lv2.getItemCount("bob", "bike") === 1, "optional reserved vehicle goes to the actor inventory on arrival");
 check((lv2.getLocation("b").items || []).length === 0, "optional vehicle is not left at the destination");
@@ -738,6 +741,31 @@ check(lv3.getActor("alice").activity.at === "b", "none reserved vehicle: actor a
 check(lv3.getLocation("b").items.some((it) => it.id === "car_1"), "none reserved vehicle is left loose at the destination");
 check(lv3.getItemCount("alice", "car_1") === 0, "none reserved vehicle is not kept in inventory");
 lv3.stop();
+
+// Several reservations are supported, even of the same item id (different actors).
+const multiResConfig = () => ({
+  items: { bike: { carry: "optional" } },
+  actors: { alice: { key: 1, skills: ["bike"] }, bob: { key: 2, skills: ["bike"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: { bike: { icon: "🚲", pace: 4, items: ["bike"], capacity: ["0:bike"] } },
+  missions: {
+    m: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a" }, bob: { location: "a" } },
+      locations: { a: { items: ["bike", "bike"] }, b: {} },
+    },
+  },
+});
+const mr = window.Umbra.create(multiResConfig());
+mr.start();
+check(mr.setPlan("alice", "b", "bike") === true && mr.setPlan("bob", "b", "bike") === true, "two actors reserve the same item id");
+const mrRes = mr.getLocation("a").reserved || [];
+check(mrRes.length === 2 && mrRes[0].actorId !== mrRes[1].actorId, "location.reserved holds both, by different actors");
+check(mr.getLocation("a").items.length === 0, "no available items left at the location");
+mr.advance();
+check((mr.getLocation("a").reserved || []).length === 0, "reserved leaves the location on commit for both");
+mr.stop();
 
 // A reserved vehicle counts as inventory for plan validity: an extra required
 // item is excess and must invalidate the plan (so the transfer is rejected).

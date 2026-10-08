@@ -41,6 +41,7 @@ const uiTranslations = {
       dropHere: "Dejar aquí",
       takeHere: "Tomar",
       cannotTake: "No se puede llevar; se usa para viajar.",
+      reservedBy: "Reservado por",
       noTakers: "No hay nadie aquí para tomarlo.",
       givePrefix: "Dar",
       giveSuffix: " a…",
@@ -117,7 +118,7 @@ const REAL_MS_PER_GAME_MIN = 250;
 const mobileMap = MobileMap.create(mapEl, {
   onLocationClick: handleLocationClick,
   onTokenClick: (id) => selectActor(id),
-  onItemClick: (locId, itemId, key) => selectLooseItem(locId, itemId, key),
+  onItemClick: (locId, itemId, key, reservedBy) => selectLooseItem(locId, itemId, key, reservedBy),
   bottomInset: () => (sheetEl.hidden ? 0 : sheetEl.getBoundingClientRect().height),
   renderAvatar,
 });
@@ -558,7 +559,20 @@ function buildScene() {
         itemId: item.id,
         avatarHtml: itemIconHTML(item),
         title: itemName(item.id),
-        selected: !!selectedLooseItem && selectedLooseItem.locationId === l.id && selectedLooseItem.itemId === item.id,
+        selected: !!selectedLooseItem && selectedLooseItem.key === key,
+      });
+    });
+    (l.reserved || []).forEach((r, n) => {
+      const key = l.id + ":r" + n;
+      items.push({
+        key,
+        at: l.id,
+        itemId: r.item.id,
+        avatarHtml: itemIconHTML(r.item),
+        title: actorName(r.actorId),
+        reserved: true,
+        reservedBy: r.actorId,
+        selected: !!selectedLooseItem && selectedLooseItem.key === key,
       });
     });
   }
@@ -761,7 +775,11 @@ function meansSheetHTML(a) {
 function renderSheet() {
   if (!activeEngine) { sheetBody.replaceChildren(); return; }
   if (selectedLooseItem) {
-    sheetBody.innerHTML = looseItemHeaderHTML(selectedLooseItem.locationId, selectedLooseItem.itemId) + takeActionsHTML();
+    const head = looseItemHeaderHTML(selectedLooseItem.locationId, selectedLooseItem.itemId);
+    const actions = selectedLooseItem.reservedBy
+      ? '<div class="phase-sub">' + esc(t("ui.reservedBy")) + " " + esc(actorName(selectedLooseItem.reservedBy)) + "</div>"
+      : takeActionsHTML();
+    sheetBody.innerHTML = head + actions;
     return;
   }
   if (!selectedActorId) { sheetBody.replaceChildren(); return; }
@@ -871,13 +889,13 @@ function selectItem(itemId) {
   refresh();
 }
 
-function selectLooseItem(locationId, itemId, key) {
+function selectLooseItem(locationId, itemId, key, reservedBy) {
   if (sheetMode !== "idle") return;
   selectedActorId = null;
   selectedItemId = null;
   giveMode = false;
   takeMode = false;
-  selectedLooseItem = { locationId, itemId, key };
+  selectedLooseItem = { locationId, itemId, key, reservedBy: reservedBy || null };
   refresh();
 }
 
@@ -910,7 +928,9 @@ function giveTo(targetId) {
 
 function looseItemAvailable(sel) {
   const loc = activeEngine.getLocation(sel.locationId);
-  return !!loc && (loc.items || []).some((it) => it.id === sel.itemId);
+  if (!loc) return false;
+  return (loc.items || []).some((it) => it.id === sel.itemId) ||
+    (loc.reserved || []).some((r) => r.item.id === sel.itemId);
 }
 
 function onItemsChanged() {
