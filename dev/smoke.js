@@ -457,6 +457,37 @@ expectThrowConfig("unknown loose item is rejected", looseConfig({ locationItems:
 expectThrowConfig("invalid carry value is rejected", looseConfig({ items: { skate: { carry: "sometimes" } }, locationItems: ["skate"] }));
 expectThrowConfig("stackable item cannot be optional/none", looseConfig({ items: { coin: { stackable: true, carry: "optional" } }, locationItems: [] }));
 
+// dropItem moves a placeable item from an actor to its current location.
+const dropConfig = {
+  items: { skate: { carry: "optional" }, hoop: { carry: "optional" }, cider: {} },
+  actors: { alice: { key: 1, skills: ["walk"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: { walk: { icon: "🚶", pace: 10, skills: [] } },
+  missions: {
+    drop: {
+      start: "2024-12-31T22:00:00",
+      deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a", items: ["skate", "hoop", "cider"] } },
+      locations: { a: {}, b: {} },
+    },
+  },
+};
+const dg = window.Umbra.create(dropConfig);
+dg.start();
+let dropEvent = null;
+dg.on("item:drop", (e) => { dropEvent = e; });
+check(dg.dropItem("alice", dg.getConfig().items.skate, 1) === true, "dropItem moves a placeable item to the location");
+check(dg.getItemCount("alice", "skate") === 0, "dropped item leaves the actor inventory");
+check(dg.getLocation("a").items.length === 1 && dg.getLocation("a").items[0].id === "skate", "location holds the dropped item");
+check(dropEvent && dropEvent.locationId === "a" && dropEvent.item.id === "skate", "item:drop is emitted");
+check(dg.dropItem("alice", dg.getConfig().items.cider, 1) === false, "required items cannot be dropped");
+check(dg.dropItem("bob", dg.getConfig().items.hoop, 1) === false, "unknown actor is rejected");
+dg.setPlan("alice", "b");
+dg.advance();
+check(dg.dropItem("alice", dg.getConfig().items.hoop, 1) === false, "dropping is rejected while in transit");
+dg.stop();
+
 if (failures > 0) {
   console.error(failures + " failure(s)");
   process.exit(1);

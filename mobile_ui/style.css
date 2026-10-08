@@ -522,6 +522,8 @@
   .item-detail .dn small { display: block; color: var(--muted); font-size: 0.72rem; margin-top: 2px; }
   .item-detail.giving { flex-direction: column; align-items: stretch; }
   .item-detail.giving .dn { margin-bottom: 8px; }
+  .item-actions { display: flex; gap: 8px; }
+  .item-actions .primary { flex: 1; margin-top: 0; }
 
   .mini-btn {
     flex: 0 0 auto;

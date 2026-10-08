@@ -307,7 +307,7 @@ const config = {
     coin: { stackable: true, avatarString: "🪙", avatar: coinIcon, /* avatarSize: "2.2rem" */ },
 
     // vehicles
-    skate: { avatarString: "🛹" },
+    skate: { avatarString: "🛹", carry: "required" },
     long:  { avatarString: "🏄‍♂️", carry: "optional" },
     bike:  { avatarString: "🚲", carry: "optional" /*avatar: bikeIcon(),*/ /* avatarSize: "2.2rem" */ },
     car_1: { avatarString: "🚗", carry: "none" }, // no se pueden "llevar"
@@ -402,16 +402,16 @@ const config = {
         charles: { location: "charlesHouse", items: ["diamond", "greenPotion", "cider", "starCoin", "key"] },
         dave: { location: "charlesHouse", items: [] },
         elena: { location: "charlesHouse" },
-        fiona: { location: "square" },
+        fiona: { location: "square", items: ["car_2"] },
         george: { location: "forest" }
       },
       locations: {
-        aliceHouse: {},
+        aliceHouse: { items: ["bike"] },
         bobHouse: { items: ["car_1", "car_2", "van"] },
         charlesHouse: { items: ["car_2"] },
         square: { items: ["van"] },
-        forest: {},
-        market: {},
+        forest: { items: [] },
+        market: { items: ["long"] },
       },
       briefing: [
         { text: ".situation" },

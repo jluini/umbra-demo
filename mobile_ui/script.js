@@ -35,6 +35,7 @@ const uiTranslations = {
       arrives: "llega",
       onTheWayTo: "En camino a",
       giveTo: "Dar a…",
+      dropHere: "Dejar aquí",
       givePrefix: "Dar",
       giveSuffix: " a…",
       noRecipients: "No hay nadie más aquí para recibirlo.",
@@ -218,6 +219,7 @@ function loadGame(gameConfig) {
     activeEngine.on("plans:started", onPlansChanged);
     activeEngine.on("plans:completed", onPlansChanged);
     activeEngine.on("item:give", onItemsChanged);
+    activeEngine.on("item:drop", onItemsChanged);
     activeEngine.on("mission:end", onMissionEnd);
     activeEngine.on("mission:reset", resetGameUI);
   }
@@ -593,7 +595,12 @@ function itemHeaderHTML(itemId) {
 
 function itemActionsHTML(a) {
   if (giveMode) return givePanelHTML(a);
-  return '<button class="primary" data-action="give">' + esc(t("ui.giveTo")) + "</button>";
+  const item = activeEngine.getConfig().items[selectedItemId];
+  const placeable = item && (item.carry === "optional" || item.carry === "none");
+  let html = '<div class="item-actions">';
+  if (placeable) html += '<button class="primary" data-action="drop">' + esc(t("ui.dropHere")) + "</button>";
+  html += '<button class="primary" data-action="give">' + esc(t("ui.giveTo")) + "</button>";
+  return html + "</div>";
 }
 
 function givePanelHTML(a) {
@@ -800,6 +807,16 @@ function onItemsChanged() {
   refresh();
 }
 
+function dropItem() {
+  const a = activeEngine.getActor(selectedActorId);
+  if (!a || !selectedItemId) return;
+  const item = activeEngine.getConfig().items[selectedItemId];
+  if (!item) return;
+  activeEngine.dropItem(a.id, item, 1);
+  if (activeEngine.getItemCount(a.id, selectedItemId) === 0) selectedItemId = null;
+  refresh();
+}
+
 function handleLocationClick(locationId) {
   if (sheetMode === "destination") chooseDest(locationId);
 }
@@ -885,6 +902,7 @@ sheetBody.addEventListener("click", (e) => {
   else if (action === "cancel-plan") cancelPlan();
   else if (action === "select-item") selectItem(btn.dataset.item);
   else if (action === "give") { giveMode = true; refresh(); }
+  else if (action === "drop") dropItem();
   else if (action === "cancel-give") { giveMode = false; refresh(); }
   else if (action === "give-to") giveTo(btn.dataset.actor);
 });

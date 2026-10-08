@@ -713,6 +713,21 @@ const create = (config = {}) => {
       // if (ending) endMission({ ...ending, reason: "rule" }, { completed: [], ended: null });
       return true;
     },
+    dropItem(actorId, item, quantity = 1) {
+      if (!isRunning()) return false;
+      const actor = findActor(state.mission, actorId);
+      if (!actor || actor.activity.kind !== "idle") return false;
+      if (!item || itemCarry(item) === "required") return false;
+      if (!Number.isInteger(quantity) || quantity < 1) return false;
+      const location = findLocation(state.mission, actor.activity.at);
+      if (!location) return false;
+      if (countItem(actor, item.id) < quantity) return false;
+      removeItems(actor, item.id, quantity);
+      if (!location.items) location.items = [];
+      for (let i = 0; i < quantity; i++) location.items.push(item);
+      emit("item:drop", { actorId, locationId: location.id, item, quantity });
+      return true;
+    },
     canTrade(actorId, locationId, tradeId) {
       return evaluateTrade(actorId, locationId, tradeId);
     },
