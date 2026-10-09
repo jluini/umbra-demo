@@ -7,6 +7,8 @@
 //   presentation/format.js   (Presentation.formatDateTime)
 //   presentation/richtext.js (Presentation.renderRichText)
 //   translations.js          (window.MobileTranslations)
+//   scene.js                 (window.MobileScene)
+//   avatars.js               (window.MobileAvatars)
 (() => {
 "use strict";
 
@@ -80,6 +82,15 @@ const mobileMap = MobileMap.create(mapEl, {
   onItemClick: (locId, itemId, key, reservedBy) => selectLooseItem(locId, itemId, key, reservedBy),
   bottomInset: () => (sheetEl.hidden ? 0 : sheetEl.getBoundingClientRect().height),
   renderAvatar,
+});
+
+const avatars = MobileAvatars.create({
+  container: avatarsEl,
+  getEngine: () => activeEngine,
+  getSelectedId: () => selectedActorId,
+  actorName,
+  renderAvatar,
+  onSelect: selectActor,
 });
 
 /* ============================ i18n / language ============================ */
@@ -300,7 +311,7 @@ function onMissionStart({ mission }) {
 
   activeClock = mission.start;
   updateClockText();
-  buildAvatars();
+  avatars.build();
   refresh();
   hideTitles();
   showBriefing(true);
@@ -402,155 +413,19 @@ function renderAvatar(entity, role) {
   return el;
 }
 
-function buildAvatars() {
-  avatarsEl.replaceChildren();
-  if (!activeEngine) return;
-  const mission = activeEngine.getMission();
-  const actors = mission.actors.slice().sort((a, b) => a.preset.key - b.preset.key);
-  for (const a of actors) {
-    const name = actorName(a.id);
-    const btn = document.createElement("button");
-    btn.dataset.actorId = a.id;
-    btn.className = "avatar-btn";
-    btn.style.setProperty("--c", a.preset.color);
-    btn.title = name;
-    btn.appendChild(renderAvatar({ color: a.preset.color, avatarUrl: a.preset.avatarUrl, initial: name.charAt(0) }, "row"));
-    const span = document.createElement("span");
-    span.className = "aname";
-    span.textContent = name;
-    btn.appendChild(span);
-    let down = null;
-    btn.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse" && e.button !== 0) return; down = { x: e.clientX, y: e.clientY }; });
-    btn.addEventListener("pointerup", (e) => { const d = down; down = null; if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 12) selectActor(a.id); });
-    btn.addEventListener("pointercancel", () => { down = null; });
-    btn.addEventListener("click", (e) => { if (e.detail === 0) selectActor(a.id); });
-    avatarsEl.appendChild(btn);
-  }
-  updateAvatarStates();
-}
-
-// Selection/status only: toggles classes on the existing buttons (no rebuild).
-function updateAvatarStates() {
-  if (!activeEngine) return;
-  const sel = selectedActorId ? activeEngine.getActor(selectedActorId) : null;
-  avatarsEl.querySelectorAll(".avatar-btn").forEach((btn) => {
-    const a = activeEngine.getActor(btn.dataset.actorId);
-    if (!a) return;
-    const far = sel && a.id !== sel.id && a.activity.at !== sel.activity.at;
-    btn.classList.toggle("sel", a.id === selectedActorId);
-    btn.classList.toggle("busy", a.activity.kind === "transit");
-    btn.classList.toggle("far", !!far);
-  });
-}
-
-function shortestPath(from, to) {
-  if (from === to) return [from];
-  const adj = {};
-  for (const r of activeEngine.getConfig().routes || []) {
-    (adj[r.from] = adj[r.from] || []).push(r.to);
-    (adj[r.to] = adj[r.to] || []).push(r.from);
-  }
-  const prev = {};
-  const seen = { [from]: true };
-  const queue = [from];
-  while (queue.length) {
-    const cur = queue.shift();
-    for (const n of adj[cur] || []) {
-      if (seen[n]) continue;
-      seen[n] = true;
-      prev[n] = cur;
-      if (n === to) {
-        const path = [to];
-        let p = to;
-        while (prev[p] !== undefined) { p = prev[p]; path.unshift(p); }
-        return path;
-      }
-      queue.push(n);
-    }
-  }
-  return [];
-}
-
-function buildScene() {
-  const mission = activeEngine.getMission();
-  const config = activeEngine.getConfig();
-  const inMission = new Set(mission.locations.map((l) => l.id));
-  const actor = selectedActorId ? activeEngine.getActor(selectedActorId) : null;
-  const selecting = sheetMode === "destination" && actor && actor.activity.kind === "idle";
-
-  const locations = mission.locations.map((l) => {
-    const entry = { id: l.id, map: l.map, pictureUrl: l.pictureUrl, itemSide: l.itemSide };
-    if (selecting) {
-      if (l.id === actor.activity.at) entry.state = "current";
-      else {
-        const d = activeEngine.distance(actor.activity.at, l.id);
-        if (d !== Infinity) { entry.state = "reachable"; entry.badge = Presentation.formatDistance(d); }
-        else entry.state = "dim";
-      }
-    }
-    return entry;
-  });
-
-  const activeEdges = new Set();
-  if (actor) {
-    const plan = activeEngine.getPlan(actor.id);
-    const dest = plan ? plan.destination : (actor.activity.kind === "transit" ? actor.activity.to : null);
-    if (dest) {
-      const path = shortestPath(actor.activity.at, dest);
-      for (let i = 0; i < path.length - 1; i++) {
-        activeEdges.add(path[i] + "|" + path[i + 1]);
-        activeEdges.add(path[i + 1] + "|" + path[i]);
-      }
-    }
-  }
-  const routes = (config.routes || [])
-    .filter((r) => inMission.has(r.from) && inMission.has(r.to))
-    .map((r) => ({ from: r.from, to: r.to, active: activeEdges.has(r.from + "|" + r.to) }));
-
-  const tokens = activeEngine.getActors()
-    .filter((a) => a.activity.kind === "idle")
-    .map((a) => ({
-      id: a.id,
-      at: a.activity.at,
-      color: a.preset.color,
-      avatarUrl: a.preset.avatarUrl,
-      initial: actorName(a.id).charAt(0),
-      title: actorName(a.id),
-    }));
-
-  const items = [];
-  for (const l of mission.locations) {
-    (l.items || []).forEach((item, n) => {
-      const key = l.id + ":" + n;
-      items.push({
-        key,
-        at: l.id,
-        itemId: item.id,
-        avatarHtml: itemIconHTML(item),
-        title: itemName(item.id),
-        selected: !!selectedLooseItem && selectedLooseItem.key === key,
-      });
-    });
-    (l.reserved || []).forEach((r, n) => {
-      const key = l.id + ":r" + n;
-      items.push({
-        key,
-        at: l.id,
-        itemId: r.item.id,
-        avatarHtml: itemIconHTML(r.item),
-        title: actorName(r.actorId),
-        reserved: true,
-        reservedBy: r.actorId,
-        selected: !!selectedLooseItem && selectedLooseItem.key === key,
-      });
-    });
-  }
-
-  return { locations, routes, tokens, items };
-}
-
 function renderMap() {
-  if (activeEngine) mobileMap.render(buildScene(), activeI18n);
+  if (!activeEngine) return;
+  const scene = MobileScene.build({
+    engine: activeEngine,
+    selectedActorId,
+    sheetMode,
+    selectedLooseItem,
+    actorName,
+    itemName,
+    itemIconHTML,
+    formatDistance: Presentation.formatDistance,
+  });
+  mobileMap.render(scene, activeI18n);
 }
 
 /* ---------- Items / inventory ---------- */
@@ -802,7 +677,7 @@ function renderSheet() {
 function refresh() {
   if (selectedLooseItem && activeEngine && !looseItemAvailable(selectedLooseItem)) { selectedLooseItem = null; takeMode = false; }
   sheetEl.hidden = !(selectedActorId || selectedLooseItem);
-  updateAvatarStates();
+  avatars.updateStates();
   renderSheet();
   renderInventory();
   renderMap();
