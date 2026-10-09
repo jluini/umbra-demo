@@ -144,7 +144,7 @@ function setLanguage(code) {
   markActiveLanguage(active);
   Presentation.applyI18n(document, activeI18n);
   updateClockText();
-  if (selectedActorId) refresh();
+  if (selectedActorId || selectedLooseItem) refresh();
 }
 
 function renderLanguageSelector(container, gameConfig) {

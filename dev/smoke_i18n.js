@@ -22,8 +22,8 @@ const check = (cond, label) => {
 };
 
 const base = {
-  en: { umbra: { mission: "Mission" }, menu: { play: "Play" }, briefingLabels: { goal: "Goal", hints: "Hints" }, plan: { walkTo: "Walk to...", cancel: "Cancel" } },
-  es: { umbra: { mission: "Misión" }, briefingLabels: { goal: "Objetivo", hints: "Pistas" }, plan: { walkTo: "Caminar a...", cancel: "Cancelar" } },
+  en: { umbra: { mission: "Mission" }, menu: { play: "Play" }, greeting: "Hi {name}", repeated: "{a}-{a}", amount: 7, briefingLabels: { goal: "Goal", hints: "Hints" }, plan: { walkTo: "Walk to...", cancel: "Cancel" } },
+  es: { umbra: { mission: "Misión" }, greeting: "Hola {name}", briefingLabels: { goal: "Objetivo", hints: "Pistas" }, plan: { walkTo: "Caminar a...", cancel: "Cancelar" } },
 };
 const config = {
   languages: ["en", "es", "pt"],
@@ -51,6 +51,12 @@ check(i18n.setLanguage("zz") === "en", "invalid language falls back to the first
 check(i18n.t("umbra.mission") === "Quest", "game translation overrides the base");
 check(i18n.t("menu.play") === "Play", "base term resolves when the game does not override it");
 check(i18n.t("umbra.missing") === "umbra.missing", "missing key returns the key");
+check(i18n.t("greeting", { name: "Ada" }) === "Hi Ada", "interpolation substitutes a named param");
+check(i18n.t("greeting") === "Hi {name}", "without params the placeholder is left intact");
+check(i18n.t("greeting", {}) === "Hi {name}", "a missing param leaves its placeholder");
+check(i18n.t("repeated", { a: "x" }) === "x-x", "a repeated placeholder is substituted everywhere");
+check(i18n.t("umbra.missing", { name: "x" }) === "umbra.missing", "missing key with params returns the key");
+check(i18n.t("amount") === 7, "a non-string value is returned as-is");
 
 check(window.Utils.buildKey("actors", "alice") === "actors.alice.name", "key defaults to the name field");
 check(window.Utils.buildKey("missions", "test", "briefing") === "missions.test.briefing", "key uses the given field");
@@ -63,6 +69,7 @@ check(i18n.t(window.Utils.buildKey("missions", "test")) === "Test", "mission nam
 
 i18n.setLanguage("es");
 check(i18n.t(window.Utils.buildKey("actors", "alice")) === "Alicia", "entity name resolves (es)");
+check(i18n.t("greeting", { name: "Ana" }) === "Hola Ana", "interpolation follows the current language");
 check(i18n.t(window.Utils.buildKey("actors", "bob")) === "actors.bob.name", "missing entity name returns the key");
 
 check(i18n.t("briefingLabels.goal") === "Objetivo", "base briefing label resolves (es)");

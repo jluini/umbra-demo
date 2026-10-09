@@ -323,7 +323,7 @@ const config = {
     forest:       { map: { x:  350, y:  350, width: 240, height: 240 }, itemSide: "right" },
   },
   means: {
-    walk:  { icon: "🚶", pace: 10, capacity: ["1:bike"] },
+    walk:  { icon: "🚶", pace: 10, capacity: ["1:bike|long"] },
     bike:  { icon: "🚲", pace: 4, items: ["bike"], capacity: ["0:bike|long"] },
     skate: { icon: "🛹", pace: 6, items: ["skate"], capacity: ["0:bike|long"] },
     long:  { icon: "🏄‍♂️", pace: 6, items: ["long"],  capacity: ["0:bike|long"] },

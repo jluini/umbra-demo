@@ -29,9 +29,11 @@ const createI18n = ({ languages = [], dictionaries = [] } = {}) => {
       i18n.emit("language:set", { language: current });
       return current;
     },
-    t(key) {
+    t(key, params) {
       const value = Utils.getPath(dictionary[current], key);
-      return value === undefined ? key : value;
+      if (value === undefined) return key;
+      if (typeof value !== "string" || !params) return value;
+      return value.replace(/\{(\w+)\}/g, (m, name) => (params[name] != null ? String(params[name]) : m));
     },
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
     emit(name, data) { (listeners[name] || []).forEach((fn) => fn(data)); },
