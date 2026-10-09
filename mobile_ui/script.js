@@ -12,44 +12,58 @@
 const uiTranslations = {
   es: {
     ui: {
-      start: "Comenzar",
-      viewBriefing: "Ver briefing",
-      victory: "Misión cumplida",
-      defeat: "Misión fallida",
-      restart: "Reiniciar",
-      backToMenu: "Volver al menú",
-      confirmAbortTitle: "¿Abortar la misión?",
-      confirmAbortMessage: "Vas a perder el progreso y volver al menú.",
-      confirmRestartTitle: "¿Reiniciar la misión?",
-      confirmRestartMessage: "Vas a perder el progreso actual y la misión comenzará de nuevo.",
-      confirmSwitchTitle: "¿Cambiar de misión?",
-      confirmSwitchMessage: "Vas a perder el progreso actual y la misión empezará de nuevo.",
-      changeMission: "Cambiar",
-      moveTo: "Moverse a…",
-      trade: "Intercambiar",
-      cost: "por",
-      missingCost: "Faltan objetos para este intercambio.",
-      chooseDestination: "Elegir destino",
-      map: "Mapa",
-      list: "Lista",
-      goTo: "Ir a",
-      chooseDestHint: "Tocá un lugar alcanzable en el mapa. Los atenuados no tienen ruta.",
-      tripInfo: "de viaje · elegí cómo ir",
-      arrives: "llega",
-      dropToTravel: "Debe dejar {items} para viajar.",
-      planBlocked: "No se puede: invalidaría un plan de viaje.",
-      plansCancelled: "Se canceló un plan de viaje (ya no era válido).",
-      onTheWayTo: "En camino a",
-      giveTo: "Dar a…",
-      dropHere: "Dejar aquí",
-      takeHere: "Tomar",
-      cannotTake: "No se puede llevar; se usa para viajar.",
-      reservedBy: "Reservado por",
-      noTakers: "No hay nadie aquí para tomarlo.",
-      givePrefix: "Dar",
-      giveSuffix: " a…",
-      noRecipients: "No hay nadie más aquí para recibirlo.",
-      noItems: "Sin objetos",
+      menu: {
+        briefing: "Ver briefing",
+        backToMenu: "Volver al menú",
+        restart: "Reiniciar",
+      },
+      briefing: {
+        close: "Comenzar",
+      },
+      confirm: {
+        abort: { title: "¿Abortar la misión?", message: "Vas a perder el progreso y volver al menú." },
+        restart: { title: "¿Reiniciar la misión?", message: "Vas a perder el progreso actual y la misión comenzará de nuevo.", accept: "Reiniciar" },
+        switch: { title: "¿Cambiar de misión?", message: "Vas a perder el progreso actual y la misión empezará de nuevo.", accept: "Cambiar" },
+      },
+      result: {
+        victory: "Misión cumplida",
+        defeat: "Misión fallida",
+      },
+      plan: {
+        moveTo: "Moverse a…",
+        chooseDestination: "Elegir destino",
+        chooseHint: "Tocá un lugar alcanzable en el mapa. Los atenuados no tienen ruta.",
+        goTo: "Ir a",
+        tripInfo: "de viaje · elegí cómo ir",
+        arrives: "llega",
+        onTheWayTo: "En camino a",
+        viewMap: "Mapa",
+        viewList: "Lista",
+      },
+      means: {
+        dropToTravel: "Debe dejar {items} para viajar.",
+      },
+      item: {
+        none: "Sin objetos",
+        giveTo: "Dar a…",
+        givePrefix: "Dar",
+        giveSuffix: " a…",
+        noRecipients: "No hay nadie más aquí para recibirlo.",
+        dropHere: "Dejar aquí",
+        take: "Tomar",
+        cannotTake: "No se puede llevar; se usa para viajar.",
+        reservedBy: "Reservado por",
+        noTakers: "No hay nadie aquí para tomarlo.",
+      },
+      trade: {
+        title: "Intercambiar",
+        cost: "por",
+        missingCost: "Faltan objetos para este intercambio.",
+      },
+      notice: {
+        planBlocked: "No se puede: invalidaría un plan de viaje.",
+        plansCancelled: "Se canceló un plan de viaje (ya no era válido).",
+      },
     },
   },
   // TODO: en
@@ -294,9 +308,9 @@ function requestMission(index) {
   if (index < 0 || index >= missions.length) return;
   if (activeEngine.getStatus() === "running") {
     openConfirm({
-      titleKey: "ui.confirmSwitchTitle",
-      messageKey: "ui.confirmSwitchMessage",
-      acceptKey: "ui.changeMission",
+      titleKey: "ui.confirm.switch.title",
+      messageKey: "ui.confirm.switch.message",
+      acceptKey: "ui.confirm.switch.accept",
       onAccept: () => switchMission(index),
     });
   } else {
@@ -354,7 +368,7 @@ function onClockSet({ time }) {
 }
 
 function onMissionEnd(ending) {
-  Presentation.setI18nText(resultTitle, "ui." + ending.effect, activeI18n);
+  Presentation.setI18nText(resultTitle, "ui.result." + ending.effect, activeI18n);
   if (ending.message) {
     Presentation.setI18nText(resultMessage, ending.message, activeI18n);
   } else {
@@ -612,7 +626,7 @@ function itemTileHTML(group) {
 
 function itemsGridHTML(a) {
   const groups = activeEngine.getItemGroups(a.id);
-  if (!groups.length) return '<div class="chips"><span class="chip empty">' + esc(t("ui.noItems")) + "</span></div>";
+  if (!groups.length) return '<div class="chips"><span class="chip empty">' + esc(t("ui.item.none")) + "</span></div>";
   return '<div class="items-grid">' + groups.map(itemTileHTML).join("") + "</div>";
 }
 
@@ -649,17 +663,17 @@ function itemActionsHTML(a) {
   const item = activeEngine.getConfig().items[selectedItemId];
   const placeable = item && (item.carry === "optional" || item.carry === "none");
   let html = '<div class="item-actions">';
-  if (placeable) html += '<button class="primary" data-action="drop">' + esc(t("ui.dropHere")) + "</button>";
-  html += '<button class="primary" data-action="give">' + esc(t("ui.giveTo")) + "</button>";
+  if (placeable) html += '<button class="primary" data-action="drop">' + esc(t("ui.item.dropHere")) + "</button>";
+  html += '<button class="primary" data-action="give">' + esc(t("ui.item.giveTo")) + "</button>";
   return html + "</div>";
 }
 
 function givePanelHTML(a) {
   const recipients = actorsAt(a.activity.at).filter((x) => x.id !== a.id);
   let html = '<div class="item-detail giving"><div class="dn"><b>' +
-    esc(t("ui.givePrefix")) + " " + esc(itemName(selectedItemId)) + esc(t("ui.giveSuffix")) + "</b></div>";
+    esc(t("ui.item.givePrefix")) + " " + esc(itemName(selectedItemId)) + esc(t("ui.item.giveSuffix")) + "</b></div>";
   if (!recipients.length) {
-    html += '<div class="recip-note">' + esc(t("ui.noRecipients")) + "</div>";
+    html += '<div class="recip-note">' + esc(t("ui.item.noRecipients")) + "</div>";
   } else {
     html += '<div class="recip-list">' + recipients.map((r) =>
       '<button class="recip" data-action="give-to" data-actor="' + r.id + '">' +
@@ -682,19 +696,19 @@ function looseItemHeaderHTML(locationId, itemId) {
 function takeActionsHTML() {
   const item = activeEngine.getConfig().items[selectedLooseItem.itemId];
   if (!item || item.carry === "none") {
-    return '<div class="phase-sub">' + esc(t("ui.cannotTake")) + "</div>";
+    return '<div class="phase-sub">' + esc(t("ui.item.cannotTake")) + "</div>";
   }
   if (takeMode) return takePanelHTML();
-  return '<div class="item-actions"><button class="primary" data-action="take">' + esc(t("ui.takeHere")) + "</button></div>";
+  return '<div class="item-actions"><button class="primary" data-action="take">' + esc(t("ui.item.take")) + "</button></div>";
 }
 
 function takePanelHTML() {
   const { locationId, itemId } = selectedLooseItem;
   const takers = actorsAt(locationId);
   let html = '<div class="item-detail giving"><div class="dn"><b>' +
-    esc(t("ui.takeHere")) + " " + esc(itemName(itemId)) + "</b></div>";
+    esc(t("ui.item.take")) + " " + esc(itemName(itemId)) + "</b></div>";
   if (!takers.length) {
-    html += '<div class="recip-note">' + esc(t("ui.noTakers")) + "</div>";
+    html += '<div class="recip-note">' + esc(t("ui.item.noTakers")) + "</div>";
   } else {
     html += '<div class="recip-list">' + takers.map((r) =>
       '<button class="recip" data-action="take-to" data-actor="' + r.id + '">' +
@@ -718,7 +732,7 @@ function idleSheetHTML(a) {
   if (a.activity.kind === "transit") {
     const elapsed = activeEngine.getInternalTime() - a.activity.startedAt;
     const pct = Math.min(100, (elapsed / a.activity.duration) * 100);
-    return '<div class="activity"><span>' + meanIcon(a.activity.mean) + '</span><div class="grow">' + esc(t("ui.onTheWayTo")) +
+    return '<div class="activity"><span>' + meanIcon(a.activity.mean) + '</span><div class="grow">' + esc(t("ui.plan.onTheWayTo")) +
       " <b>" + esc(locationName(a.activity.to)) + "</b><small>" + esc(meanName(a.activity.mean)) + " · " + elapsed + "/" + a.activity.duration +
       " min</small></div></div>" + '<div class="progress"><i style="width:' + pct + '%"></i></div>';
   }
@@ -726,13 +740,13 @@ function idleSheetHTML(a) {
   if (plan) {
     const arrival = new Date(activeEngine.getClock().getTime() + plan.duration * 60000);
     return '<div class="activity"><span>' + meanIcon(plan.mean) + '</span><div class="grow">→ <b>' + esc(locationName(plan.destination)) +
-      "</b><small>" + esc(meanName(plan.mean)) + " · " + Presentation.formatDuration(plan.duration) + " · " + esc(t("ui.arrives")) + " " +
+      "</b><small>" + esc(meanName(plan.mean)) + " · " + Presentation.formatDuration(plan.duration) + " · " + esc(t("ui.plan.arrives")) + " " +
       Presentation.formatDateTime(arrival, lang(), "time") + "</small></div>" +
       '<button class="x" data-action="cancel-plan">✕</button></div>';
   }
-  let html = '<button class="primary" data-action="move">' + esc(t("ui.moveTo")) + "</button>";
+  let html = '<button class="primary" data-action="move">' + esc(t("ui.plan.moveTo")) + "</button>";
   if (activeEngine.getTrades(a.activity.at).length > 0) {
-    html += '<button class="primary" data-action="open-trades">' + esc(t("ui.trade")) + "</button>";
+    html += '<button class="primary" data-action="open-trades">' + esc(t("ui.trade.title")) + "</button>";
   }
   return '<div class="item-actions">' + html + "</div>";
 }
@@ -744,7 +758,7 @@ function tradeRowHTML(a, trade) {
   const extra = reward.length > 1 ? " ×" + reward.reduce((n, e) => n + e.quantity, 0) : "";
   const cost = (trade.cost || []).map((e) => e.quantity + " × " + itemName(e.item)).join(" + ");
   const ok = activeEngine.canTrade(a.id, a.activity.at, trade.id).ok;
-  const note = ok ? esc(t("ui.cost")) + " " + esc(cost) : esc(t("ui.missingCost"));
+  const note = ok ? esc(t("ui.trade.cost")) + " " + esc(cost) : esc(t("ui.trade.missingCost"));
   return '<button class="mean-row' + (ok ? "" : " disabled") + '"' + (ok ? ' data-action="do-trade" data-trade="' + trade.id + '"' : "") + ">" +
     '<span class="mi">' + itemIconHTML(first) + "</span>" +
     '<span class="mn">' + esc(title) + extra + '<small>' + note + "</small></span></button>";
@@ -754,7 +768,7 @@ function tradeSheetHTML(a) {
   const trades = activeEngine.getTrades(a.activity.at);
   return '<div class="phase-bar">' +
     '<button class="icon-btn" data-action="cancel-trades">←</button>' +
-    '<span class="phase-title">' + esc(t("ui.trade")) + " · " + esc(locationName(a.activity.at)) + "</span></div>" +
+    '<span class="phase-title">' + esc(t("ui.trade.title")) + " · " + esc(locationName(a.activity.at)) + "</span></div>" +
     '<div class="means-list">' + trades.map((tr) => tradeRowHTML(a, tr)).join("") + "</div>";
 }
 
@@ -769,10 +783,10 @@ function reachableList() {
 function destinationSheetHTML() {
   let html = '<div class="phase-bar">' +
     '<button class="icon-btn" data-action="cancel-destination">←</button>' +
-    '<span class="phase-title">' + esc(t("ui.chooseDestination")) + "</span>" +
+    '<span class="phase-title">' + esc(t("ui.plan.chooseDestination")) + "</span>" +
     '<span class="seg">' +
-    '<button class="' + (listView ? "" : "on") + '" data-action="view-map">' + esc(t("ui.map")) + "</button>" +
-    '<button class="' + (listView ? "on" : "") + '" data-action="view-list">' + esc(t("ui.list")) + "</button>" +
+    '<button class="' + (listView ? "" : "on") + '" data-action="view-map">' + esc(t("ui.plan.viewMap")) + "</button>" +
+    '<button class="' + (listView ? "on" : "") + '" data-action="view-list">' + esc(t("ui.plan.viewList")) + "</button>" +
     "</span></div>";
   if (listView) {
     html += '<div class="dest-list">' + reachableList().map((r) =>
@@ -780,7 +794,7 @@ function destinationSheetHTML() {
       '<span class="dn">' + esc(locationName(r.loc.id)) + '</span><span class="dd">' +
       Presentation.formatDistance(r.d) + "</span></button>").join("") + "</div>";
   } else {
-    html += '<div class="phase-sub">' + esc(t("ui.chooseDestHint")) + "</div>";
+    html += '<div class="phase-sub">' + esc(t("ui.plan.chooseHint")) + "</div>";
   }
   return html;
 }
@@ -800,18 +814,18 @@ function meansSheetHTML(a) {
     const disabled = m.blocked ? " disabled" : "";
     const action = m.blocked ? "" : ' data-action="choose-means"';
     const note = m.blocked
-      ? (m.violations || []).map((v) => "<small>" + esc(t("ui.dropToTravel", { items: formatViolation(v) })) + "</small>").join("")
+      ? (m.violations || []).map((v) => "<small>" + esc(t("ui.means.dropToTravel", { items: formatViolation(v) })) + "</small>").join("")
       : "";
     return '<button class="mean-row' + disabled + '"' + action + ' data-mean="' + m.id + '">' +
       '<span class="mi">' + (m.icon || "🚶") + "</span>" +
       '<span class="mn">' + esc(meanName(m.id)) + note + "</span>" +
-      '<span class="mm"><b>' + Presentation.formatDuration(duration) + "</b><small>" + esc(t("ui.arrives")) + " " +
+      '<span class="mm"><b>' + Presentation.formatDuration(duration) + "</b><small>" + esc(t("ui.plan.arrives")) + " " +
       Presentation.formatDateTime(arrival, lang(), "time") + "</small></span></button>";
   }).join("");
   return '<div class="phase-bar">' +
     '<button class="icon-btn" data-action="back-destination">←</button>' +
-    '<span class="phase-title">' + esc(t("ui.goTo")) + " <b>" + esc(locationName(selectedDestId)) + "</b></span></div>" +
-    '<div class="phase-sub">' + Presentation.formatDistance(d) + " " + esc(t("ui.tripInfo")) + "</div>" +
+    '<span class="phase-title">' + esc(t("ui.plan.goTo")) + " <b>" + esc(locationName(selectedDestId)) + "</b></span></div>" +
+    '<div class="phase-sub">' + Presentation.formatDistance(d) + " " + esc(t("ui.plan.tripInfo")) + "</div>" +
     '<div class="means-list">' + rows + "</div>";
 }
 
@@ -820,7 +834,7 @@ function renderSheet() {
   if (selectedLooseItem) {
     const head = looseItemHeaderHTML(selectedLooseItem.locationId, selectedLooseItem.itemId);
     const actions = selectedLooseItem.reservedBy
-      ? '<div class="phase-sub">' + esc(t("ui.reservedBy")) + " " + esc(actorName(selectedLooseItem.reservedBy)) + "</div>"
+      ? '<div class="phase-sub">' + esc(t("ui.item.reservedBy")) + " " + esc(actorName(selectedLooseItem.reservedBy)) + "</div>"
       : takeActionsHTML();
     sheetBody.innerHTML = head + actions;
     return;
@@ -908,7 +922,7 @@ function cancelTrades() {
 function tradeTerms(trade) {
   const cost = (trade.cost || []).map((e) => e.quantity + " × " + itemName(e.item)).join(" + ");
   const reward = (trade.reward || []).map((e) => e.quantity + " × " + itemName(e.item)).join(" + ");
-  return cost + " " + t("ui.cost") + " " + reward;
+  return cost + " " + t("ui.trade.cost") + " " + reward;
 }
 
 function doTrade(tradeId) {
@@ -917,9 +931,9 @@ function doTrade(tradeId) {
   const trade = activeEngine.getTrades(a.activity.at).find((tr) => tr.id === tradeId);
   if (!trade) return;
   openConfirm({
-    title: t("ui.trade"),
+    title: t("ui.trade.title"),
     message: tradeTerms(trade),
-    accept: t("ui.trade"),
+    accept: t("ui.trade.title"),
     onAccept: () => { activeEngine.trade(a.id, a.activity.at, tradeId); refresh(); },
   });
 }
@@ -987,7 +1001,7 @@ function takeTo(actorId) {
     selectedLooseItem = null;
     takeMode = false;
   } else {
-    showToast(t("ui.planBlocked"));
+    showToast(t("ui.notice.planBlocked"));
   }
   refresh();
 }
@@ -1001,7 +1015,7 @@ function giveTo(targetId) {
     giveMode = false;
     if (activeEngine.getItemCount(a.id, selectedItemId) === 0) selectedItemId = null;
   } else {
-    showToast(t("ui.planBlocked"));
+    showToast(t("ui.notice.planBlocked"));
   }
   refresh();
 }
@@ -1027,7 +1041,7 @@ function dropItem() {
   if (activeEngine.dropItem(a.id, item, 1)) {
     if (activeEngine.getItemCount(a.id, selectedItemId) === 0) selectedItemId = null;
   } else {
-    showToast(t("ui.planBlocked"));
+    showToast(t("ui.notice.planBlocked"));
   }
   refresh();
 }
@@ -1041,7 +1055,7 @@ function onPlansChanged() {
 }
 
 function onPlansCancelled() {
-  showToast(t("ui.plansCancelled"));
+  showToast(t("ui.notice.plansCancelled"));
   if (activeEngine && !activeEngine.canAdvance()) stopAdvancing();
   refresh();
 }
@@ -1099,9 +1113,9 @@ menuEl.addEventListener("click", (e) => {
   else if (btn.dataset.menu === "reset") {
     closeMenu();
     openConfirm({
-      titleKey: "ui.confirmRestartTitle",
-      messageKey: "ui.confirmRestartMessage",
-      acceptKey: "ui.restart",
+      titleKey: "ui.confirm.restart.title",
+      messageKey: "ui.confirm.restart.message",
+      acceptKey: "ui.confirm.restart.accept",
       onAccept: restartMission,
     });
   }
