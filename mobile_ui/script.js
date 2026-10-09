@@ -9,6 +9,7 @@
 //   translations.js          (window.MobileTranslations)
 //   scene.js                 (window.MobileScene)
 //   avatars.js               (window.MobileAvatars)
+//   sheet.js                 (window.MobileSheet)
 (() => {
 "use strict";
 
@@ -72,7 +73,6 @@ let selectedItemId = null;
 let giveMode = false;
 let selectedLooseItem = null; // { locationId, itemId, key }
 let takeMode = false;
-let lastInvActor = null;
 
 const REAL_MS_PER_GAME_MIN = 250;
 
@@ -348,7 +348,6 @@ function resetGameUI() {
   giveMode = false;
   selectedLooseItem = null;
   takeMode = false;
-  lastInvActor = null;
   sheetEl.hidden = true;
   sheetBody.replaceChildren();
   avatarsEl.replaceChildren();
@@ -428,258 +427,21 @@ function renderMap() {
   mobileMap.render(scene, activeI18n);
 }
 
-/* ---------- Items / inventory ---------- */
-
-function actorsAt(locationId) {
-  return activeEngine.getActors().filter((a) => a.activity.kind === "idle" && a.activity.at === locationId);
-}
-
-function itemTileHTML(group) {
-  const name = itemName(group.item.id);
-  const sel = selectedItemId === group.item.id ? " sel" : "";
-  return '<button class="item-tile' + sel + '" data-action="select-item" data-item="' + group.item.id + '"' +
-    ' title="' + esc(name) + '" aria-label="' + esc(name) + '">' +
-    '<span class="ii">' + itemIconHTML(group.item) + "</span>" +
-    (group.count > 1 ? '<span class="item-count">' + group.count + "</span>" : "") +
-    "</button>";
-}
-
-function itemsGridHTML(a) {
-  const groups = activeEngine.getItemGroups(a.id);
-  if (!groups.length) return '<div class="chips"><span class="chip empty">' + esc(t("ui.item.none")) + "</span></div>";
-  return '<div class="items-grid">' + groups.map(itemTileHTML).join("") + "</div>";
-}
-
-// Inventory bar (floats below the avatars row). Shows only the item tiles; the
-// selected item is detailed in the sheet. Animates when opening or switching actor.
-function renderInventory() {
-  const a = selectedActorId ? activeEngine.getActor(selectedActorId) : null;
-  const show = !!a && inventoryOpen && !selectedLooseItem && sheetMode === "idle" && a.activity.kind === "idle";
-  if (!show) {
-    inventoryBar.hidden = true;
-    inventoryBar.replaceChildren();
-    lastInvActor = null;
-    return;
-  }
-  const animate = inventoryBar.hidden || a.id !== lastInvActor;
-  inventoryBar.hidden = false;
-  inventoryBar.innerHTML = itemsGridHTML(a);
-  lastInvActor = a.id;
-  if (animate) {
-    inventoryBar.querySelectorAll(".item-tile").forEach((el) => el.classList.add("bubble-in"));
-  }
-}
-
-function itemHeaderHTML(a, itemId) {
-  const item = activeEngine.getConfig().items[itemId] || { id: itemId };
-  const name = item.stackable ? activeEngine.getItemCount(a.id, itemId) + " " + itemName(itemId) : itemName(itemId);
-  return '<div class="sheet-title"><span class="av av-head" style="--c:var(--item-color); --c-bg:var(--panel-2)">' + itemIconHTML(item) +
-    "</span><h2>" + esc(name) + '</h2><span class="at">· ' + esc(actorName(a.id)) +
-    '</span><span class="at">· ' + esc(locationName(a.activity.at)) + "</span></div>";
-}
-
-function itemActionsHTML(a) {
-  if (giveMode) return givePanelHTML(a);
-  const item = activeEngine.getConfig().items[selectedItemId];
-  const placeable = item && (item.carry === "optional" || item.carry === "none");
-  let html = '<div class="item-actions">';
-  if (placeable) html += '<button class="primary" data-action="drop">' + esc(t("ui.item.dropHere")) + "</button>";
-  html += '<button class="primary" data-action="give">' + esc(t("ui.item.giveTo")) + "</button>";
-  return html + "</div>";
-}
-
-function givePanelHTML(a) {
-  const recipients = actorsAt(a.activity.at).filter((x) => x.id !== a.id);
-  let html = '<div class="item-detail giving"><div class="dn"><b>' +
-    esc(t("ui.item.givePrefix")) + " " + esc(itemName(selectedItemId)) + esc(t("ui.item.giveSuffix")) + "</b></div>";
-  if (!recipients.length) {
-    html += '<div class="recip-note">' + esc(t("ui.item.noRecipients")) + "</div>";
-  } else {
-    html += '<div class="recip-list">' + recipients.map((r) =>
-      '<button class="recip" data-action="give-to" data-actor="' + r.id + '">' +
-      '<span class="av av-map" style="--c:' + r.preset.color + '"><img src="' + r.preset.avatarUrl + '" alt=""></span>' +
-      '<span class="rn">' + esc(actorName(r.id)) + "</span>" +
-      '<span class="rc">' + activeEngine.getItemCount(r.id, selectedItemId) + "</span></button>").join("") + "</div>";
-  }
-  html += '<button class="mini-btn ghost" data-action="cancel-give">' + esc(t("plan.cancel")) + "</button></div>";
-  return html;
-}
-
-// A loose (location) item: subject first, then its location as context.
-function looseItemHeaderHTML(locationId, itemId) {
-  const item = activeEngine.getConfig().items[itemId] || { id: itemId };
-  return '<div class="sheet-title"><span class="av av-head" style="--c:var(--item-color); --c-bg:var(--panel-2)">' + itemIconHTML(item) +
-    '</span><h2>' + esc(itemName(itemId)) + '</h2><span class="at">· ' +
-    esc(locationName(locationId)) + "</span></div>";
-}
-
-function takeActionsHTML() {
-  const item = activeEngine.getConfig().items[selectedLooseItem.itemId];
-  if (!item || item.carry === "none") {
-    return '<div class="phase-sub">' + esc(t("ui.item.cannotTake")) + "</div>";
-  }
-  if (takeMode) return takePanelHTML();
-  return '<div class="item-actions"><button class="primary" data-action="take">' + esc(t("ui.item.take")) + "</button></div>";
-}
-
-function takePanelHTML() {
-  const { locationId, itemId } = selectedLooseItem;
-  const takers = actorsAt(locationId);
-  let html = '<div class="item-detail giving"><div class="dn"><b>' +
-    esc(t("ui.item.take")) + " " + esc(itemName(itemId)) + "</b></div>";
-  if (!takers.length) {
-    html += '<div class="recip-note">' + esc(t("ui.item.noTakers")) + "</div>";
-  } else {
-    html += '<div class="recip-list">' + takers.map((r) =>
-      '<button class="recip" data-action="take-to" data-actor="' + r.id + '">' +
-      '<span class="av av-map" style="--c:' + r.preset.color + '"><img src="' + r.preset.avatarUrl + '" alt=""></span>' +
-      '<span class="rn">' + esc(actorName(r.id)) + "</span>" +
-      '<span class="rc">' + activeEngine.getItemCount(r.id, itemId) + "</span></button>").join("") + "</div>";
-  }
-  html += '<button class="mini-btn ghost" data-action="cancel-take">' + esc(t("plan.cancel")) + "</button></div>";
-  return html;
-}
-
-/* ---------- Sheet ---------- */
-
-function actorHeaderHTML(a) {
-  return '<div class="sheet-title"><span class="av av-head" style="--c:' + a.preset.color + '">' +
-    '<img src="' + a.preset.avatarUrl + '" alt=""></span><h2>' + esc(actorName(a.id)) + "</h2>" +
-    '<span class="at">· ' + esc(locationName(a.activity.at)) + "</span></div>";
-}
-
-function idleSheetHTML(a) {
-  if (a.activity.kind === "transit") {
-    const elapsed = activeEngine.getInternalTime() - a.activity.startedAt;
-    const pct = Math.min(100, (elapsed / a.activity.duration) * 100);
-    return '<div class="activity"><span>' + meanIcon(a.activity.mean) + '</span><div class="grow">' + esc(t("ui.plan.onTheWayTo")) +
-      " <b>" + esc(locationName(a.activity.to)) + "</b><small>" + esc(meanName(a.activity.mean)) + " · " + elapsed + "/" + a.activity.duration +
-      " min</small></div></div>" + '<div class="progress"><i style="width:' + pct + '%"></i></div>';
-  }
-  const plan = activeEngine.getPlan(a.id);
-  if (plan) {
-    const arrival = new Date(activeEngine.getClock().getTime() + plan.duration * 60000);
-    return '<div class="activity"><span>' + meanIcon(plan.mean) + '</span><div class="grow">→ <b>' + esc(locationName(plan.destination)) +
-      "</b><small>" + esc(meanName(plan.mean)) + " · " + Presentation.formatDuration(plan.duration) + " · " + esc(t("ui.plan.arrives")) + " " +
-      Presentation.formatDateTime(arrival, lang(), "time") + "</small></div>" +
-      '<button class="x" data-action="cancel-plan">✕</button></div>';
-  }
-  let html = '<button class="primary" data-action="move">' + esc(t("ui.plan.moveTo")) + "</button>";
-  if (activeEngine.getTrades(a.activity.at).length > 0) {
-    html += '<button class="primary" data-action="open-trades">' + esc(t("ui.trade.title")) + "</button>";
-  }
-  return '<div class="item-actions">' + html + "</div>";
-}
-
-function tradeRowHTML(a, trade) {
-  const reward = trade.reward || [];
-  const first = reward[0] ? activeEngine.getConfig().items[reward[0].item] : null;
-  const title = trade.label || (first ? itemName(first.id) : "");
-  const extra = reward.length > 1 ? " ×" + reward.reduce((n, e) => n + e.quantity, 0) : "";
-  const cost = (trade.cost || []).map((e) => e.quantity + " × " + itemName(e.item)).join(" + ");
-  const ok = activeEngine.canTrade(a.id, a.activity.at, trade.id).ok;
-  const note = ok ? esc(t("ui.trade.cost")) + " " + esc(cost) : esc(t("ui.trade.missingCost"));
-  return '<button class="mean-row' + (ok ? "" : " disabled") + '"' + (ok ? ' data-action="do-trade" data-trade="' + trade.id + '"' : "") + ">" +
-    '<span class="mi">' + itemIconHTML(first) + "</span>" +
-    '<span class="mn">' + esc(title) + extra + '<small>' + note + "</small></span></button>";
-}
-
-function tradeSheetHTML(a) {
-  const trades = activeEngine.getTrades(a.activity.at);
-  return '<div class="phase-bar">' +
-    '<button class="icon-btn" data-action="cancel-trades">←</button>' +
-    '<span class="phase-title">' + esc(t("ui.trade.title")) + " · " + esc(locationName(a.activity.at)) + "</span></div>" +
-    '<div class="means-list">' + trades.map((tr) => tradeRowHTML(a, tr)).join("") + "</div>";
-}
-
-function reachableList() {
-  const a = activeEngine.getActor(selectedActorId);
-  return activeEngine.getMission().locations
-    .filter((l) => l.id !== a.activity.at && activeEngine.distance(a.activity.at, l.id) !== Infinity)
-    .map((l) => ({ loc: l, d: activeEngine.distance(a.activity.at, l.id) }))
-    .sort((x, y) => x.d - y.d);
-}
-
-function destinationSheetHTML() {
-  let html = '<div class="phase-bar">' +
-    '<button class="icon-btn" data-action="cancel-destination">←</button>' +
-    '<span class="phase-title">' + esc(t("ui.plan.chooseDestination")) + "</span>" +
-    '<span class="seg">' +
-    '<button class="' + (listView ? "" : "on") + '" data-action="view-map">' + esc(t("ui.plan.viewMap")) + "</button>" +
-    '<button class="' + (listView ? "on" : "") + '" data-action="view-list">' + esc(t("ui.plan.viewList")) + "</button>" +
-    "</span></div>";
-  if (listView) {
-    html += '<div class="dest-list">' + reachableList().map((r) =>
-      '<button class="dest-row" data-action="choose-dest" data-loc="' + r.loc.id + '">' +
-      '<span class="dn">' + esc(locationName(r.loc.id)) + '</span><span class="dd">' +
-      Presentation.formatDistance(r.d) + "</span></button>").join("") + "</div>";
-  } else {
-    html += '<div class="phase-sub">' + esc(t("ui.plan.chooseHint")) + "</div>";
-  }
-  return html;
-}
-
-// One "to drop" line per violated capacity group: the item types actually present.
-function formatViolation(v) {
-  const names = v.items.map((x) => itemName(x.id)).join("/");
-  return (v.excess > 1 ? v.excess + " " : "") + names;
-}
-
-function meansSheetHTML(a) {
-  const d = activeEngine.distance(a.activity.at, selectedDestId);
-  const means = activeEngine.getAvailableMeans(a.id);
-  const rows = means.map((m) => {
-    const duration = activeEngine.computeTravelTime(d, m.id);
-    const arrival = new Date(activeEngine.getClock().getTime() + duration * 60000);
-    const disabled = m.blocked ? " disabled" : "";
-    const action = m.blocked ? "" : ' data-action="choose-means"';
-    const note = m.blocked
-      ? (m.violations || []).map((v) => "<small>" + esc(t("ui.means.dropToTravel", { items: formatViolation(v) })) + "</small>").join("")
-      : "";
-    return '<button class="mean-row' + disabled + '"' + action + ' data-mean="' + m.id + '">' +
-      '<span class="mi">' + (m.icon || "🚶") + "</span>" +
-      '<span class="mn">' + esc(meanName(m.id)) + note + "</span>" +
-      '<span class="mm"><b>' + Presentation.formatDuration(duration) + "</b><small>" + esc(t("ui.plan.arrives")) + " " +
-      Presentation.formatDateTime(arrival, lang(), "time") + "</small></span></button>";
-  }).join("");
-  return '<div class="phase-bar">' +
-    '<button class="icon-btn" data-action="back-destination">←</button>' +
-    '<span class="phase-title">' + esc(t("ui.plan.goTo")) + " <b>" + esc(locationName(selectedDestId)) + "</b></span></div>" +
-    '<div class="phase-sub">' + Presentation.formatDistance(d) + " " + esc(t("ui.plan.tripInfo")) + "</div>" +
-    '<div class="means-list">' + rows + "</div>";
-}
-
-function renderSheet() {
-  if (!activeEngine) { sheetBody.replaceChildren(); return; }
-  if (selectedLooseItem) {
-    const head = looseItemHeaderHTML(selectedLooseItem.locationId, selectedLooseItem.itemId);
-    const actions = selectedLooseItem.reservedBy
-      ? '<div class="phase-sub">' + esc(t("ui.item.reservedBy")) + " " + esc(actorName(selectedLooseItem.reservedBy)) + "</div>"
-      : takeActionsHTML();
-    sheetBody.innerHTML = head + actions;
-    return;
-  }
-  if (!selectedActorId) { sheetBody.replaceChildren(); return; }
-  const a = activeEngine.getActor(selectedActorId);
-  let html;
-  if (selectedItemId && sheetMode === "idle") {
-    html = itemHeaderHTML(a, selectedItemId) + itemActionsHTML(a);
-  } else {
-    html = actorHeaderHTML(a);
-    if (sheetMode === "destination") html += destinationSheetHTML();
-    else if (sheetMode === "means") html += meansSheetHTML(a);
-    else if (sheetMode === "trade") html += tradeSheetHTML(a);
-    else html += idleSheetHTML(a);
-  }
-  sheetBody.innerHTML = html;
-}
+const sheet = MobileSheet.create({
+  sheetBody,
+  inventoryBar,
+  getEngine: () => activeEngine,
+  getState: () => ({ selectedActorId, selectedItemId, giveMode, takeMode, selectedLooseItem, selectedDestId, listView, sheetMode, inventoryOpen }),
+  helpers: { esc, itemIconHTML, actorName, locationName, itemName, meanName, meanIcon, t, lang,
+             formatDuration: Presentation.formatDuration, formatDistance: Presentation.formatDistance, formatDateTime: Presentation.formatDateTime },
+});
 
 function refresh() {
   if (selectedLooseItem && activeEngine && !looseItemAvailable(selectedLooseItem)) { selectedLooseItem = null; takeMode = false; }
   sheetEl.hidden = !(selectedActorId || selectedLooseItem);
   avatars.updateStates();
-  renderSheet();
-  renderInventory();
+  sheet.renderSheet();
+  sheet.renderInventory();
   renderMap();
   updateRunButton();
 }
