@@ -297,6 +297,10 @@ const expandItems = (config, actorId, entries) => {
         throw new Error("umbra: actor '" + actorId + "' has an invalid quantity in '" + entry + "'");
       }
     }
+    const item = config.items[id];
+    if (itemCarry(item) === "none") {
+      throw new Error("umbra: actor '" + actorId + "' cannot start with non-portable item '" + id + "'");
+    }
     for (let i = 0; i < quantity; i++) items.push(config.items[id]);
   }
   return items;

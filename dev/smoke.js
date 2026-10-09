@@ -579,34 +579,7 @@ cap2.start();
 check(capIds(cap2).join(",") === "walk!,bike!,taxi!,metro!", "capacity: 2 bikes -> walk/bike/taxi/metro blocked");
 cap2.stop();
 
-const cap3 = window.Umbra.create(capConfig({ items: ["car"] }));
-cap3.start();
-check(capIds(cap3).join(",") === "walk!,taxi!,metro!,van", "capacity: 'none' item blocked everywhere except when required");
-cap3.stop();
-
-// A required "none" item means exactly one: any extra unit is blocked too.
-const noneReqConfig = (items) => ({
-  items: { car_1: { carry: "none" }, cider: {} },
-  actors: { alice: { key: 1, skills: ["car"] } },
-  locations: { a: {}, b: {} },
-  routes: [{ from: "a", to: "b", distance: 1 }],
-  means: { car_1: { icon: "🚗", pace: 3, items: ["car_1"], skills: ["car"] } },
-  missions: {
-    n: {
-      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
-      actors: { alice: { location: "a", items } },
-      locations: { a: {}, b: {} },
-    },
-  },
-});
-const nr1 = window.Umbra.create(noneReqConfig(["car_1"]));
-nr1.start();
-check(nr1.getAvailableMeans("alice").map((m) => m.id + (m.blocked ? "!" : "")).join(",") === "car_1", "capacity: 1 required 'none' item -> ok");
-nr1.stop();
-const nr2 = window.Umbra.create(noneReqConfig(["car_1", "car_1"]));
-nr2.start();
-check(nr2.getAvailableMeans("alice").map((m) => m.id + (m.blocked ? "!" : "")).join(",") === "car_1!", "capacity: 2 required 'none' items -> blocked (excess counts)");
-nr2.stop();
+expectThrowConfig("actor cannot start with a non-portable item", capConfig({ items: ["car"] }));
 
 expectThrowConfig("capacity referencing a required item is rejected", capConfig({ means: { walk: { icon: "🚶", pace: 10, capacity: ["0:cider"] } } }));
 expectThrowConfig("capacity referencing a none item is rejected", capConfig({ means: { walk: { icon: "🚶", pace: 10, capacity: ["0:car"] } } }));

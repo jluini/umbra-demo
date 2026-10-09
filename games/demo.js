@@ -402,7 +402,7 @@ const config = {
         charles: { location: "charlesHouse", items: ["diamond", "greenPotion", "cider", "starCoin", "key"] },
         dave: { location: "charlesHouse", items: [] },
         elena: { location: "charlesHouse" },
-        fiona: { location: "square", items: ["car_2"] },
+        fiona: { location: "square" },
         george: { location: "forest" }
       },
       locations: {
