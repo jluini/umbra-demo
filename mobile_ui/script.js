@@ -18,7 +18,8 @@ const uiTranslations = {
         restart: "Reiniciar",
       },
       briefing: {
-        close: "Comenzar",
+        start: "Comenzar",
+        close: "Continuar",
       },
       confirm: {
         abort: { title: "¿Abortar la misión?", message: "Vas a perder el progreso y volver al menú." },
@@ -69,7 +70,7 @@ const uiTranslations = {
   en: {
     ui: {
       menu: { briefing: "View briefing", backToMenu: "Back to menu", restart: "Restart" },
-      briefing: { close: "Start" },
+      briefing: { start: "Start", close: "Continue" },
       confirm: {
         abort: { title: "Abort the mission?", message: "You will lose your progress and return to the menu." },
         restart: { title: "Restart the mission?", message: "You will lose your current progress and the mission will start over.", accept: "Restart" },
@@ -107,7 +108,7 @@ const uiTranslations = {
   pt: {
     ui: {
       menu: { briefing: "Ver briefing", backToMenu: "Voltar ao menu", restart: "Reiniciar" },
-      briefing: { close: "Começar" },
+      briefing: { start: "Começar", close: "Continuar" },
       confirm: {
         abort: { title: "Abortar a missão?", message: "Você vai perder o progresso e voltar ao menu." },
         restart: { title: "Reiniciar a missão?", message: "Você vai perder o progresso atual e a missão vai começar de novo.", accept: "Reiniciar" },
@@ -146,6 +147,7 @@ const uiTranslations = {
 
 const titlesEl = document.getElementById("titles");
 const briefingEl = document.getElementById("briefing");
+const briefingCloseBtn = document.getElementById("briefing-close");
 const menuEl = document.getElementById("menu");
 const resultEl = document.getElementById("result");
 const confirmEl = document.getElementById("confirm");
@@ -259,7 +261,10 @@ langSelector.addEventListener("click", handleLanguageClick);
 function showTitles() { titlesEl.hidden = false; }
 function hideTitles() { titlesEl.hidden = true; }
 
-function showBriefing() { briefingEl.hidden = false; }
+function showBriefing(initial) {
+  Presentation.setI18nText(briefingCloseBtn, initial ? "ui.briefing.start" : "ui.briefing.close", activeI18n);
+  briefingEl.hidden = false;
+}
 function hideBriefing() { briefingEl.hidden = true; }
 
 function openMenu() { menuEl.hidden = false; }
@@ -432,7 +437,7 @@ function onMissionStart({ mission }) {
   buildAvatars();
   refresh();
   hideTitles();
-  showBriefing();
+  showBriefing(true);
 }
 
 function onClockSet({ time }) {
@@ -1168,7 +1173,7 @@ titlesMissions.addEventListener("click", (e) => {
 menuBtn.addEventListener("click", openMenu);
 
 missionBtn.addEventListener("click", () => {
-  if (briefingEl.hidden) showBriefing(); else hideBriefing();
+  if (briefingEl.hidden) showBriefing(false); else hideBriefing();
 });
 
 clockEl.addEventListener("click", (e) => { e.stopPropagation(); toggleDatePop(); });
@@ -1182,7 +1187,7 @@ menuEl.addEventListener("click", (e) => {
   if (e.target.closest("[data-close-menu]")) { closeMenu(); return; }
   const btn = e.target.closest("[data-menu]");
   if (!btn) return;
-  if (btn.dataset.menu === "briefing") { closeMenu(); showBriefing(); }
+  if (btn.dataset.menu === "briefing") { closeMenu(); showBriefing(false); }
   else if (btn.dataset.menu === "back") backToMenu();
   else if (btn.dataset.menu === "reset") {
     closeMenu();
