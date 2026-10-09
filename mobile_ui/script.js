@@ -36,7 +36,7 @@ const uiTranslations = {
       chooseDestHint: "Tocá un lugar alcanzable en el mapa. Los atenuados no tienen ruta.",
       tripInfo: "de viaje · elegí cómo ir",
       arrives: "llega",
-      tooManyItems: "No puede llevar tantos objetos para este medio.",
+      dropToTravel: "Debe dejar {items} para viajar.",
       planBlocked: "No se puede: invalidaría un plan de viaje.",
       plansCancelled: "Se canceló un plan de viaje (ya no era válido).",
       onTheWayTo: "En camino a",
@@ -389,7 +389,7 @@ function resetGameUI() {
 
 /* ============================ Map / avatars / sheet ============================ */
 
-const t = (key) => activeI18n.t(key);
+const t = (key, params) => activeI18n.t(key, params);
 const lang = () => activeI18n.language();
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -785,6 +785,12 @@ function destinationSheetHTML() {
   return html;
 }
 
+// One "to drop" line per violated capacity group: the item types actually present.
+function formatViolation(v) {
+  const names = v.items.map((x) => itemName(x.id)).join("/");
+  return (v.excess > 1 ? v.excess + " " : "") + names;
+}
+
 function meansSheetHTML(a) {
   const d = activeEngine.distance(a.activity.at, selectedDestId);
   const means = activeEngine.getAvailableMeans(a.id);
@@ -793,7 +799,9 @@ function meansSheetHTML(a) {
     const arrival = new Date(activeEngine.getClock().getTime() + duration * 60000);
     const disabled = m.blocked ? " disabled" : "";
     const action = m.blocked ? "" : ' data-action="choose-means"';
-    const note = m.blocked ? " <small>" + esc(t("ui.tooManyItems")) + "</small>" : "";
+    const note = m.blocked
+      ? (m.violations || []).map((v) => "<small>" + esc(t("ui.dropToTravel", { items: formatViolation(v) })) + "</small>").join("")
+      : "";
     return '<button class="mean-row' + disabled + '"' + action + ' data-mean="' + m.id + '">' +
       '<span class="mi">' + (m.icon || "🚶") + "</span>" +
       '<span class="mn">' + esc(meanName(m.id)) + note + "</span>" +

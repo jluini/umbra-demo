@@ -779,6 +779,54 @@ check(rc2.getLocation("a").items.filter((it) => it.id === "bike").length === 0, 
 check(rc2.getPlan("bob").vehicle && rc2.getPlan("bob").vehicle.itemId === "bike", "setPlan replace: new plan holds a reserved vehicle");
 rc2.stop();
 
+// Capacity violations: one per exceeded group, listing the types actually present.
+const violConfig = (capacity, items) => ({
+  items: { bike: { carry: "optional" }, long: { carry: "optional" } },
+  actors: { alice: { key: 1, skills: ["walk"] } },
+  locations: { a: {}, b: {} },
+  routes: [{ from: "a", to: "b", distance: 1 }],
+  means: { walk: { icon: "🚶", pace: 10, skills: [], capacity } },
+  missions: {
+    v: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "a", items } },
+      locations: { a: {}, b: {} },
+    },
+  },
+});
+const v1 = window.Umbra.create(violConfig(["1:bike|long"], ["bike", "bike"]));
+v1.start();
+const v1m = v1.getAvailableMeans("alice")[0];
+check(v1m.blocked && v1m.violations.length === 1 && v1m.violations[0].excess === 1, "violation: 1:bike|long with 2 bikes -> excess 1");
+check(v1m.violations[0].items.length === 1 && v1m.violations[0].items[0].id === "bike" && v1m.violations[0].items[0].held === 2, "violation lists only the present type (bike x2)");
+v1.stop();
+
+const v2 = window.Umbra.create(violConfig(["0:bike", "0:long"], ["bike", "long"]));
+v2.start();
+const v2m = v2.getAvailableMeans("alice")[0];
+check(v2m.violations.length === 2, "violation: separate groups -> two violations");
+v2.stop();
+
+const v3 = window.Umbra.create(violConfig(["0:bike"], ["bike", "bike"]));
+v3.start();
+check(v3.getAvailableMeans("alice")[0].violations[0].excess === 2, "violation: 0:bike with 2 bikes -> excess 2");
+v3.stop();
+
+// A trade definition referencing a non-portable item is invalid.
+expectThrowConfig("trade reward cannot be a non-portable item", {
+  items: { coin: { stackable: true }, car_1: { carry: "none" } },
+  actors: { alice: { key: 1 } },
+  locations: { shop: {} },
+  routes: [],
+  missions: {
+    t: {
+      start: "2024-12-31T22:00:00", deadline: "2025-01-01T00:00:00",
+      actors: { alice: { location: "shop", items: ["coin:3"] } },
+      locations: { shop: { trades: { x: { cost: [{ item: "coin", quantity: 1 }], reward: [{ item: "car_1", quantity: 1 }] } } } },
+    },
+  },
+});
+
 if (failures > 0) {
   console.error(failures + " failure(s)");
   process.exit(1);

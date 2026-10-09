@@ -388,14 +388,18 @@ const buildLocations = (config, missionDef) =>
 // A location of a mission may define `trades`: a map keyed by trade id of
 // { cost: [{ item, quantity }], reward: [{ item, quantity }], label? }.
 
-const validateTradeItems = (itemIds, locationId, tradeId, field, entries) => {
+const validateTradeItems = (items, locationId, tradeId, field, entries) => {
   if (!Array.isArray(entries)) {
     throw new Error("umbra: trade '" + tradeId + "' in location '" + locationId + "' has invalid '" + field + "'");
   }
   for (const entry of entries) {
     const itemId = entry && entry.item;
-    if (!itemIds.has(itemId)) {
+    const item = items[itemId];
+    if (!item) {
       throw new Error("umbra: trade '" + tradeId + "' references unknown item '" + itemId + "'");
+    }
+    if (itemCarry(item) === "none") {
+      throw new Error("umbra: trade '" + tradeId + "' references non-portable item '" + itemId + "'");
     }
     if (!Number.isInteger(entry.quantity) || entry.quantity < 1) {
       throw new Error("umbra: trade '" + tradeId + "' has an invalid quantity for item '" + itemId + "'");
@@ -404,12 +408,12 @@ const validateTradeItems = (itemIds, locationId, tradeId, field, entries) => {
 };
 
 const validateTrades = (config, locations) => {
-  const itemIds = new Set(Object.keys(config.items || {}));
+  const items = config.items || {};
   for (const location of locations) {
     if (location.trades === undefined) continue;
     for (const [tradeId, trade] of Object.entries(location.trades)) {
-      validateTradeItems(itemIds, location.id, tradeId, "cost", trade.cost);
-      validateTradeItems(itemIds, location.id, tradeId, "reward", trade.reward);
+      validateTradeItems(items, location.id, tradeId, "cost", trade.cost);
+      validateTradeItems(items, location.id, tradeId, "reward", trade.reward);
     }
   }
 };
@@ -611,25 +615,25 @@ const create = (config = {}) => {
     for (const it of items) m.set(it.id, (m.get(it.id) || 0) + 1);
     return m;
   };
-  // "none" items are implicitly "0:<item>" in every mean (they can only be used
-  // as a mean's required item, never carried in addition).
-  const noneItemIds = Object.keys(config.items || {}).filter((id) => itemCarry(config.items[id]) === "none");
+  // Capacity violations keep the shape of the config entry: one violation per
+  // "capacity" group that is exceeded, with the item types actually present.
   const carryIssue = (def, id, counts) => {
     const required = def.items || [];
     const extra = (itemId) => Math.max(0, (counts.get(itemId) || 0) - (required.includes(itemId) ? 1 : 0));
+    const violations = [];
     for (const entry of def.capacity || []) {
       const { max, group } = parseCapacity(entry, id);
       let count = 0;
+      const items = [];
       for (const itemId of group) {
         if (RESERVED_CAPACITY.has(itemId)) continue;
-        count += extra(itemId);
+        const held = extra(itemId);
+        count += held;
+        if (held > 0) items.push({ id: itemId, held });
       }
-      if (count > max) return { reason: "capacity" };
+      if (count > max) violations.push({ items, excess: count - max });
     }
-    let noneExcess = 0;
-    for (const itemId of noneItemIds) noneExcess += extra(itemId);
-    if (noneExcess > 0) return { reason: "capacity" };
-    return null;
+    return violations.length ? { reason: "capacity", violations } : null;
   };
   // Why a pending plan would be invalid with the given item counts
   // (null = valid): "unknown" (no such mean), "mean" (items/skills), "capacity".
@@ -654,7 +658,7 @@ const create = (config = {}) => {
       .filter(([id]) => actorHasMean(actor, id))
       .map(([id, def]) => {
         const issue = carryIssue(def, id, countMap(actor.items));
-        return { id, icon: def.icon, pace: def.pace, blocked: !!issue, reason: issue ? issue.reason : null };
+        return { id, icon: def.icon, pace: def.pace, blocked: !!issue, reason: issue ? issue.reason : null, violations: issue ? issue.violations : null };
       });
   const computeTravelTime = (distance, meanId) => {
     const def = meansOf()[meanId];
